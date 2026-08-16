@@ -1782,10 +1782,10 @@
     margin-top: -66px; /* = высота search-bar (53px) + отступ под ним (13px) — поднимает карточку до верха блока поиска */
 }
 .reviews-filter-toggle-card {
-    background: var(--card-bg);
+    background: var(--col-bg);
     border: 1px solid var(--border-color);
-    border-radius: 36px 36px 30px 30px; /* верхние углы = радиусу search-bar/filter-btn */
-    padding: 70px 13px 13px 13px; /* увеличенный отступ сверху до слайдера */
+    border-radius: 33px 33px 30px 30px; /* верхние углы = радиусу search-bar/filter-btn */
+    padding: 66px 13px 13px 13px; /* увеличенный отступ сверху до слайдера */
 }
 
         .empty-message {
@@ -4379,23 +4379,7 @@ function showAdditionalSettingsAlert() {
                if (window.__allReviews) applyReviewFilters(window.__allReviews);
             });
         });
-                document.getElementById('reviewsFilterToggleBtn')?.addEventListener('click', (e) => {
-    hapticLight();
-    const dropdown = document.getElementById('reviewsFilterDropdown');
-    if (!dropdown) return;
-    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
-});
-document.querySelectorAll('.reviews-filter-option').forEach(opt => {
-    opt.addEventListener('click', (e) => {
-        e.stopPropagation();
-        hapticLight();
-        reviewRatingFilter = opt.dataset.filter;
-        document.querySelectorAll('.reviews-filter-option').forEach(o => o.classList.remove('active'));
-        opt.classList.add('active');
-        document.getElementById('reviewsFilterDropdown').style.display = 'none';
-        if (window.__allReviews) applyReviewFilters(window.__allReviews);
-    });
-});
+
                 await renderReviewsFixedAction();
         setupReviewsListUI(initialReviews);
     }
