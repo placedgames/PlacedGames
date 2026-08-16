@@ -586,6 +586,20 @@ app.get('/api/users', adminAuth, async (req, res) => {
     }
 });
 
+const multer = require('multer');
+const upload = multer({ dest: '/tmp/' });
+
+app.post('/admin/import-db', upload.single('backup'), (req, res) => {
+  const filepath = req.file.path;
+  exec(`pg_restore --clean --if-exists -d "${process.env.DATABASE_URL}" ${filepath}`, (err, stdout, stderr) => {
+    if (err) {
+      console.error(stderr);
+      return res.status(500).send('Ошибка импорта: ' + stderr);
+    }
+    res.send('Готово! База восстановлена.');
+  });
+});
+
 // ЗАЩИЩЁННЫЕ ЭНДПОИНТЫ (требуют токен)
 app.post('/api/order', async (req, res) => {
     const client = await pool.connect();
