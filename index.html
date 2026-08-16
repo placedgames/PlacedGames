@@ -1667,6 +1667,56 @@
     background: var(--card-bg);
     border-radius: 20px;
 }
+
+.reviews-filter-stack {
+    display: flex;
+    align-items: center;
+    margin-top: 8px;
+}
+.reviews-filter-badge {
+    height: 35px;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 20px;
+    font-size: 17px;
+    font-weight: 500;
+    padding: 0 14px 0 12px;
+    position: relative;
+}
+.reviews-filter-badge.all {
+    background: var(--accent-blue-bg);
+    color: #4cb4e9;
+    z-index: 3;
+}
+.reviews-filter-badge.good {
+    background: rgba(34, 197, 94, 0.12);
+    color: #22c55e;
+    z-index: 2;
+    margin-left: -18px;
+    padding-left: 30px;
+}
+.reviews-filter-badge.bad {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    z-index: 1;
+    margin-left: -18px;
+    padding-left: 30px;
+}
+.reviews-filter-option {
+    padding: 12px 14px;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 20px;
+}
+.reviews-filter-option.active {
+    background: var(--accent-blue-bg);
+    color: #4cb4e9;
+}
+
 .summary-badge {
     position: relative;
     display: inline-flex;
@@ -2541,6 +2591,7 @@
     let currentOpenOrder = null;
     let appliedPromo = null;
     let reviewsViewMode = 'all';
+    let reviewRatingFilter = 'all';
     let reviewsListCache = null;       // только в памяти, не в localStorage — сбрасывается при каждом новом открытии приложения
     let reviewsFetchPromise = null;    // чтобы не запускать параллельно два одинаковых запроса
     let isPromoMode = false;
@@ -4292,31 +4343,24 @@ function showAdditionalSettingsAlert() {
                     </div>
                 </div>
 
-                <div class="review-card-wrapper reviews-summary-card" id="reviewsSummaryCard">
-    <div class="review-card">
-        <div class="review-header">
-            <span class="review-placed-badge" style="cursor:default;" id="reviewsServiceLabel">Все сервисы</span>
-            <div class="review-badge-stack" style="margin-left:auto;">
-                <span class="summary-badge-wrap" style="z-index:2;">
-                    <span class="summary-badge-backdrop"></span>
-                    <span class="summary-badge good" id="badgeGoodCount">${initialGoodCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg></span>
-                </span>
-                <span class="summary-badge-wrap" style="z-index:1;">
-                    <span class="summary-badge-backdrop"></span>
-                    <span class="summary-badge bad" id="badgeBadCount">${initialBadCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-sad"></use></svg></span>
-                </span>
+                                <div class="profile-wrapper" id="reviewsSummaryCard">
+    <div class="profile-main-card" id="reviewsFilterToggleBtn" style="cursor:pointer;">
+        <img class="profile-avatar" style="border-radius:22px;" src="https://cdn.jsdelivr.net/gh/placedgames/media/img/LogoPG.PNG" alt="Placed Games">
+        <div class="profile-info">
+            <div class="profile-nickname">Placed Games</div>
+            <div class="reviews-filter-stack">
+                <span class="reviews-filter-badge all">Все отзывы</span>
+                <span class="reviews-filter-badge good" id="badgeGoodCount">${initialGoodCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg></span>
+                <span class="reviews-filter-badge bad" id="badgeBadCount">${initialBadCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-sad"></use></svg></span>
             </div>
         </div>
-        <div class="form-section" style="margin-top:12px;margin-bottom:0;">
-            <select class="form-select2-native" id="reviewRatingSelect">
-                <option value="" disabled selected>Сортировать по оценкам</option>
-                <option value="all">Все оценки</option>
-                <option value="good">Нравится</option>
-                <option value="bad">Не нравится</option>
-            </select>
-        </div>
     </div>
-    <div class="review-items-card">
+    <div class="profile-bottom-card">
+        <div id="reviewsFilterDropdown" style="display:none;background:var(--card-bg);border-radius:29px;padding:6px;margin-bottom:10px;">
+            <div class="reviews-filter-option active" data-filter="all">Все отзывы</div>
+            <div class="reviews-filter-option" data-filter="good">Нравится</div>
+            <div class="reviews-filter-option" data-filter="bad">Не нравится</div>
+        </div>
         <div class="reviews-toggle-wrap">
             <div class="reviews-toggle-thumb" id="reviewsToggleThumb"></div>
             <button class="reviews-toggle-btn active" data-toggle="all">Все отзывы</button>
@@ -4339,18 +4383,23 @@ function showAdditionalSettingsAlert() {
                if (window.__allReviews) applyReviewFilters(window.__allReviews);
             });
         });
-        document.getElementById('reviewRatingSelect')?.addEventListener('change', () => {
+                document.getElementById('reviewsFilterToggleBtn')?.addEventListener('click', (e) => {
     hapticLight();
-    if (window.__allReviews) applyReviewFilters(window.__allReviews);
+    const dropdown = document.getElementById('reviewsFilterDropdown');
+    if (!dropdown) return;
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
 });
-        const ratingSelect = document.getElementById('reviewRatingSelect');
-function updateRatingSelectColor() {
-    if (!ratingSelect) return;
-    ratingSelect.style.color = ratingSelect.value === '' ? 'var(--text-muted)' : 'var(--text-primary)';
-}
-updateRatingSelectColor();
-ratingSelect?.addEventListener('change', updateRatingSelectColor);
-
+document.querySelectorAll('.reviews-filter-option').forEach(opt => {
+    opt.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hapticLight();
+        reviewRatingFilter = opt.dataset.filter;
+        document.querySelectorAll('.reviews-filter-option').forEach(o => o.classList.remove('active'));
+        opt.classList.add('active');
+        document.getElementById('reviewsFilterDropdown').style.display = 'none';
+        if (window.__allReviews) applyReviewFilters(window.__allReviews);
+    });
+});
                 await renderReviewsFixedAction();
         setupReviewsListUI(initialReviews);
     }
@@ -4973,8 +5022,8 @@ body: JSON.stringify({
     window.__allReviews = list;
     const searchVal = document.getElementById('reviewSearchInput')?.value.toLowerCase() || '';
     const gameVal = document.getElementById('reviewGameSelect')?.value || 'Все сервисы';
-    const ratingVal = document.getElementById('reviewRatingSelect')?.value || 'all';
-
+    const ratingVal = reviewRatingFilter || 'all';
+        
     let filtered = list;
 
     if (gameVal !== 'Все сервисы') {
