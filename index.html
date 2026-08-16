@@ -2409,6 +2409,15 @@
             }
         }
     }
+    
+    function pluralizeReviews(n) {
+    const abs = Math.abs(n) % 100;
+    const last = abs % 10;
+    if (abs > 10 && abs < 20) return `${n} отзывов`;
+    if (last === 1) return `${n} отзыв`;
+    if (last >= 2 && last <= 4) return `${n} отзыва`;
+    return `${n} отзывов`;
+}
 
     function formatPrice(p) {
         return Math.round(p).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + "₽";
@@ -4295,16 +4304,16 @@ function showAdditionalSettingsAlert() {
                 <div class="review-card-wrapper reviews-summary-card" id="reviewsSummaryCard">
     <div class="review-card">
         <div class="order-detail-row" style="padding-top:0;">
-            <span class="order-detail-label" style="color:var(--text-primary);">Всего отзывов</span>
-            <span class="order-detail-value" id="summaryTotalCount" style="color:var(--text-primary);">${initialReviews.length}</span>
+            <span class="order-detail-label">Всего отзывов</span>
+            <span class="order-detail-value" id="summaryTotalCount" style="color:var(--text-primary);">${pluralizeReviews(initialReviews.length)}</span>
         </div>
         <div class="order-detail-row">
-            <span class="order-detail-label" style="color:var(--text-primary);">Отрицательные</span>
-            <span class="order-detail-value" id="badgeBadCount" style="color:#ef4444;">${initialBadCount}</span>
+            <span class="order-detail-label">Отрицательные</span>
+            <span class="order-detail-value" id="badgeBadCount" style="color:#ef4444;">${pluralizeReviews(initialBadCount)}</span>
         </div>
         <div class="order-detail-row" style="padding-bottom:0;">
-            <span class="order-detail-label" style="color:var(--text-primary);">Положительные</span>
-            <span class="order-detail-value" id="badgeGoodCount" style="color:#22c55e;">${initialGoodCount}</span>
+            <span class="order-detail-label">Положительные</span>
+            <span class="order-detail-value" id="badgeGoodCount" style="color:#22c55e;">${pluralizeReviews(initialGoodCount)}</span>
         </div>
     </div>
     <div class="review-items-card">
@@ -4952,12 +4961,11 @@ body: JSON.stringify({
     const totalEl = document.getElementById('summaryTotalCount');
     const goodEl = document.getElementById('badgeGoodCount');
     const badEl = document.getElementById('badgeBadCount');
-    if (totalEl) totalEl.textContent = filteredByGame.length;
-    if (!goodEl || !badEl) return;
     const good = filteredByGame.filter(r => (r.rating || (r.satisfied ? 'good' : 'bad')) !== 'bad').length;
     const bad = filteredByGame.length - good;
-    goodEl.textContent = good;
-    badEl.textContent = bad;
+    if (totalEl) totalEl.textContent = pluralizeReviews(filteredByGame.length);
+    if (goodEl) goodEl.textContent = pluralizeReviews(good);
+    if (badEl) badEl.textContent = pluralizeReviews(bad);
 }
 
     function applyReviewFilters(list) {
