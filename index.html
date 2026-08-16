@@ -4294,26 +4294,17 @@ function showAdditionalSettingsAlert() {
 
                 <div class="review-card-wrapper reviews-summary-card" id="reviewsSummaryCard">
     <div class="review-card">
-        <div class="review-header">
-            <span class="review-placed-badge" style="cursor:default;" id="reviewsServiceLabel">Все сервисы</span>
-            <div class="review-badge-stack" style="margin-left:auto;">
-                <span class="summary-badge-wrap" style="z-index:2;">
-                    <span class="summary-badge-backdrop"></span>
-                    <span class="summary-badge good" id="badgeGoodCount">${initialGoodCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg></span>
-                </span>
-                <span class="summary-badge-wrap" style="z-index:1;">
-                    <span class="summary-badge-backdrop"></span>
-                    <span class="summary-badge bad" id="badgeBadCount">${initialBadCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-sad"></use></svg></span>
-                </span>
-            </div>
+        <div class="order-detail-row" style="padding-top:0;">
+            <span class="order-detail-label" style="color:var(--text-primary);">Всего отзывов</span>
+            <span class="order-detail-value" id="summaryTotalCount" style="color:var(--text-primary);">${initialReviews.length}</span>
         </div>
-        <div class="form-section" style="margin-top:12px;margin-bottom:0;">
-            <select class="form-select2-native" id="reviewRatingSelect">
-                <option value="" disabled selected>Сортировать по оценкам</option>
-                <option value="all">Все оценки</option>
-                <option value="good">Нравится</option>
-                <option value="bad">Не нравится</option>
-            </select>
+        <div class="order-detail-row">
+            <span class="order-detail-label" style="color:var(--text-primary);">Отрицательные</span>
+            <span class="order-detail-value" id="badgeBadCount" style="color:#ef4444;">${initialBadCount}</span>
+        </div>
+        <div class="order-detail-row" style="padding-bottom:0;">
+            <span class="order-detail-label" style="color:var(--text-primary);">Положительные</span>
+            <span class="order-detail-value" id="badgeGoodCount" style="color:#22c55e;">${initialGoodCount}</span>
         </div>
     </div>
     <div class="review-items-card">
@@ -4958,15 +4949,15 @@ body: JSON.stringify({
     }
     
     function updateSummaryBadges(filteredByGame) {
+    const totalEl = document.getElementById('summaryTotalCount');
     const goodEl = document.getElementById('badgeGoodCount');
     const badEl = document.getElementById('badgeBadCount');
-    const totalEl = document.getElementById('totalReviewsCount');
     if (totalEl) totalEl.textContent = filteredByGame.length;
     if (!goodEl || !badEl) return;
     const good = filteredByGame.filter(r => (r.rating || (r.satisfied ? 'good' : 'bad')) !== 'bad').length;
     const bad = filteredByGame.length - good;
-    goodEl.firstChild.textContent = good + ' ';
-    badEl.firstChild.textContent = bad + ' ';
+    goodEl.textContent = good;
+    badEl.textContent = bad;
 }
 
     function applyReviewFilters(list) {
