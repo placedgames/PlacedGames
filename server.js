@@ -590,7 +590,12 @@ app.get('/api/users', adminAuth, async (req, res) => {
 
 const upload = multer({ dest: '/tmp/' });
 
-app.post('/admin/import-db', adminAuth, upload.single('backup'), (req, res) => {
+app.post('/admin/import-db', upload.single('backup'), (req, res) => {
+  const secret = req.headers['x-import-secret'];
+  if (secret !== process.env.IMPORT_SECRET) {
+    return res.status(401).send('Unauthorized');
+  }
+
   const filepath = req.file.path;
   exec(`pg_restore --clean --if-exists -d "${process.env.DATABASE_URL}" ${filepath}`, (err, stdout, stderr) => {
     if (err) {
