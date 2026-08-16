@@ -445,6 +445,7 @@
             margin-bottom: 14px;
             align-items: center;
             position: relative;
+            z-index: 2;
         }
 
         .search-bar {
@@ -1774,6 +1775,17 @@
 }
 .reviews-toggle-btn.active {
     color: var(--text-primary);
+}
+.reviews-filter-card-wrapper {
+    position: relative;
+    z-index: 1;
+    margin-top: -66px; /* = высота search-bar (53px) + отступ под ним (13px) — поднимает карточку до верха блока поиска */
+}
+.reviews-filter-toggle-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 36px 36px 30px 30px; /* верхние углы = радиусу search-bar/filter-btn */
+    padding: 70px 13px 13px 13px; /* увеличенный отступ сверху до слайдера */
 }
 
         .empty-message {
@@ -4343,24 +4355,8 @@ function showAdditionalSettingsAlert() {
                     </div>
                 </div>
 
-                                <div class="profile-wrapper" id="reviewsSummaryCard">
-    <div class="profile-main-card" id="reviewsFilterToggleBtn" style="cursor:pointer;">
-        <img class="profile-avatar" style="border-radius:22px;" src="https://cdn.jsdelivr.net/gh/placedgames/media/img/LogoPG.PNG" alt="Placed Games">
-        <div class="profile-info">
-            <div class="profile-nickname">Placed Games</div>
-            <div class="reviews-filter-stack">
-                <span class="reviews-filter-badge all">Все отзывы</span>
-                <span class="reviews-filter-badge good" id="badgeGoodCount">${initialGoodCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg></span>
-                <span class="reviews-filter-badge bad" id="badgeBadCount">${initialBadCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-sad"></use></svg></span>
-            </div>
-        </div>
-    </div>
-    <div class="profile-bottom-card">
-        <div id="reviewsFilterDropdown" style="display:none;background:var(--card-bg);border-radius:29px;padding:6px;margin-bottom:10px;">
-            <div class="reviews-filter-option active" data-filter="all">Все отзывы</div>
-            <div class="reviews-filter-option" data-filter="good">Нравится</div>
-            <div class="reviews-filter-option" data-filter="bad">Не нравится</div>
-        </div>
+                                                <div class="reviews-filter-card-wrapper">
+    <div class="reviews-filter-toggle-card">
         <div class="reviews-toggle-wrap">
             <div class="reviews-toggle-thumb" id="reviewsToggleThumb"></div>
             <button class="reviews-toggle-btn active" data-toggle="all">Все отзывы</button>
