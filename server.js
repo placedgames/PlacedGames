@@ -5,6 +5,7 @@ const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
+const { exec } = require('child_process');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
