@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <script>
+    (function() {
+      const theme = localStorage.getItem('appTheme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="products.js"></script>
+  <meta name="theme-color" content="#121214">
+  <title>Админ панель</title>
+  <style>
+    * {
+      margin: 0; padding: 0; box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    :root {
+      --brand-blue: #4cb4e9;
+      --app-bg: #131314;
+      --card-bg: #232326;
+      --col-bg: #151516;
+      --header-btn-bg: #242427;
+      --text-primary: #ffffff;
+      --text-secondary: #9e9e9e;
+      --text-muted: #cbcdcd;
+      --border-color: #2B2B2E;
+      --input-bg: #303032;
+      --sticky-bg: rgba(38, 38, 42, 0.96);
+      --bottom-menu-border: #424244;
+      --menu-slider-bg: rgba(200, 200, 204, 0.1);
+      --profile-wrapper-active: rgba(40, 40, 42, 0.98);
+      --accent-blue-bg: rgba(56, 150, 200, 0.1);
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --danger-color: #ef4444;
+    }
+    [data-theme="light"] {
+      --app-bg: #EFEFF3;
+      --card-bg: #ffffff;
+      --col-bg: #e8e8ed;
+      --header-btn-bg: #ffffff;
+      --text-primary: #000000;
+      --text-secondary: #6e6e73;
+      --text-muted: #3c3c43;
+      --border-color: #e3e3ea;
+      --input-bg: #e8e8ed;
+      --sticky-bg: rgba(255, 255, 255, 0.96);
+      --bottom-menu-border: #e3e3ea;
+      --menu-slider-bg: rgba(80, 80, 83, 0.08);
+      --profile-wrapper-active: rgba(220, 220, 225, 0.98);
+      --accent-blue-bg: rgba(56, 150, 200, 0.1);
+      --danger-bg: rgba(239, 68, 68, 0.12);
+      --danger-color: #ef4444;
+    }
+        body {
+      background-color: var(--app-bg);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text-primary);
+      padding-bottom: 130px;
+      padding-top: var(--tg-content-safe-area-inset-top, 0px);
+      -webkit-user-select: text !important;
+      user-select: text !important;
+      -webkit-touch-callout: default !important;
+    }
+
+    * {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    .page { display: none; padding: 0 16px 20px 16px; max-width: 600px; margin: 0 auto; }
+    .page.active-page { display: block; }
+
+    .page-header-sticky {
+      position: relative;
+      top: 0;
+      z-index: 500;
+      margin: 0 -16px 5px -16px;
+      padding: calc(var(--tg-content-safe-area-inset-top, 12px) + 6px) 16px 8px 16px;
+      background: var(--app-bg);
+    }
+    .page-header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: transparent;
+      border: none;
+      padding: 0;
+      height: 44px;
+      position: relative;
+    }
+    .page-header-title-btn {
+      display: inline-flex;
+      align-items: center;
+      background: var(--header-btn-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 50px;
+      height: 44px;
+      padding: 0 16px 0 12px;
+      position: relative;
+      z-index: 1;
+      flex: 0 0 auto;
+    }
+    .page-header-title-btn img {
+      width: 21px;
+      height: 21px;
+      object-fit: contain;
+      flex-shrink: 0;
+      margin-right: 8px;
+    }
+    .page-header-title-btn span {
+      font-size: 18px;
+      font-weight: 550;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+    .page-header-double-btn {
+      height: 44px;
+      background: var(--header-btn-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 14px;
+      cursor: pointer;
+    }
+    .page-header-double-btn img { width: 21px; height: 21px; }
+    #headerThemeIcon { transition: transform 0.3s ease; }
+
+    .bottom-menu {
+      position: fixed; bottom: 18px; left: 18px; right: 18px;
+      background: var(--sticky-bg); border: 1px solid var(--bottom-menu-border);
+      border-radius: 60px; display: flex; justify-content: space-around;
+      align-items: center; padding: 5px 12px 8px 12px; z-index: 1001;
+      max-width: 600px; margin: 0 auto; width: calc(100% - 36px);
+      backdrop-filter: blur(10px);
+    }
+    .menu-slider {
+      position: absolute; top: 3px; left: 3px;
+      height: calc(100% - 6px); width: calc(33.33% - 3px);
+      background: var(--menu-slider-bg); border-radius: 50px;
+      transition: left 0.2s cubic-bezier(0.4,0,0.2,1), width 0.2s cubic-bezier(0.4,0,0.2,1);
+      pointer-events: none;
+    }
+    .menu-item {
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+      background: none; border: none; cursor: pointer;
+      flex: 1; padding: 5px 0 2px 0;
+    }
+    .menu-icon { width: 28px; height: 28px; }
+    .menu-icon-inactive { display: block; }
+    .menu-icon-active { display: none; }
+    .menu-item.active .menu-icon-inactive { display: none; }
+    .menu-item.active .menu-icon-active { display: block; }
+    .menu-label { font-size: 11px; font-weight: 500; color: var(--text-secondary); }
+    .menu-item.active .menu-label { color: #4cb4e9; }
+    #profileMenuWrapper.active { background: var(--profile-wrapper-active) !important; }
+
+    .orders-list { display: flex; flex-direction: column; gap: 13px; }
+    .order-wrapper { position: relative; margin-bottom: 0; }
+    .order-main-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 30px; padding: 14px; position: relative; z-index: 2; cursor: pointer;
+    }
+    .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .order-id { font-weight: 600; color: #4cb4e9; font-size: 17px; }
+    .order-card-status { padding: 4px 12px; border-radius: 20px; font-size: 16px; font-weight: 500; }
+    .status-pending-text { color: #4cb4e9; }
+    .status-pending-bg { background: rgba(76,180,233,0.1); }
+    .status-awaiting_text { color: #eab308; }
+    .status-awaiting-bg { background: rgba(234,179,8,0.1); }
+    .status-processing-text { color: #4cb4e9; }
+    .status-processing-bg { background: rgba(76,180,233,0.1); }
+    .status-completed-text { color: #22c55e; }
+    .status-completed-bg { background: rgba(34,197,94,0.1); }
+    .status-done-text { color: #22c55e; }
+    .status-done-bg { background: rgba(34,197,94,0.1); }
+    .status-cancelled-text { color: #ef4444; }
+    .status-cancelled-bg { background: rgba(239,68,68,0.1); }
+    .status-notfound-text { color: #ef4444; }
+    .status-notfound-bg { background: rgba(239,68,68,0.1); }
+    .status-inprogress-text { color: #eab308; }
+.status-inprogress-bg { background: rgba(234,179,8,0.1); }
+    .order-date { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
+    .order-total { font-weight: 600; color: var(--text-primary); font-size: 17px; }
+    .order-items-card {
+      background: var(--col-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 0 0 30px 30px; padding: 12px 16px;
+      margin-top: -28px; padding-top: 36px; position: relative; z-index: 1;
+    }
+    .order-item-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+    .order-item-name { font-size: 16px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; }
+    .order-item-price { font-size: 16px; color: var(--text-primary); font-weight: 500; }
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+    .empty-title { font-size: 18px; color: var(--text-secondary); }
+
+    .order-data-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 32px; padding: 18px; position: relative; z-index: 2;
+    }
+    .order-detail-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; }
+    .order-detail-row:first-child { padding-top: 0; }
+    .order-detail-label { color: var(--text-muted); font-size: 17px; font-weight: 500; }
+    .order-detail-value { color: var(--text-primary); font-weight: 500; text-align: right; font-size: 17px; }
+    .detail-items-card {
+      background: var(--col-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 0 0 30px 30px; padding: 12px 16px;
+      margin-top: -28px; padding-top: 36px; position: relative; z-index: 1; margin-bottom: 16px;
+    }
+
+    .fixed-bottom-bar {
+      position: fixed; bottom: 18px; left: 18px; right: 18px; z-index: 1000;
+      max-width: 600px; margin: 0 auto; width: calc(100% - 36px);
+    }
+
+    .fixed-action-bar {
+      position: fixed; bottom: 18px; left: 18px; right: 18px; z-index: 1000;
+      max-width: 600px; margin: 0 auto; width: calc(100% - 36px);
+    }
+
+    .action-card {
+      background: var(--sticky-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 34px;
+      padding: 14px;
+      border: 1px solid var(--bottom-menu-border);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Вариант с запасом снизу для страниц, где нижняя навигация остаётся видимой */
+    .action-card-nav {
+      background: var(--sticky-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 34px;
+      padding: 14px;
+      padding-bottom: 80px;
+      border: 1px solid var(--bottom-menu-border);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .status-select {
+      width: 100%; background: var(--input-bg); border: 1px solid var(--border-color);
+      border-radius: 34px; padding: 14px 16px; color: var(--text-primary); font-size: 18px;
+      font-weight: 500; outline: none; cursor: pointer; appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 16px center; background-size: 20px; padding-right: 44px;
+    }
+    .action-buttons-row { display: flex; gap: 12px; align-items: center; width: 100%; }
+    .update-status-btn {
+      flex: 1; background: #4cb4e9; border: none; border-radius: 34px; padding: 14px;
+      color: white; font-weight: 600; font-size: 18px; cursor: pointer; height: 52px;
+    }
+    .refresh-circle-btn {
+      width: 52px; height: 52px; min-width: 52px; border-radius: 50%;
+      background: var(--accent-blue-bg); display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; border: none; outline: none;
+    }
+    .refresh-circle-btn img { width: 26px; height: 26px; }
+
+    .stats-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color); border-radius: 28px;
+      padding: 16px 18px; margin-bottom: 16px;
+    }
+    .stats-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+    .stats-label { font-size: 16px; color: var(--text-muted); }
+    .stats-value { font-size: 16px; color: var(--text-primary); font-weight: 600; }
+
+    .user-card-wrapper { position: relative; margin-bottom: 13px; }
+    .user-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color); border-radius: 30px;
+      padding: 16px; position: relative; z-index: 2; margin-bottom: 0;
+    }
+    .user-card-bottom {
+      background: var(--col-bg);
+      border: 1px solid var(--border-color); border-radius: 0 0 30px 30px;
+      padding: 12px 18px; margin-top: -28px; padding-top: 36px;
+      position: relative; z-index: 1;
+    }
+    .user-header { display: flex; align-items: center; gap: 10px; }
+    .user-avatar-circle {
+      width: 42px; height: 42px; border-radius: 50%; background: var(--input-bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0; overflow: hidden;
+    }
+    .user-avatar-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+    .user-header-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 17px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-id-text { font-size: 14px; color: var(--text-secondary); margin-top: 2px; }
+    .user-rank-badge {
+      display: inline-flex; align-items: center; background: var(--accent-blue-bg);
+      border-radius: 20px; padding: 4px 10px; font-size: 15px; font-weight: 600;
+      margin-left: auto; flex-shrink: 0;
+    }
+    .user-spent-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+    .user-spent-label { font-size: 15px; color: var(--text-secondary); }
+    .user-spent-value { font-size: 15px; color: var(--text-primary); font-weight: 600; }
+
+    .review-card-wrapper { position: relative; margin-bottom: 13px; }
+    .review-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 30px; padding: 16px; position: relative; z-index: 2; margin-bottom: 0; }
+    .review-items-card { background: var(--col-bg); border: 1px solid var(--border-color); border-radius: 0 0 30px 30px; padding: 12px 16px; margin-top: -28px; padding-top: 36px; position: relative; z-index: 1; margin-bottom: 0; }
+    .review-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .review-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--input-bg); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .review-author-name { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .review-date { font-size: 12px; color: var(--text-secondary); }
+    .review-text { font-size: 16px; color: var(--text-muted); line-height: 1.5; }
+    .review-order-badge {
+      display: inline-flex; align-items: center; background: var(--accent-blue-bg);
+      border-radius: 20px; padding: 4px 10px; font-size: 17px; font-weight: 500;
+      color: #4cb4e9; margin-left: auto; flex-shrink: 0; cursor: pointer;
+    }
+    .review-delete-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: var(--danger-bg); border-radius: 50%; width: 32px; height: 32px;
+      color: var(--danger-color); cursor: pointer; border: none; flex-shrink: 0;
+      margin-left: 2px; padding: 0;
+    }
+    .review-delete-btn img { width: 20px; height: 20px; }
+    .review-item-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+    .review-item-name { font-size: 16px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; }
+    .review-item-price { font-size: 16px; color: var(--text-primary); font-weight: 500; }
+    .review-empty { text-align: center; padding: 30px 0; color: var(--text-secondary); font-size: 15px; }
+
+    /* Смайлик-бейдж отзыва (нажатие = удаление) */
+    .review-face-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 50%; border: none; cursor: pointer;
+      font-size: 17px; flex-shrink: 0; margin-left: 2px; padding: 0;
+    }
+    .review-face-btn.good { background: rgba(34,197,94,0.12); }
+    .review-face-btn.bad { background: rgba(239,68,68,0.12); }
+    .review-username-link { cursor: pointer; }
+    .review-username-link:active { opacity: 0.7; }
+
+    /* Поиск + фильтр (как в index.html) */
+    .search-section { display: flex; gap: 10px; margin-bottom: 13px; align-items: center; position: relative; }
+    .search-bar {
+      flex: 1; background: var(--card-bg); height: 52px; border-radius: 36px;
+      border: 1px solid var(--border-color); display: flex; align-items: center;
+      padding: 0 16px; gap: 10px; position: relative; z-index: 2;
+    }
+    .search-icon { width: 20px; height: 20px; filter: brightness(0) saturate(100%) invert(70%); flex-shrink: 0; }
+    .search-input {
+      flex: 1; background: transparent; border: none; outline: none; color: var(--text-primary);
+      font-size: 16px; min-width: 0;
+    }
+    .search-input::placeholder { color: var(--text-secondary); }
+    .search-clear-btn { display: none; width: 18px; height: 18px; flex-shrink: 0; cursor: pointer; color: var(--text-secondary); }
+    .search-clear-btn.visible { display: block; }
+    .filter-btn {
+      width: 52px; height: 52px; min-width: 52px; background: var(--card-bg);
+      border: 1px solid var(--border-color); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; cursor: pointer;
+    }
+    .filter-btn img, .filter-btn svg { width: 22px; height: 22px; }
+    .filter-dropdown {
+      position: absolute; top: 58px; right: 0; z-index: 30; min-width: 220px;
+      background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px;
+      padding: 6px; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+    .filter-dropdown.open { display: block; }
+    .filter-dropdown-item {
+      display: flex; justify-content: space-between; align-items: center; padding: 12px 14px;
+      border-radius: 18px; cursor: pointer; font-size: 15px; color: var(--text-primary); font-weight: 500;
+    }
+    .filter-dropdown-item.active { background: var(--accent-blue-bg); color: #4cb4e9; }
+    .filter-dropdown-item span.count { color: var(--text-secondary); font-weight: 400; }
+    .filter-dropdown-item.active span.count { color: #4cb4e9; }
+
+    /* Карточки рефералов / истории операций (стиль как index.html) */
+    .referral-wrapper { position: relative; margin-bottom: 13px; }
+    .referral-main-card {
+      background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: 30px; padding: 16px 18px; position: relative; z-index: 2;
+    }
+    .referral-title { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .referral-bottom-card {
+      background: var(--col-bg); border: 1px solid var(--border-color);
+      border-radius: 0 0 30px 30px; padding: 4px 4px 6px 4px; margin-top: -28px; padding-top: 36px;
+      position: relative; z-index: 1;
+    }
+    .referral-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; }
+    .referral-row-name { font-size: 16px; color: var(--text-muted); cursor: pointer; }
+    .referral-row-value { font-size: 16px; color: var(--text-primary); font-weight: 500; }
+    .referral-row-value.negative { color: #ef4444; }
+    .referral-row-value.positive { color: #22c55e; }
+
+    .profile-wrapper { position: relative; margin-bottom: 13px; }
+    .profile-main-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color); border-radius: 30px;
+      padding: 18px; position: relative; z-index: 2; display: flex; align-items: center; gap: 16px;
+    }
+    .profile-avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+    .profile-nickname { font-size: 20px; font-weight: 550; color: var(--text-primary); margin-bottom: 8px; }
+    .profile-username {
+      display: inline-block; background: var(--accent-blue-bg); border-radius: 20px;
+      padding: 6px 14px; font-size: 15px; font-weight: 500; color: #4cb4e9;
+    }
+    .profile-bottom-card {
+      background: var(--col-bg);
+      border: 1px solid var(--border-color); border-radius: 0 0 30px 30px;
+      padding: 16px 18px; margin-top: -27px; padding-top: 41px; position: relative; z-index: 1;
+    }
+    .profile-stats-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; }
+    .profile-stats-row:first-child { padding-top: 0; }
+    .profile-stats-row:last-child { padding-bottom: 0; }
+    .profile-stats-label { font-size: 16px; color: var(--text-muted); font-weight: 500; }
+    .profile-stats-value { font-size: 16px; color: var(--text-primary); font-weight: 500; }
+    
+    .subscribe-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color); border-radius: 30px;
+      padding: 18px; display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 13px; cursor: pointer;
+    }
+    .subscribe-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .subscribe-text { font-size: 14px; color: var(--text-secondary); }
+
+    .settings-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color); border-radius: 32px;
+      padding: 18px; margin-bottom: 16px;
+    }
+    .settings-title { font-size: 18px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; }
+    
+        .balance-input {
+      width: 100%; background: var(--input-bg); border: 1px solid var(--border-color);
+      border-radius: 34px; padding: 14px 16px; color: var(--text-primary); font-size: 18px;
+      font-weight: 500; outline: none;
+    }
+    
+        .order-detail-value, .order-detail-label,
+    .user-id-text, .user-name, .user-spent-value, .user-spent-label,
+    .order-id, .order-total, .order-date,
+    .order-item-name, .order-item-price,
+    .review-text, .review-author-name, .review-date,
+    .stats-value, .stats-label,
+    .profile-nickname, .profile-username,
+    .settings-title {
+      -webkit-user-select: text !important;
+      user-select: text !important;
+      -webkit-touch-callout: default !important;
+    }
+
+    /* Загрузчик */
+    .loader-overlay {
+      position: fixed; inset: 0; background: var(--app-bg); z-index: 9999;
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+      gap: 20px;
+    }
+    .loader-spinner {
+      width: 48px; height: 48px; border: 3px solid var(--border-color);
+      border-top-color: #4cb4e9; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-text { color: var(--text-secondary); font-size: 16px; }
+  </style>
+</head>
+<body>
+
+<!-- Загрузчик -->
+<div class="loader-overlay" id="loaderOverlay">
+  <div class="loader-spinner"></div>
+  <div class="loader-text">Проверка доступа...</div>
+</div>
+
+<div id="orders-page" class="page">
+  <div id="ordersHeader"></div>
+  <div id="ordersList" class="orders-list"><div class="empty-state">Загрузка...</div></div>
+</div>
+
+<div id="users-page" class="page">
+  <div id="usersHeader"></div>
+  <div id="usersContent"></div>
+</div>
+
+<div id="reviews-page" class="page">
+  <div id="reviewsHeader"></div>
+  <div id="reviewsContent"></div>
+</div>
+
+<div id="profile-page" class="page">
+  <div id="profileHeader"></div>
+  <div id="profileContent"></div>
+</div>
+
+<div id="detail-page" class="page">
+  <div id="detailHeader"></div>
+  <div id="detailContent"></div>
+</div>
+
+<div id="promos-page" class="page">
+  <div id="promosHeader"></div>
+  <div id="promosContent"></div>
+</div>
+
+<div id="create-promo-page" class="page">
+  <div id="createPromoHeader"></div>
+  <div id="createPromoContent"></div>
+</div>
+
+<div id="user-detail-page" class="page">
+  <div id="userDetailHeader"></div>
+  <div id="userDetailContent"></div>
+</div>
+
+<div id="bottomNav" style="position:fixed;bottom:18px;left:18px;right:18px;z-index:1001;max-width:600px;margin:0 auto;width:calc(100% - 36px);display:flex;gap:10px;align-items:center;">
+  <div style="flex:1;height:66px;background:var(--sticky-bg);border:1px solid var(--bottom-menu-border);border-radius:60px;display:flex;justify-content:space-around;align-items:center;padding:5px 4px 8px 4px;backdrop-filter:blur(10px);position:relative;overflow:hidden;">
+    <div class="menu-slider" id="menuSlider"></div>
+    <button class="menu-item" data-page="orders">
+      <img class="menu-icon menu-icon-inactive" src="https://storage.botpapa.me/files/8a684130-49e6-11f1-bef9-f1ec7a2c6e45.png" alt="orders" style="width:28px;height:28px;">
+      <img class="menu-icon menu-icon-active" src="https://storage.botpapa.me/files/aa66c190-49e7-11f1-bef9-f1ec7a2c6e45.png" alt="orders" style="width:28px;height:28px;">
+      <span class="menu-label">Заказы</span>
+    </button>
+    <button class="menu-item" data-page="users">
+      <img class="menu-icon menu-icon-inactive" src="https://storage.botpapa.me/files/498e4d20-5167-11f1-bef9-f1ec7a2c6e45.png" alt="users" style="opacity:1;">
+      <img class="menu-icon menu-icon-active" src="https://storage.botpapa.me/files/49df3ed0-5110-11f1-bef9-f1ec7a2c6e45.png" alt="users">
+      <span class="menu-label">Польз.</span>
+    </button>
+    <button class="menu-item" data-page="reviews">
+      <img class="menu-icon menu-icon-inactive" src="https://storage.botpapa.me/files/4d674190-5167-11f1-bef9-f1ec7a2c6e45.png" alt="reviews" style="opacity:1;">
+      <img class="menu-icon menu-icon-active" src="https://storage.botpapa.me/files/f665c4e0-510f-11f1-bef9-f1ec7a2c6e45.png" alt="reviews">
+      <span class="menu-label">Отзывы</span>
+    </button>
+  </div>
+  <div id="profileMenuWrapper" style="height:66px;width:66px;background:var(--sticky-bg);border:1px solid var(--bottom-menu-border);border-radius:50%;backdrop-filter:blur(10px);flex:none;transition:background 0.2s;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+    <button class="menu-item" data-page="profile" id="profileMenuBtn" style="width:55px;height:55px;min-width:55px;min-height:55px;border-radius:50%;border:none;padding:0;overflow:hidden;background:transparent;flex:none;">
+      <img id="profileMenuAvatar" src="" style="width:100%;height:100%;aspect-ratio:1/1;object-fit:cover;border-radius:50%;">
+    </button>
+  </div>
+</div>
+
+<script>
+['log','warn','error','info','debug','table','trace'].forEach(m => console[m] = () => {});
+
+(async function() {
+  if (!window.Telegram?.WebApp?.initData) {
+  document.body.innerHTML = ''; // или любая заглушка
+  return;
+}
+  const tg = window.Telegram?.WebApp;
+
+  // =============================================
+  // ШАГ 3: Проверяем подпись на сервере
+  // =============================================
+  let sessionToken = null;
+  try {
+    const res = await fetch('https://placedgames.up.railway.app/api/admin/verify-telegram', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ initData: tg.initData })
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      document.body.innerHTML = `
+        <div style="color:white;text-align:center;margin-top:40vh;font-size:20px;padding:20px;">
+          Проверка не пройдена<br><span style="font-size:14px;color:#9e9e9e;">${data.reason || ''}</span>
+        </div>`;
+      return;
+    }
+
+    sessionToken = data.sessionToken;
+    sessionStorage.setItem('adminSessionToken', sessionToken);
+
+  } catch(e) {
+    document.body.innerHTML = `
+      <div style="color:white;text-align:center;margin-top:40vh;font-size:20px;padding:20px;">
+        Ошибка проверки<br><span style="font-size:14px;color:#9e9e9e;">${e.message}</span>
+      </div>`;
+    return;
+  }
+
+  // Убираем загрузчик
+  const loader = document.getElementById('loaderOverlay');
+  if (loader) loader.style.display = 'none';
+
+  // =============================================
+  // ДАЛЬШЕ ВЕСЬ КОД АДМИНКИ
+  // =============================================
+
+  function getAdminToken() {
+    return sessionStorage.getItem('adminSessionToken') || '';
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('appTheme', theme);
+    const tgApp = window.Telegram?.WebApp;
+    if (tgApp) {
+      if (theme === 'light') {
+        try { tgApp.setHeaderColor('#EFEFF3'); } catch(e) {}
+        try { tgApp.setBackgroundColor('#EFEFF3'); } catch(e) {}
+      } else {
+        try { tgApp.setHeaderColor('#121214'); } catch(e) {}
+        try { tgApp.setBackgroundColor('#121214'); } catch(e) {}
+      }
+    }
+  }
+
+  function initTheme() {
+    const saved = localStorage.getItem('appTheme') || 'dark';
+    applyTheme(saved);
+  }
+
+  function renderPageHeader(iconUrl, title) {
+    return `<div class="page-header-sticky">
+      <div class="page-header-inner">
+        <div class="page-header-title-btn">
+          <img src="${iconUrl}" alt="">
+          <span>${title}</span>
+        </div>
+        <div class="page-header-double-btn" id="headerDoubleBtn">
+          <img id="headerRefreshIcon" src="https://storage.botpapa.me/files/9aa1c690-64ce-11f1-af2e-f7a93121b83b.png" alt="refresh">
+          <img id="headerThemeIcon" src="https://cdn.jsdelivr.net/gh/melssed/PG@main/icons/Theme.png" alt="theme">
+        </div>
+      </div>
+    </div>`;
+  }
+
+  const API = 'https://placedgames.up.railway.app';
+  let allOrders = [];
+  let currentDetailOrder = null;
+  let currentAdminPage = 'orders';
+
+    if (window.Telegram?.WebApp) {
+    const tg = window.Telegram.WebApp;
+    tg.ready(); tg.expand();
+    try { tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } catch(e) {}
+    try { tg.enableClosingConfirmation && tg.enableClosingConfirmation(); } catch(e) {}
+    initTheme();
+  }
+
+  function forceEnableTextSelection() {
+    document.documentElement.style.setProperty('-webkit-user-select', 'text', 'important');
+    document.documentElement.style.setProperty('user-select', 'text', 'important');
+    document.body.style.setProperty('-webkit-user-select', 'text', 'important');
+    document.body.style.setProperty('user-select', 'text', 'important');
+  }
+  forceEnableTextSelection();
+  const selectionObserver = new MutationObserver(forceEnableTextSelection);
+  selectionObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
+  selectionObserver.observe(document.body, { attributes: true, attributeFilter: ['style'] });
+
+  function formatPrice(p) {
+    return Math.round(p).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + "₽";
+  }
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+  }
+  function hapticLight() { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred("light"); }
+  function hapticMedium() { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred("medium"); }
+
+  function getStatusTextClass(s) {
+    return {'pending':'status-pending-text','awaiting_code':'status-awaiting_text','processing':'status-processing-text','in_progress':'status-inprogress-text','completed':'status-completed-text','done':'status-done-text','cancelled':'status-cancelled-text','notfound':'status-notfound-text'}[s?.toLowerCase()] || 'status-pending-text';
+}
+
+  function getStatusBgClass(s) {
+    return {
+        'pending':'status-pending-bg',
+        'awaiting_code':'status-awaiting-bg',
+        'processing':'status-processing-bg',
+        'in_progress':'status-inprogress-bg',
+        'completed':'status-completed-bg',
+        'done':'status-done-bg',
+        'cancelled':'status-cancelled-bg',
+        'notfound':'status-notfound-bg'
+    }[s?.toLowerCase()] || 'status-pending-bg';
+}
+
+  function getStatusDisplayText(s) {
+    return {
+        'pending':'Ожидает проверки',
+        'awaiting_code':'Ожидание кода',
+        'processing':'Ожидает выполнения',
+        'in_progress':'Выполняется',
+        'completed':'Заказ выполнен',
+        'done':'Заказ выполнен',
+        'cancelled':'Отменен',
+        'notfound':'Заказ отменён'
+    }[s?.toLowerCase()] || 'Ожидает проверки';
+}
+
+  function showAdminPage(pageId) {
+    history.pushState({ page: pageId }, '', '');
+    const oldFixed = document.getElementById('adminFixedBar');
+    if (oldFixed) oldFixed.remove();
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+    document.getElementById(pageId + '-page')?.classList.add('active-page');
+    currentAdminPage = pageId;
+
+    const mainPages = ['orders', 'users', 'reviews', 'profile'];
+    if (mainPages.includes(pageId)) {
+      document.querySelectorAll('.menu-item').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.menu-item[data-page="${pageId}"]`)?.classList.add('active');
+      const pw = document.getElementById('profileMenuWrapper');
+      if (pw) pw.classList.toggle('active', pageId === 'profile');
+      updateMenuSlider(pageId);
+    }
+
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.BackButton[pageId === 'orders' ? 'hide' : 'show']();
+    }
+    const bottomNav = document.getElementById('bottomNav');
+    if (bottomNav) bottomNav.style.display = 'flex';
+
+    if (pageId === 'orders') { renderOrders(); }
+    if (pageId === 'users') { renderUsersPage(); }
+    if (pageId === 'reviews') { renderReviewsPage(); }
+    if (pageId === 'profile') { renderProfilePage(); }
+    if (pageId === 'promos') { renderPromosPage(); }
+    if (pageId === 'create-promo') { renderCreatePromoPage(); }
+
+    window.scrollTo({ top: 0 });
+  }
+
+  function updateMenuSlider(pageId) {
+    const slider = document.getElementById('menuSlider');
+    if (!slider) return;
+    const pages = ['orders', 'users', 'reviews'];
+    const index = pages.indexOf(pageId);
+    if (index === -1) { slider.style.opacity = '0'; return; }
+    slider.style.opacity = '1';
+    if (index === 0) { slider.style.left = '3px'; slider.style.width = 'calc(33.33% - 3px)'; }
+    else if (index === 2) { slider.style.left = 'calc(66.66%)'; slider.style.width = 'calc(33.33% - 3px)'; }
+    else { slider.style.left = 'calc(33.33%)'; slider.style.width = 'calc(33.33%)'; }
+  }
+
+  async function loadOrders() {
+    try {
+      const r = await fetch(`${API}/api/orders`, {
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+      });
+      if (!r.ok) throw new Error('Ошибка загрузки');
+      allOrders = await r.json();
+      if (currentAdminPage === 'orders') renderOrders();
+    } catch(e) {
+      document.getElementById('ordersList').innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+    }
+  }
+
+  function renderOrders() {
+    const container = document.getElementById('ordersList');
+    const headerContainer = document.getElementById('ordersHeader');
+    if (headerContainer) headerContainer.innerHTML = renderPageHeader('https://storage.botpapa.me/files/aa66c190-49e7-11f1-bef9-f1ec7a2c6e45.png', 'Заказы');
+    
+    if (!container) return;
+
+    if (!allOrders.length) { 
+      container.innerHTML = '<div class="empty-state"><div class="empty-title">Нет заказов</div></div>'; 
+      return; 
+    }
+
+    container.innerHTML = allOrders.map(order => {
+      let items = []; 
+      try { items = JSON.parse(order.items || '[]'); } catch(e) {}
+      const tc = getStatusTextClass(order.status_code);
+      const bc = getStatusBgClass(order.status_code);
+      const sd = getStatusDisplayText(order.status_code);
+      const itemsHtml = items.map(i => `<div class="order-item-row"><span class="order-item-name">${escapeHtml(i.name)} ${i.qty > 1 ? `x${i.qty}` : ''}</span><span class="order-item-price">${formatPrice(i.price * i.qty)}</span></div>`).join('');
+      return `<div class="order-wrapper" data-order-id="${order.id}">
+        <div class="order-main-card" style="position:relative;">
+          <div class="order-header">
+            <span class="order-id">Заказ #${order.order_number}</span>
+            <span class="order-card-status ${tc} ${bc}">${sd}</span>
+          </div>
+          <div class="order-date">${order.date} ${order.time || ''}</div>
+          <div class="order-total">${formatPrice(order.total)}</div>
+          <button class="admin-delete-order-btn" data-id="${order.id}" data-num="${order.order_number}" style="position:absolute;bottom:12px;right:12px;background:rgba(239,68,68,0.12);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <img src="https://storage.botpapa.me/files/19b700d0-4a0d-11f1-bef9-f1ec7a2c6e45.png" style="width:18px;height:18px;">
+          </button>
+        </div>
+        <div class="order-items-card">${itemsHtml}</div>
+      </div>`;
+    }).join('');
+
+    container.querySelectorAll('.order-wrapper').forEach(w => {
+      w.addEventListener('click', () => {
+        hapticLight();
+        const order = allOrders.find(o => o.id === parseInt(w.dataset.orderId));
+        if (order) showOrderDetail(order);
+      });
+    });
+
+    container.querySelectorAll('.admin-delete-order-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        hapticLight();
+        const orderId = btn.dataset.id;
+        const orderNum = btn.dataset.num;
+        window.Telegram.WebApp.showPopup({
+          message: `Удалить заказ #${orderNum}?`,
+          buttons: [
+            { id: 'ok', type: 'destructive', text: 'Удалить' },
+            { id: 'cancel', type: 'cancel' }
+          ]
+        }, async (buttonId) => {
+          if (buttonId !== 'ok') return;
+          try {
+            const r = await fetch(`${API}/api/orders/${orderId}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+            });
+            if (r.ok) { hapticLight(); await loadOrders(); }
+            else alert('Ошибка удаления');
+          } catch(e) { alert('Ошибка соединения'); }
+        });
+      });
+    });
+  }
+
+  async function showOrderDetail(order) {
+    currentDetailOrder = order;
+    
+    const bottomNav = document.getElementById('bottomNav');
+    if (bottomNav) bottomNav.style.display = 'none';
+    
+    const headerContainer = document.getElementById('detailHeader');
+    if (headerContainer) headerContainer.innerHTML = renderPageHeader('https://storage.botpapa.me/files/aa66c190-49e7-11f1-bef9-f1ec7a2c6e45.png', `Заказ #${order.order_number}`);
+
+    let items = []; 
+    try { items = JSON.parse(order.items || '[]'); } catch(e) {}
+
+    const statusColor = {'pending':'#4cb4e9','awaiting_code':'#eab308','processing':'#4cb4e9','in_progress':'#eab308','completed':'#22c55e','done':'#22c55e','notfound':'#ef4444','cancelled':'#ef4444'}[order.status_code] || '#4cb4e9';
+    const itemsHtml = items.map(i => `<div class="order-item-row"><span class="order-item-name">${escapeHtml(i.name)} ${i.qty > 1 ? `x${i.qty}` : ''}</span><span class="order-item-price">${formatPrice(i.price * i.qty)}</span></div>`).join('');
+
+    document.getElementById('detailContent').innerHTML = `
+  <div class="order-data-card">
+    <div class="order-detail-row"><span class="order-detail-label">Статус</span><span class="order-detail-value" style="color:${statusColor}">${getStatusDisplayText(order.status_code)}</span></div>
+    <div class="order-detail-row"><span class="order-detail-label">Дата</span><span class="order-detail-value">${order.date} ${order.time || ''}</span></div>
+    <div class="order-detail-row"><span class="order-detail-label">Способ оплаты</span><span class="order-detail-value">${order.payment_method || '—'}</span></div>
+    <div class="order-detail-row"><span class="order-detail-label">Отправитель</span><span class="order-detail-value">${escapeHtml(order.sender_name || '—')}</span></div>
+    <div class="order-detail-row"><span class="order-detail-label">Почта</span><span class="order-detail-value">${escapeHtml(order.email || '—')}</span></div>
+    ${order.promo ? `<div class="order-detail-row"><span class="order-detail-label">Промокод</span><span class="order-detail-value">${order.promo} (${order.promo_discount}%)</span></div>` : ''}
+    ${order.verification_code ? `<div class="order-detail-row"><span class="order-detail-label">Код</span><span class="order-detail-value">${escapeHtml(order.verification_code)}</span></div>` : ''}
+    <div class="order-detail-row" style="padding-bottom:4px;"><span class="order-detail-label">Сумма заказа</span><span class="order-detail-value">${formatPrice(order.total)}</span></div>
+  </div>
+      <div class="detail-items-card">${itemsHtml}</div>
+      <div id="detailUserCard" style="margin-top:14px;margin-bottom:160px;"></div>`;
+
+// Загружаем карточку пользователя
+if (order.user_id) {
+  fetch(`${API}/api/user/${order.user_id}`, {
+    headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+  }).then(r => r.json()).then(u => {
+    const userCard = document.getElementById('detailUserCard');
+    if (!userCard || !u || !u.user_id) return;
+    const avatarHtml = u.photo_url
+      ? `<div class="user-avatar-circle"><img src="${u.photo_url}" alt="avatar"></div>`
+      : `<div class="user-avatar-circle">👤</div>`;
+    const isBlocked = u.status === 'blocked';
+    userCard.innerHTML = `
+      <div class="user-card-wrapper" id="detailUserCardClickable" style="cursor:pointer;">
+        <div class="user-card">
+          <div class="user-header">
+            ${avatarHtml}
+            <div class="user-header-info">
+              <div class="user-name">${escapeHtml(u.user_name || 'Без имени')}</div>
+              <div class="user-id-text">ID: ${u.user_id}${u.user_username ? ' · @' + escapeHtml(u.user_username) : ''}</div>
+            </div>
+          </div>
+        </div>
+        <div class="user-card-bottom">
+          <div class="user-spent-row"><span class="user-spent-label">Статус польз.</span><span class="user-spent-value" style="color:${isBlocked ? '#ef4444' : '#22c55e'};font-weight:400;">${isBlocked ? 'заблок.' : 'активен'}</span></div>
+          <div class="user-spent-row"><span class="user-spent-label">Объем покупок</span><span class="user-spent-value" style="font-weight:400;">${formatPrice(u.total_spent)}</span></div>
+        </div>
+      </div>`;
+    document.getElementById('detailUserCardClickable')?.addEventListener('click', () => {
+      hapticLight();
+      showUserDetail(u);
+    });
+  }).catch(() => {});
+}
+
+    const oldFixed = document.getElementById('adminFixedBar');
+    if (oldFixed) oldFixed.remove();
+    const fixedBar = document.createElement('div');
+    fixedBar.id = 'adminFixedBar';
+    fixedBar.className = 'fixed-bottom-bar';
+    fixedBar.innerHTML = `<div class="action-card">
+  <select class="status-select" id="adminStatusSelect">
+    <option value="awaiting_code" ${order.status_code==='awaiting_code'?'selected':''}>Ожидание кода</option>
+    <option value="processing" ${order.status_code==='processing'?'selected':''}>Ожидает выполнения</option>
+    <option value="in_progress" ${order.status_code==='in_progress'?'selected':''}>Выполняется</option>
+    <option value="done" ${(order.status_code==='done'||order.status_code==='completed')?'selected':''}>Заказ выполнен</option>
+    <option value="notfound" ${order.status_code==='notfound'?'selected':''}>Заказ отменён</option>
+  </select>
+      <div class="action-buttons-row">
+        <button class="update-status-btn" id="adminUpdateStatusBtn">Сохранить статус</button>
+        <button class="refresh-circle-btn" id="adminRefreshBtn" title="Обновить заказы">
+          <img src="https://storage.botpapa.me/files/9aa1c690-64ce-11f1-af2e-f7a93121b83b.png" alt="refresh">
+        </button>
+      </div>
+    </div>`;
+    document.body.appendChild(fixedBar);
+
+    document.getElementById('adminUpdateStatusBtn').addEventListener('click', async () => {
+  const newCode = document.getElementById('adminStatusSelect').value;
+  const statusMap = {'awaiting_code':'Ожидание кода','processing':'Ожидает выполнения','in_progress':'Выполняется','done':'Заказ выполнен','notfound':'Заказ отменён'};
+      hapticMedium();
+      try {
+        const r = await fetch(`${API}/api/update-status`, { 
+          method:'POST',
+          headers: { 
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${getAdminToken()}` 
+},
+          body: JSON.stringify({ orderId: order.id, status: statusMap[newCode], statusCode: newCode })
+        });
+        if (r.ok) { 
+          await loadOrders(); 
+          const upd = allOrders.find(o => o.id === order.id); 
+          if (upd) showOrderDetail(upd); 
+        } else alert('Ошибка обновления статуса');
+      } catch(e) { alert('Ошибка соединения'); }
+    });
+
+    document.getElementById('adminRefreshBtn').addEventListener('click', async () => {
+      hapticLight();
+      await loadOrders();
+      const upd = allOrders.find(o => o.id === order.id);
+      if (upd) showOrderDetail(upd);
+    });
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+    document.getElementById('detail-page').classList.add('active-page');
+    window.Telegram?.WebApp?.BackButton.show();
+    window.scrollTo({ top: 0 });
+  }
+
+  async function renderUsersPage() {
+    const container = document.getElementById('usersContent');
+    const headerContainer = document.getElementById('usersHeader');
+    if (headerContainer) headerContainer.innerHTML = renderPageHeader('https://storage.botpapa.me/files/49df3ed0-5110-11f1-bef9-f1ec7a2c6e45.png', 'Пользователи');
+    
+    if (!container) return;
+    container.innerHTML = '<div class="empty-state">Загрузка...</div>';
+    try {
+      const r = await fetch(`${API}/api/users`, {
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+      });
+      if (!r.ok) throw new Error('Ошибка загрузки');
+      const data = await r.json();
+      const users = Array.isArray(data) ? data : [];
+      window.__allUsers = users;
+      window.__usersFilter = window.__usersFilter || 'all';
+      window.__usersSearch = window.__usersSearch || '';
+
+      container.innerHTML = `
+        <div class="search-section">
+          <div class="search-bar">
+            <img class="search-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E">
+            <input type="text" class="search-input" id="userSearchInput" placeholder="Найти пользователя по имени" value="${escapeHtml(window.__usersSearch)}">
+            <svg class="search-clear-btn ${window.__usersSearch ? 'visible' : ''}" id="userSearchClearBtn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </div>
+          <div class="filter-btn" id="userFilterBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+          </div>
+          <div class="filter-dropdown" id="userFilterDropdown"></div>
+        </div>
+        <div id="usersListInner"></div>`;
+
+      function renderUsersList() {
+        const activeCount = users.filter(u => parseInt(u.orders_count) > 0).length;
+        const inactiveCount = users.length - activeCount;
+
+        const dropdown = document.getElementById('userFilterDropdown');
+        if (dropdown) {
+          const opts = [
+            { key: 'all', label: 'Все пользователи', count: users.length },
+            { key: 'active', label: 'Активные', count: activeCount },
+            { key: 'inactive', label: 'Неактивные', count: inactiveCount }
+          ];
+          dropdown.innerHTML = opts.map(o => `<div class="filter-dropdown-item ${window.__usersFilter === o.key ? 'active' : ''}" data-filter="${o.key}">${o.label} <span class="count">(${o.count})</span></div>`).join('');
+          dropdown.querySelectorAll('.filter-dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+              hapticLight();
+              window.__usersFilter = item.dataset.filter;
+              dropdown.classList.remove('open');
+              renderUsersList();
+            });
+          });
+        }
+
+        let filtered = users;
+        if (window.__usersFilter === 'active') filtered = filtered.filter(u => parseInt(u.orders_count) > 0);
+        if (window.__usersFilter === 'inactive') filtered = filtered.filter(u => parseInt(u.orders_count) <= 0);
+        const q = window.__usersSearch.trim().toLowerCase();
+        if (q) filtered = filtered.filter(u => (u.user_name || '').toLowerCase().includes(q) || (u.user_username || '').toLowerCase().includes(q));
+
+        const listEl = document.getElementById('usersListInner');
+        if (!listEl) return;
+        if (!filtered.length) { listEl.innerHTML = '<div class="empty-state"><div class="empty-title">Никого не найдено</div></div>'; return; }
+
+        listEl.innerHTML = filtered.map((u) => {
+          const rank = users.indexOf(u) + 1;
+          const avatarHtml = u.photo_url
+            ? `<div class="user-avatar-circle"><img src="${u.photo_url}" alt="avatar"></div>`
+            : `<div class="user-avatar-circle">👤</div>`;
+          const idText = `ID: ${u.user_id}${u.user_username ? ' · @' + escapeHtml(u.user_username) : ''}`;
+          const isBlocked = u.status === 'blocked';
+          const statusText = isBlocked ? 'заблок.' : 'активен';
+          const statusColor = isBlocked ? '#ef4444' : '#22c55e';
+          return `<div class="user-card-wrapper" data-user-id="${u.user_id}" style="cursor:pointer;">
+            <div class="user-card">
+              <div class="user-header">
+                ${avatarHtml}
+                <div class="user-header-info">
+                  <div class="user-name">${escapeHtml(u.user_name || 'Без имени')}</div>
+                  <div class="user-id-text">${idText}</div>
+                </div>
+                <span class="user-rank-badge" style="color:#4cb4e9;">#${rank}</span>
+              </div>
+            </div>
+            <div class="user-card-bottom">
+              <div class="user-spent-row">
+                <span class="user-spent-label">Статус польз.</span>
+               <span class="user-spent-value" style="color:${statusColor};font-weight:400;">${statusText}</span>
+           </div>
+              <div class="user-spent-row">
+                <span class="user-spent-label">Объем покупок</span>
+                <span class="user-spent-value" style="font-weight:400;">${formatPrice(u.total_spent)}</span>
+         </div>
+            </div>
+          </div>`;
+        }).join('');
+
+        listEl.querySelectorAll('.user-card-wrapper').forEach(wrapper => {
+          wrapper.addEventListener('click', () => {
+            hapticLight();
+            const userId = wrapper.dataset.userId;
+            const user = users.find(u => u.user_id === userId);
+            if (user) showUserDetail(user);
+          });
+        });
+      }
+
+      renderUsersList();
+
+      document.getElementById('userSearchInput')?.addEventListener('input', (e) => {
+        window.__usersSearch = e.target.value;
+        document.getElementById('userSearchClearBtn')?.classList.toggle('visible', !!window.__usersSearch);
+        renderUsersList();
+      });
+      document.getElementById('userSearchClearBtn')?.addEventListener('click', () => {
+        hapticLight();
+        window.__usersSearch = '';
+        const input = document.getElementById('userSearchInput');
+        if (input) input.value = '';
+        document.getElementById('userSearchClearBtn')?.classList.remove('visible');
+        renderUsersList();
+      });
+      document.getElementById('userFilterBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hapticLight();
+        document.getElementById('userFilterDropdown')?.classList.toggle('open');
+      });
+      document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('userFilterDropdown');
+        if (dropdown && dropdown.classList.contains('open') && !e.target.closest('.filter-btn') && !e.target.closest('.filter-dropdown')) {
+          dropdown.classList.remove('open');
+        }
+      });
+
+    } catch(e) {
+      container.innerHTML = `<div class="empty-state">Ошибка загрузки: ${e.message}</div>`;
+    }
+  }
+
+  async function showUserDetail(user) {
+    const bottomNav = document.getElementById('bottomNav');
+    if (bottomNav) bottomNav.style.display = 'none';
+
+    const headerContainer = document.getElementById('userDetailHeader');
+    if (headerContainer) headerContainer.innerHTML = renderPageHeader('https://storage.botpapa.me/files/49df3ed0-5110-11f1-bef9-f1ec7a2c6e45.png', escapeHtml(user.user_name || 'Пользователь'));
+
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+    document.getElementById('user-detail-page').classList.add('active-page');
+    currentAdminPage = 'user-detail';
+    window.Telegram?.WebApp?.BackButton.show();
+    window.scrollTo({ top: 0 });
+
+    const container = document.getElementById('userDetailContent');
+    const isBlocked = user.status === 'blocked';
+
+    const firstSeenDate = user.first_seen ? new Date(user.first_seen) : null;
+    const firstSeenStr = firstSeenDate 
+        ? `${String(firstSeenDate.getDate()).padStart(2,'0')}.${String(firstSeenDate.getMonth()+1).padStart(2,'0')}`
+        : '—';
+
+    const avatarHtml = user.photo_url
+        ? `<div class="user-avatar-circle" style="width:60px;height:60px;font-size:28px;"><img src="${user.photo_url}" alt="avatar"></div>`
+        : `<div class="user-avatar-circle" style="width:60px;height:60px;font-size:28px;">👤</div>`;
+
+    const tgLink = user.user_username ? `https://t.me/${user.user_username}` : null;
+
+    container.innerHTML = `
+        <div class="profile-wrapper">
+            <div class="profile-main-card" ${tgLink ? `onclick="window.open('${tgLink}','_blank')" style="cursor:pointer;"` : ''}>
+                ${avatarHtml}
+                <div>
+                    <div class="profile-nickname">${escapeHtml(user.user_name || 'Без имени')}</div>
+                    ${user.user_username ? `<div class="profile-username">@${escapeHtml(user.user_username)}</div>` : ''}
+                </div>
+            </div>
+            <div class="profile-bottom-card">
+                <div class="profile-stats-row">
+                    <span class="profile-stats-label">Регистрация</span>
+                    <span class="profile-stats-value">${firstSeenStr}</span>
+                </div>
+                <div class="profile-stats-row">
+                    <span class="profile-stats-label">Статус польз.</span>
+                    <span class="profile-stats-value" style="color:${isBlocked ? '#ef4444' : '#22c55e'};">${isBlocked ? 'заблок.' : 'активен'}</span>
+                </div>
+                <div class="profile-stats-row">
+                    <span class="profile-stats-label">Всего заказов</span>
+                    <span class="profile-stats-value">${user.orders_count}</span>
+                </div>
+                                <div class="profile-stats-row">
+                    <span class="profile-stats-label">Объем покупок</span>
+                    <span class="profile-stats-value">${formatPrice(user.total_spent)}</span>
+                </div>
+                <div class="profile-stats-row">
+                    <span class="profile-stats-label">Баланс кошелька</span>
+                    <span class="profile-stats-value">${formatPrice(user.balance || 0)}</span>
+                </div>
+            </div>
+        </div>
+        <div id="userReferralCard"></div>
+        <div id="userHistoryCard" style="margin-bottom:160px;"></div>`;
+
+    // Карточка "Приглашенные пользователи"
+    fetch(`${API}/api/referral-stats?userId=${user.user_id}`).then(r => r.json()).then(async (stats) => {
+      const listRes = await fetch(`${API}/api/referral-list?userId=${user.user_id}`);
+      const list = await listRes.json();
+      const card = document.getElementById('userReferralCard');
+      if (!card) return;
+      const rowsHtml = list.length ? list.map(ref => `
+        <div class="referral-row">
+          <span class="referral-row-name review-username-link" data-user-id="${ref.user_id || ''}">${escapeHtml(ref.nickname || 'Пользователь')}</span>
+          <span class="referral-row-value positive">+${formatPrice(ref.earned || 0)}</span>
+        </div>`).join('') : `<div class="referral-row"><span class="referral-row-name" style="cursor:default;">Пока никого не пригласил</span></div>`;
+      card.innerHTML = `
+        <div class="referral-wrapper" style="margin-top:13px;">
+          <div class="referral-main-card">
+            <div class="referral-title">Приглашенные пользователи</div>
+            <div style="color:var(--text-secondary);font-size:14px;">Приглашено: ${stats.invited} · Заработано: ${formatPrice(stats.earned)}</div>
+          </div>
+          <div class="referral-bottom-card">${rowsHtml}</div>
+        </div>`;
+      card.querySelectorAll('.review-username-link[data-user-id]').forEach(el => {
+        if (!el.dataset.userId) return;
+        el.addEventListener('click', async () => {
+          hapticLight();
+          try {
+            const rr = await fetch(`${API}/api/user/${el.dataset.userId}`, { headers: { 'Authorization': `Bearer ${getAdminToken()}` } });
+            const u = await rr.json();
+            if (u && u.user_id) showUserDetail(u);
+          } catch(e) {}
+        });
+      });
+    }).catch(() => {});
+
+    // Карточка "История операций"
+    fetch(`${API}/api/wallet-transactions?userId=${user.user_id}`).then(r => r.json()).then(txList => {
+      const card = document.getElementById('userHistoryCard');
+      if (!card) return;
+      const typeLabels = { admin_topup: 'Начисление админом', purchase: 'Покупка', cashback_referral: 'Реферал', cashback_own: 'Кэшбэк' };
+      const rowsHtml = (txList || []).length ? txList.map(tx => {
+        const isNeg = tx.amount < 0;
+        const dt = tx.created_at ? new Date(tx.created_at) : null;
+        const dateStr = dt ? `${dt.toLocaleDateString('ru-RU')} ${dt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}` : '';
+        return `<div class="referral-row" data-tx-id="${tx.id}" style="cursor:pointer;">
+          <span class="referral-row-name" style="cursor:pointer;">${typeLabels[tx.type] || tx.type || 'Операция'}${tx.order_number ? ' #' + tx.order_number : ''}<br><span style="font-size:12px;color:var(--text-secondary);">${dateStr}</span></span>
+          <span class="referral-row-value ${isNeg ? 'negative' : 'positive'}">${isNeg ? '' : '+'}${formatPrice(tx.amount)}</span>
+        </div>`;
+      }).join('') : `<div class="referral-row"><span class="referral-row-name" style="cursor:default;">История операций пуста</span></div>`;
+      card.innerHTML = `
+        <div class="referral-wrapper" style="margin-top:13px;">
+          <div class="referral-main-card">
+            <div class="referral-title">История операций</div>
+          </div>
+          <div class="referral-bottom-card">${rowsHtml}</div>
+        </div>`;
+      card.querySelectorAll('.referral-row[data-tx-id]').forEach(row => {
+        row.addEventListener('click', () => {
+          hapticLight();
+          const txId = row.dataset.txId;
+          window.Telegram.WebApp.showPopup({
+            message: 'Удалить операцию?',
+            buttons: [{ id: 'ok', type: 'destructive', text: 'Удалить' }, { id: 'cancel', type: 'cancel' }]
+          }, async (buttonId) => {
+            if (buttonId !== 'ok') return;
+            try {
+              const dr = await fetch(`${API}/api/wallet-transactions/${txId}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+              });
+              if (dr.ok) { hapticLight(); showUserDetail(user); }
+              else alert('Ошибка удаления');
+            } catch(e) { alert('Ошибка соединения'); }
+          });
+        });
+      });
+    }).catch(() => {});
+
+        const oldFixed = document.getElementById('adminFixedBar');
+    if (oldFixed) oldFixed.remove();
+    const fixedBar = document.createElement('div');
+    fixedBar.id = 'adminFixedBar';
+    fixedBar.className = 'fixed-bottom-bar';
+    fixedBar.innerHTML = `<div class="action-card">
+        <select class="status-select" id="userStatusSelect">
+            <option value="active" ${!isBlocked ? 'selected' : ''}>Активен</option>
+            <option value="blocked" ${isBlocked ? 'selected' : ''}>Заблокирован</option>
+        </select>
+        <input class="balance-input" id="balanceAmountInput" type="number" placeholder="Сумма (можно отрицательную, необязательно)">
+        <div class="action-buttons-row">
+            <button class="update-status-btn" id="saveUserChangesBtn">Сохранить изменения</button>
+        </div>
+    </div>`;
+    document.body.appendChild(fixedBar);
+
+    document.getElementById('saveUserChangesBtn')?.addEventListener('click', async () => {
+        hapticMedium();
+        const newStatus = document.getElementById('userStatusSelect')?.value;
+        const amountVal = document.getElementById('balanceAmountInput')?.value;
+        const amt = parseInt(amountVal);
+        const hasAmount = amountVal && !isNaN(amt) && amt !== 0;
+        try {
+            const requests = [
+                fetch(`${API}/api/user/${user.user_id}/status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAdminToken()}` },
+                    body: JSON.stringify({ status: newStatus })
+                })
+            ];
+            if (hasAmount) {
+                requests.push(fetch(`${API}/api/user/${user.user_id}/balance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAdminToken()}` },
+                    body: JSON.stringify({ amount: amt })
+                }));
+            }
+            const results = await Promise.all(requests);
+            if (results.every(r => r.ok)) {
+                hapticLight();
+                user.status = newStatus;
+                if (hasAmount) { const data = await results[1].json(); user.balance = data.balance; }
+                showUserDetail(user);
+            } else alert('Ошибка сохранения');
+        } catch(e) { alert('Ошибка соединения'); }
+    });
+  }
+
+  async function renderReviewsPage() {
+    const container = document.getElementById('reviewsContent');
+    const headerContainer = document.getElementById('reviewsHeader');
+    if (headerContainer) headerContainer.innerHTML = renderPageHeader('https://storage.botpapa.me/files/f665c4e0-510f-11f1-bef9-f1ec7a2c6e45.png', 'Отзывы');
+    
+    if (!container) return;
+    container.innerHTML = '<div class="review-empty">Загрузка...</div>';
+    try {
+      const r = await fetch(`${API}/api/reviews`, {
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+      });
+      if (!r.ok) throw new Error('Ошибка загрузки');
+      const list = await r.json();
+      window.__allReviewsAdmin = list;
+      window.__reviewsFilter = window.__reviewsFilter || 'all';
+      window.__reviewsSearch = window.__reviewsSearch || '';
+
+      if (!list.length) { container.innerHTML = '<div class="review-empty">Отзывов нет</div>'; return; }
+
+      const goodCount = list.filter(r => r.rating !== 'bad').length;
+      const badCount = list.length - goodCount;
+
+      container.innerHTML = `
+        <div class="search-section">
+          <div class="search-bar">
+            <img class="search-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E">
+            <input type="text" class="search-input" id="reviewSearchInput" placeholder="Найти отзыв по товарам" value="${escapeHtml(window.__reviewsSearch)}">
+            <svg class="search-clear-btn ${window.__reviewsSearch ? 'visible' : ''}" id="reviewSearchClearBtn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </div>
+          <div class="filter-btn" id="reviewFilterBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+          </div>
+          <div class="filter-dropdown" id="reviewFilterDropdown"></div>
+        </div>
+        <div class="review-card-wrapper" style="margin-bottom:13px;">
+          <div class="review-card" style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:16px;font-weight:600;color:var(--text-primary);">Всего отзывов: ${list.length}</span>
+            <div style="display:flex;gap:8px;">
+              <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,0.12);color:#22c55e;border-radius:16px;padding:5px 10px;font-size:14px;font-weight:600;">🙂 ${goodCount}</span>
+              <span style="display:inline-flex;align-items:center;gap:4px;background:rgba(239,68,68,0.12);color:#ef4444;border-radius:16px;padding:5px 10px;font-size:14px;font-weight:600;">🙁 ${badCount}</span>
+            </div>
+          </div>
+        </div>
+        <div id="reviewsListInner"></div>`;
+
+      function renderReviewsList() {
+        const dropdown = document.getElementById('reviewFilterDropdown');
+        if (dropdown) {
+          const opts = [
+            { key: 'all', label: 'Все отзывы', count: list.length },
+            { key: 'good', label: 'Нравится', count: goodCount },
+            { key: 'bad', label: 'Не нравится', count: badCount }
+          ];
+          dropdown.innerHTML = opts.map(o => `<div class="filter-dropdown-item ${window.__reviewsFilter === o.key ? 'active' : ''}" data-filter="${o.key}">${o.label} <span class="count">(${o.count})</span></div>`).join('');
+          dropdown.querySelectorAll('.filter-dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+              hapticLight();
+              window.__reviewsFilter = item.dataset.filter;
+              dropdown.classList.remove('open');
+              renderReviewsList();
+            });
+          });
+        }
+
+        let filtered = list;
+        if (window.__reviewsFilter === 'good') filtered = filtered.filter(r => r.rating !== 'bad');
+        if (window.__reviewsFilter === 'bad') filtered = filtered.filter(r => r.rating === 'bad');
+        const q = window.__reviewsSearch.trim().toLowerCase();
+        if (q) {
+          filtered = filtered.filter(rv => {
+            let items = [];
+            try { items = JSON.parse(rv.order_items || '[]'); } catch(e) {}
+            return items.some(i => (i.name || '').toLowerCase().includes(q)) || (rv.user_name || '').toLowerCase().includes(q);
+          });
+        }
+
+        const listEl = document.getElementById('reviewsListInner');
+        if (!listEl) return;
+        if (!filtered.length) { listEl.innerHTML = '<div class="review-empty">Ничего не найдено</div>'; return; }
+
+        listEl.innerHTML = filtered.map(rv => {
+          const avatar = rv.photo_url
+            ? `<img style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" src="${rv.photo_url}" alt="avatar">`
+            : `<div class="review-avatar">👤</div>`;
+          const dt = rv.created_at ? new Date(rv.created_at) : null;
+          const dateStr = dt ? `${dt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} ${dt.toLocaleDateString('ru-RU')}` : '';
+          let items = [];
+          try { items = JSON.parse(rv.order_items || '[]'); } catch(e) {}
+          const itemsHtml = items.map(i => `<div class="review-item-row"><span class="review-item-name">${escapeHtml(i.name)}</span><span class="review-item-price">${formatPrice(i.price)}</span></div>`).join('');
+          const isBad = rv.rating === 'bad';
+          return `<div class="review-card-wrapper" data-review-id="${rv.id}">
+            <div class="review-card">
+              <div class="review-header">
+                ${avatar}
+                <div>
+                  <div class="review-author-name review-username-link" data-user-id="${rv.user_id || ''}">${escapeHtml(rv.user_name || 'Пользователь')}</div>
+                  <div class="review-date">${dateStr}</div>
+                </div>
+                ${rv.order_number ? `<span class="review-order-badge">#${rv.order_number}</span>` : ''}
+                <button class="review-face-btn ${isBad ? 'bad' : 'good'}" data-id="${rv.id}" title="Удалить отзыв">${isBad ? '🙁' : '🙂'}</button>
+              </div>
+              <div class="review-text">${escapeHtml(rv.text || '')}</div>
+            </div>
+            ${itemsHtml ? `<div class="review-items-card">${itemsHtml}</div>` : ''}
+          </div>`;
+        }).join('');
+
+        listEl.querySelectorAll('.review-face-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            hapticLight();
+            const reviewId = btn.dataset.id;
+            window.Telegram.WebApp.showPopup({
+              message: 'Удалить отзыв?',
+              buttons: [{ id: 'ok', type: 'destructive', text: 'Удалить' }, { id: 'cancel', type: 'cancel' }]
+            }, async (buttonId) => {
+              if (buttonId !== 'ok') return;
+              try {
+                const dr = await fetch(`${API}/api/reviews/${reviewId}`, {
+                  method: 'DELETE',
+                  headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+                });
+                if (dr.ok) { hapticLight(); renderReviewsPage(); }
+                else alert('Ошибка удаления');
+              } catch(e) { alert('Ошибка соединения'); }
+            });
+          });
+        });
+
+        listEl.querySelectorAll('.review-username-link[data-user-id]').forEach(el => {
+          if (!el.dataset.userId) return;
+          el.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            hapticLight();
+            try {
+              const rr = await fetch(`${API}/api/user/${el.dataset.userId}`, { headers: { 'Authorization': `Bearer ${getAdminToken()}` } });
+              const u = await rr.json();
+              if (u && u.user_id) showUserDetail(u);
+            } catch(e) {}
+          });
+        });
+      }
+
+      renderReviewsList();
+
+      document.getElementById('reviewSearchInput')?.addEventListener('input', (e) => {
+        window.__reviewsSearch = e.target.value;
+        document.getElementById('reviewSearchClearBtn')?.classList.toggle('visible', !!window.__reviewsSearch);
+        renderReviewsList();
+      });
+      document.getElementById('reviewSearchClearBtn')?.addEventListener('click', () => {
+        hapticLight();
+        window.__reviewsSearch = '';
+        const input = document.getElementById('reviewSearchInput');
+        if (input) input.value = '';
+        document.getElementById('reviewSearchClearBtn')?.classList.remove('visible');
+        renderReviewsList();
+      });
+      document.getElementById('reviewFilterBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hapticLight();
+        document.getElementById('reviewFilterDropdown')?.classList.toggle('open');
+      });
+      document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('reviewFilterDropdown');
+        if (dropdown && dropdown.classList.contains('open') && !e.target.closest('.filter-btn') && !e.target.closest('.filter-dropdown')) {
+          dropdown.classList.remove('open');
+        }
+      });
+
+    } catch(e) {
+      container.innerHTML = '<div class="review-empty">Ошибка загрузки</div>';
+    }
+  }
+
+  async function renderProfilePage() {
+    const container = document.getElementById('profileContent');
+    const headerContainer = document.getElementById('profileHeader');
+    if (headerContainer) headerContainer.innerHTML = renderPageHeader('https://storage.botpapa.me/files/49df3ed0-5110-11f1-bef9-f1ec7a2c6e45.png', 'Профиль');
+    
+    if (!container) return;
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    const nickname = tgUser?.first_name || 'Администратор';
+    const username = tgUser?.username ? '@' + tgUser.username : '';
+    const photoUrl = tgUser?.photo_url || '';
+
+    let totalRevenue = 0;
+    let botStatus = 'open';
+
+    try {
+      const ru = await fetch(`${API}/api/total-revenue`, {
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+      });
+      const data = await ru.json();
+      totalRevenue = data.revenue || 0;
+    } catch(e) {}
+
+    try {
+      const rs = await fetch(`${API}/api/settings`, {
+        headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+      });
+      const s = await rs.json();
+      botStatus = s.bot_status || 'open';
+    } catch(e) {}
+
+    const statusMap = {
+      'open': { text: 'Открыт', tc: 'status-completed-text', bc: 'status-completed-bg' },
+      'closed': { text: 'Закрыт', tc: 'status-cancelled-text', bc: 'status-cancelled-bg' },
+      'auto': { text: 'Авто', tc: 'status-pending-text', bc: 'status-pending-bg' },
+      'maintenance': { text: 'Тех. раб.', tc: 'status-awaiting_text', bc: 'status-awaiting-bg' },
+    };
+    const currentStatus = statusMap[botStatus] || statusMap['open'];
+
+    container.innerHTML = `
+      <div class="profile-wrapper">
+        <div class="profile-main-card">
+          ${photoUrl ? `<img class="profile-avatar" src="${photoUrl}" alt="avatar">` : '<div class="profile-avatar" style="background:var(--input-bg);display:flex;align-items:center;justify-content:center;font-size:24px;">👤</div>'}
+          <div>
+            <div class="profile-nickname">${escapeHtml(nickname)}</div>
+            ${username ? `<div class="profile-username">${escapeHtml(username)}</div>` : ''}
+          </div>
+        </div>
+        <div class="profile-bottom-card">
+          <div class="profile-stats-row">
+            <span class="profile-stats-label">Общий объем</span>
+            <span class="profile-stats-value">${formatPrice(totalRevenue)}</span>
+          </div>
+        </div>
+      </div>
+      
+            <div class="subscribe-card" id="syncProductsBtn">
+        <div>
+          <div class="subscribe-title">Синхронизировать товары</div>
+          <div class="subscribe-text">Обновить цены в базе данных</div>
+        </div>
+        <svg style="width:18px;height:18px;opacity:0.4;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+      <div class="subscribe-card" id="goPromosBtn">
+  <div>
+    <div class="subscribe-title">Промокоды</div>
+    <div class="subscribe-text">Создавать и управлять промокодами</div>
+  </div>
+  <svg style="width:18px;height:18px;opacity:0.4;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+</div>
+
+      <div class="settings-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <span class="settings-title" style="margin-bottom:0;">Статус</span>
+          <span id="currentStatusBadge" class="order-card-status ${currentStatus.tc} ${currentStatus.bc}">${currentStatus.text}</span>
+        </div>
+        <select class="status-select" id="adminStatusSelectProfile">
+          <option value="open" ${botStatus==='open'?'selected':''}>Открыт</option>
+          <option value="closed" ${botStatus==='closed'?'selected':''}>Закрыт</option>
+          <option value="auto" ${botStatus==='auto'?'selected':''}>Авто (10:00–23:59 МСК)</option>
+          <option value="maintenance" ${botStatus==='maintenance'?'selected':''}>Тех. раб.</option>
+        </select>
+        <div class="action-buttons-row" style="margin-top:12px;">
+          <button class="update-status-btn" id="saveStatusBtn">Сохранить статус</button>
+          <button class="refresh-circle-btn" id="showMskTimeBtn">
+            <img src="https://storage.botpapa.me/files/9aa1c690-64ce-11f1-af2e-f7a93121b83b.png" alt="time" style="width:26px;height:26px;">
+          </button>
+        </div>
+      </div>`;
+
+    setTimeout(() => {
+      document.getElementById('saveStatusBtn')?.addEventListener('click', async () => {
+        hapticMedium();
+        const val = document.getElementById('adminStatusSelectProfile')?.value;
+        try {
+          const r = await fetch(`${API}/api/settings`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${getAdminToken()}`
+            },
+            body: JSON.stringify({ bot_status: val })
+          });
+          if (r.ok) {
+            hapticLight();
+            const saved = statusMap[val] || statusMap['open'];
+            const badge = document.getElementById('currentStatusBadge');
+            if (badge) {
+              badge.className = `order-card-status ${saved.tc} ${saved.bc}`;
+              badge.textContent = saved.text;
+            }
+          } else {
+            alert('Ошибка сохранения');
+          }
+        } catch(e) { alert('Ошибка сохранения'); }
+      });
+
+      document.getElementById('showMskTimeBtn')?.addEventListener('click', () => {
+        hapticLight();
+        const mskTime = new Intl.DateTimeFormat('ru-RU', {
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          timeZone: 'Europe/Moscow'
+        }).format(new Date());
+        const msg = `Время по МСК: ${mskTime}`;
+        window.Telegram?.WebApp ? window.Telegram.WebApp.showAlert(msg) : alert(msg);
+      });
+
+            document.getElementById('goPromosBtn')?.addEventListener('click', () => {
+    hapticLight();
+    showAdminPage('promos');
+});
+
+      document.getElementById('syncProductsBtn')?.addEventListener('click', async () => {
+        hapticLight();
+        const allProducts = [
+          ...(window.brawlProducts || []),
+          ...(window.crProducts || []),
+          ...(window.robloxProducts || []),
+          ...(window.tgProducts || [])
+        ].map(p => ({ id: p.id, price: p.price, maxQty: p.maxQty, conflictGroup: p.conflictGroup }));
+
+        if (!allProducts.length) { alert('Товары не найдены (products.js не загрузился)'); return; }
+
+        try {
+          const r = await fetch(`${API}/api/sync-products`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAdminToken()}` },
+            body: JSON.stringify({ products: allProducts })
+          });
+          const data = await r.json();
+          if (r.ok) {
+            hapticLight();
+            alert(`Синхронизировано товаров: ${data.count}`);
+          } else {
+            alert(data.error || 'Ошибка синхронизации');
+          }
+        } catch(e) { alert('Ошибка соединения'); }
+      });
+    }, 0);
+  }
+  
+  async function renderPromosPage() {
+    const container = document.getElementById('promosContent');
+    const headerContainer = document.getElementById('promosHeader');
+    if (headerContainer) headerContainer.innerHTML = renderPageHeader('https://storage.botpapa.me/files/8324fec0-5933-11f1-bef9-f1ec7a2c6e45.png', 'Промокоды');
+    if (!container) return;
+    container.innerHTML = '<div id="promosList" style="padding-bottom:140px;"><div class="empty-state">Загрузка...</div></div>';
+    loadPromosList();
+
+    const oldFixed = document.getElementById('adminFixedBar');
+    if (oldFixed) oldFixed.remove();
+    const fixedBar = document.createElement('div');
+    fixedBar.id = 'adminFixedBar';
+    fixedBar.className = 'fixed-action-bar';
+    fixedBar.innerHTML = `<div class="action-card-nav">
+        <div class="action-buttons-row">
+            <button class="update-status-btn" id="goCreatePromoBtn">Создать промокод</button>
+            <button class="refresh-circle-btn" id="refreshPromosBtn">
+                <img src="https://storage.botpapa.me/files/9aa1c690-64ce-11f1-af2e-f7a93121b83b.png" alt="refresh">
+            </button>
+        </div>
+    </div>`;
+    document.body.appendChild(fixedBar);
+    setTimeout(() => {
+        document.getElementById('goCreatePromoBtn')?.addEventListener('click', () => {
+            hapticLight();
+            showAdminPage('create-promo');
+        });
+        document.getElementById('refreshPromosBtn')?.addEventListener('click', () => {
+            hapticLight();
+            loadPromosList();
+        });
+    }, 0);
+}
+
+async function loadPromosList() {
+    const container = document.getElementById('promosList');
+    if (!container) return;
+    try {
+        const r = await fetch(`${API}/api/promo-codes`, {
+            headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+        });
+        const list = await r.json();
+        if (!list.length) { container.innerHTML = '<div class="empty-state"><div class="empty-title">Промокодов нет</div></div>'; return; }
+        
+        container.innerHTML = list.map(p => {
+            const now = new Date();
+            const isExpired = p.expires_at && new Date(p.expires_at) < now;
+            const isLimitReached = p.max_uses !== null && p.used_count >= p.max_uses;
+            const isActive = p.active && !isExpired && !isLimitReached;
+            
+            let expiresStr = '∞';
+            if (p.expires_at) {
+                const d = new Date(p.expires_at);
+                const hh = String(d.getHours()).padStart(2,'0');
+                const mm = String(d.getMinutes()).padStart(2,'0');
+                const dd = String(d.getDate()).padStart(2,'0');
+                const mo = String(d.getMonth()+1).padStart(2,'0');
+                expiresStr = `${hh}:${mm} ${dd}.${mo}`;
+            }
+            
+            const uses = p.max_uses ? `${p.used_count}/${p.max_uses}` : `${p.used_count}/∞`;
+            const forUser = p.user_id ? `Для: ${p.user_id}` : 'Для всех';
+            
+            return `<div class="order-wrapper" style="margin-bottom:14px;">
+                <div class="order-main-card" style="position:relative;">
+                    <div class="order-header">
+                        <span class="order-id">${p.code}</span>
+                        <span class="order-card-status ${isActive ? 'status-completed-text status-completed-bg' : 'status-cancelled-text status-cancelled-bg'}">${isActive ? 'Активен' : 'Не активен'}</span>
+                    </div>
+                    <div class="order-date">${forUser} · Тип: ${p.type === 'first_order' ? 'первый заказ' : 'все'}</div>
+                    <div class="order-total">−${p.discount}%</div>
+                    <button onclick="deletePromo(${p.id})" style="position:absolute;bottom:12px;right:12px;background:rgba(239,68,68,0.12);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+                        <img src="https://storage.botpapa.me/files/19b700d0-4a0d-11f1-bef9-f1ec7a2c6e45.png" style="width:18px;height:18px;">
+                    </button>
+                </div>
+                <div class="order-items-card">
+                    <div class="order-item-row"><span class="order-item-name">Использований</span><span class="order-item-price">${uses}</span></div>
+                    <div class="order-item-row"><span class="order-item-name">Срок действия</span><span class="order-item-price">${expiresStr}</span></div>
+                </div>
+            </div>`;
+        }).join('');
+    } catch(e) {
+        container.innerHTML = '<div class="empty-state">Ошибка загрузки</div>';
+    }
+}
+
+window.deletePromo = async function(id) {
+    hapticLight();
+    window.Telegram.WebApp.showPopup({
+        message: 'Удалить промокод?',
+        buttons: [
+            { id: 'ok', type: 'destructive', text: 'Удалить' },
+            { id: 'cancel', type: 'cancel' }
+        ]
+    }, async (buttonId) => {
+        if (buttonId !== 'ok') return;
+        try {
+            const r = await fetch(`${API}/api/promo-codes/${id}/delete`, { 
+                method: 'DELETE', 
+                headers: { 'Authorization': `Bearer ${getAdminToken()}` } 
+            });
+            if (r.ok) {
+                hapticLight();
+                loadPromosList();
+            } else {
+                alert('Ошибка удаления');
+            }
+        } catch(e) { 
+            alert('Ошибка соединения'); 
+        }
+    });
+}
+
+async function renderCreatePromoPage() {
+    const container = document.getElementById('createPromoContent');
+    const headerContainer = document.getElementById('createPromoHeader');
+    if (headerContainer) headerContainer.innerHTML = renderPageHeader('https://storage.botpapa.me/files/8324fec0-5933-11f1-bef9-f1ec7a2c6e45.png', 'Создать промокод');
+    if (!container) return;
+
+    container.innerHTML = `
+    <div class="settings-card" style="margin-bottom: 140px;">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+                <input id="promoCode" placeholder="Введите промокод" style="background:var(--input-bg);border-radius:34px;padding:14px 16px;color:var(--text-primary);font-size:17px;border:none;outline:none;width:100%;">
+                <input id="promoDiscount" type="number" placeholder="Процент скидки" min="1" max="100" style="background:var(--input-bg);border-radius:34px;padding:14px 16px;color:var(--text-primary);font-size:17px;border:none;outline:none;width:100%;">
+                <select id="promoType" style="background:var(--input-bg);border-radius:34px;padding:14px 16px;color:var(--text-primary);font-size:17px;border:none;outline:none;width:100%;appearance:none;">
+                    <option value="all">Все заказы</option>
+                    <option value="first_order">Первый заказ</option>
+                </select>
+                <input id="promoUserId" placeholder="ID пользователя (необязательно)" style="background:var(--input-bg);border-radius:34px;padding:14px 16px;color:var(--text-primary);font-size:17px;border:none;outline:none;width:100%;">
+                <input id="promoExpires" placeholder="Срок действия: 14:08 21.06 (МСК)" style="background:var(--input-bg);border-radius:34px;padding:14px 16px;color:var(--text-primary);font-size:17px;border:none;outline:none;width:100%;">
+                <input id="promoMaxUses" type="number" placeholder="Количество активаций (необязательно)" min="1" style="background:var(--input-bg);border-radius:34px;padding:14px 16px;color:var(--text-primary);font-size:17px;border:none;outline:none;width:100%;">
+            </div>
+        </div>`;
+
+    const oldFixed = document.getElementById('adminFixedBar');
+    if (oldFixed) oldFixed.remove();
+    const fixedBar = document.createElement('div');
+    fixedBar.id = 'adminFixedBar';
+    fixedBar.className = 'fixed-action-bar';
+    fixedBar.innerHTML = `<div class="action-card-nav"><div class="action-buttons-row"><button class="update-status-btn" id="createPromoSubmitBtn">Создать промокод</button></div></div>`;
+    document.body.appendChild(fixedBar);
+
+    setTimeout(() => {
+        document.getElementById('createPromoSubmitBtn')?.addEventListener('click', async () => {
+            hapticMedium();
+            const code = document.getElementById('promoCode')?.value.trim();
+            const discount = document.getElementById('promoDiscount')?.value;
+            const type = document.getElementById('promoType')?.value;
+            const userId = document.getElementById('promoUserId')?.value.trim();
+            const expiresRaw = document.getElementById('promoExpires')?.value.trim();
+            const maxUses = document.getElementById('promoMaxUses')?.value;
+
+            if (!code || !discount) { alert('Введите код и скидку'); return; }
+
+            // Парсим дату формата "14:08 21.06" по МСК
+            let expiresAt = null;
+            if (expiresRaw) {
+                try {
+                    const [timePart, datePart] = expiresRaw.split(' ');
+                    const [hh, mm] = timePart.split(':').map(Number);
+                    const [dd, mo] = datePart.split('.').map(Number);
+                    const year = new Date().getFullYear();
+                    // Создаём дату по МСК (UTC+3)
+                    const mskDate = new Date(Date.UTC(year, mo - 1, dd, hh - 3, mm));
+                    expiresAt = mskDate.toISOString();
+                } catch(e) { alert('Неверный формат срока. Используйте: 14:08 21.06'); return; }
+            }
+
+            try {
+                const r = await fetch(`${API}/api/promo-codes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAdminToken()}` },
+                    body: JSON.stringify({
+                        code, discount: parseInt(discount), type,
+                        userId: userId || null,
+                        expiresAt,
+                        maxUses: maxUses || null
+                    })
+                });
+                const data = await r.json();
+                if (r.ok) { hapticLight(); showAdminPage('promos'); }
+                else alert(data.error || 'Ошибка создания');
+            } catch(e) { alert('Ошибка соединения'); }
+        });
+    }, 0);
+}
+
+  function initBackButton() {
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.BackButton.onClick(() => {
+        hapticLight();
+        const oldFixed = document.getElementById('adminFixedBar');
+        if (oldFixed) oldFixed.remove();
+        if (document.getElementById('detail-page').classList.contains('active-page')) {
+          showAdminPage('orders');
+        } else if (document.getElementById('promos-page').classList.contains('active-page')) {
+    showAdminPage('profile');
+} else if (document.getElementById('create-promo-page').classList.contains('active-page')) {
+    showAdminPage('promos');
+} else if (document.getElementById('user-detail-page').classList.contains('active-page')) {
+    showAdminPage('users');
+} else {
+          showAdminPage('orders');
+        }
+      });
+    }
+  }
+
+  document.addEventListener('click', function(e) {
+    const doubleBtn = e.target.closest('#headerDoubleBtn');
+    if (!doubleBtn) return;
+    const isRefresh = e.target.closest('#headerRefreshIcon');
+    const isTheme = e.target.closest('#headerThemeIcon');
+    
+    if (isRefresh) {
+      hapticLight();
+      if (currentAdminPage === 'orders') loadOrders();
+      else if (currentAdminPage === 'users') renderUsersPage();
+      else if (currentAdminPage === 'reviews') renderReviewsPage();
+      else if (currentAdminPage === 'profile') renderProfilePage();
+      else if (currentAdminPage === 'promos') renderPromosPage();
+    } else if (isTheme) {
+      hapticLight();
+      const icon = doubleBtn.querySelector('#headerThemeIcon') || doubleBtn.querySelector('img[alt="theme"]');
+      if (icon) {
+        const rotation = (parseInt(icon.dataset.rotation || '0', 10) + 180);
+        icon.style.transform = `rotate(${rotation}deg)`;
+        icon.dataset.rotation = rotation;
+      }
+      const current = localStorage.getItem('appTheme') || 'dark';
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    }
+  });
+
+  document.querySelectorAll('.menu-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      hapticLight();
+      showAdminPage(btn.dataset.page);
+      if (btn.dataset.page === 'orders') loadOrders();
+    });
+  });
+
+  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  if (tgUser?.photo_url) {
+    document.getElementById('profileMenuAvatar').src = tgUser.photo_url;
+  }
+
+  window.addEventListener('popstate', () => {
+    const oldFixed = document.getElementById('adminFixedBar');
+    if (oldFixed) oldFixed.remove();
+    if (document.getElementById('detail-page').classList.contains('active-page')) {
+      showAdminPage('orders');
+    } else if (document.getElementById('promos-page').classList.contains('active-page')) {
+      showAdminPage('profile');
+    } else if (document.getElementById('create-promo-page').classList.contains('active-page')) {
+      showAdminPage('promos');
+    } else if (document.getElementById('user-detail-page').classList.contains('active-page')) {
+      showAdminPage('users');
+    } else {
+      showAdminPage('orders');
+    }
+  });
+  
+  initBackButton();
+  showAdminPage('orders');
+  loadOrders();
+  setInterval(loadOrders, 30000);
+  
+})();
+</script>
+</body>
+</html>
