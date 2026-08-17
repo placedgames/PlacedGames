@@ -1640,7 +1640,7 @@
     border: 1px solid rgba(76, 180, 233, 0.05);
     border-radius: 20px;
     padding: 0 14px 0 12px;
-    height: 35px;
+    height: 38px;
     box-sizing: border-box;
     font-size: 18px;
     font-weight: 500;
@@ -1661,17 +1661,27 @@
 .summary-stat-row + .summary-stat-row {
     margin-top: 10px;
 }
-.summary-label-pill {
+.summary-label-wrap {
     position: relative;
     z-index: 2;
+    flex: 1;
+    height: 38px;
+}
+.summary-label-backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--card-bg);
+    border-radius: 20px;
+}
+.summary-label-pill {
+    position: relative;
     display: flex;
     align-items: center;
-    flex: 1;
-    background: rgba(158, 158, 158, 0.10);
-    border: 1px solid rgba(158, 158, 158, 0.05);
-    border-radius: 20px;
     height: 35px;
     padding: 0 16px;
+    border-radius: 20px;
+    background: rgba(158, 158, 158, 0.10);
+    border: 1px solid rgba(158, 158, 158, 0.05);
     font-size: 17px;
     font-weight: 500;
     color: var(--text-primary);
@@ -4358,21 +4368,30 @@ function showAdditionalSettingsAlert() {
                 <div class="review-card-wrapper reviews-summary-card" id="reviewsSummaryCard">
     <div class="review-card">
         <div class="summary-stat-row">
-            <span class="summary-label-pill">Всего отзывов</span>
+            <span class="summary-label-wrap">
+                <span class="summary-label-backdrop"></span>
+                <span class="summary-label-pill">Всего отзывов</span>
+            </span>
             <span class="summary-value-pill total">
                 <span id="summaryTotalNum">${initialReviews.length}</span>
                 <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg>
             </span>
         </div>
         <div class="summary-stat-row">
-            <span class="summary-label-pill">Отрицательные</span>
+            <span class="summary-label-wrap">
+                <span class="summary-label-backdrop"></span>
+                <span class="summary-label-pill">Отрицательные</span>
+            </span>
             <span class="summary-value-pill bad">
                 <span id="summaryBadNum">${initialBadCount}</span>
                 <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-sad"></use></svg>
             </span>
         </div>
         <div class="summary-stat-row">
-            <span class="summary-label-pill">Положительные</span>
+            <span class="summary-label-wrap">
+                <span class="summary-label-backdrop"></span>
+                <span class="summary-label-pill">Положительные</span>
+            </span>
             <span class="summary-value-pill good">
                 <span id="summaryGoodNum">${initialGoodCount}</span>
                 <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg>
