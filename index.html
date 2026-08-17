@@ -1489,10 +1489,17 @@
         }
 
         .review-author-name {
-            font-size: 17px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.review-header-info {
+    flex: 1;
+    min-width: 0;
+}
 
         .review-date {
             font-size: 14px;
@@ -1646,84 +1653,6 @@
     font-weight: 500;
     color: #4cb4e9;
     cursor: pointer;
-}
-
-.reviews-summary-card .review-items-card {
-    margin-top: -28px;
-    padding: 0 13px 13px 13px;
-    padding-top: 39px;
-}
-
-.summary-badge-wrap {
-    position: relative;
-    height: 37px;
-}
-.summary-badge-wrap + .summary-badge-wrap {
-    margin-left: -30px;
-}
-.summary-badge-backdrop {
-    position: absolute;
-    inset: 0;
-    background: var(--card-bg);
-    border-radius: 20px;
-}
-.summary-badge {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 37px;
-    box-sizing: border-box;
-    border-radius: 20px;
-    font-size: 18px;
-    font-weight: 500;
-    padding: 0 11px 0 13px;
-}
-.summary-badge-wrap:not(:first-child) .summary-badge {
-    padding-left: 36px;
-}
-.summary-badge.good {
-    background: rgba(34, 197, 94, 0.12);
-    border: 1px solid rgba(34, 197, 94, 0.05);
-    color: #22c55e;
-}
-.summary-badge.bad {
-    background: rgba(239, 68, 68, 0.12);
-    border: 1px solid rgba(239, 68, 68, 0.05);
-    color: #ef4444;
-}
-
-.reviews-toggle-wrap {
-    position: relative;
-    display: flex;
-    width: 100%;
-    background: var(--card-bg);
-    border-radius: 34px;
-    padding: 0;
-}
-.reviews-toggle-thumb {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 50%;
-    height: 100%;
-    background: var(--input-bg-dark);
-    border-radius: 34px;
-    transition: left 0.2s;
-}
-.reviews-toggle-btn {
-    flex: 1;
-    z-index: 1;
-    background: none;
-    border: none;
-    padding: 11px;
-    font-size: 17px;
-    font-weight: 500;
-    color: var(--text-secondary);
-    cursor: pointer;
-}
-.reviews-toggle-btn.active {
-    color: var(--text-primary);
 }
 
         .empty-message {
@@ -2540,7 +2469,6 @@
     let cart = {};
     let currentOpenOrder = null;
     let appliedPromo = null;
-    let reviewsViewMode = 'all';
     let reviewsListCache = null;       // только в памяти, не в localStorage — сбрасывается при каждом новом открытии приложения
     let reviewsFetchPromise = null;    // чтобы не запускать параллельно два одинаковых запроса
     let isPromoMode = false;
@@ -3984,14 +3912,14 @@ function showAdditionalSettingsAlert() {
         return `
                     <div style="margin-top:14px;" class="review-card-wrapper">
                         <div class="review-card" style="margin-bottom:0;">
-                            <div class="review-header">
-                                ${avatar}
-                                <div>
-                                    <div class="review-author-name">${escapeHtml(review.user_name || 'Пользователь')}</div>
-                                    <div class="review-date">${dateStr}</div>
-                                </div>
-                                ${orderBadge}
-                            </div>
+                                            <div class="review-header">
+                    ${avatar}
+                    <div class="review-header-info">
+                        <div class="review-author-name">${escapeHtml(review.user_name || 'Пользователь')}</div>
+                        <div class="review-date">${dateStr}</div>
+                    </div>
+                    ${orderBadge}
+                </div>
                             <div class="review-text" style="-webkit-line-clamp:unset;">${escapeHtml(review.text)}</div>
                         </div>
                         ${itemsHtml ? `<div class="review-items-card">${itemsHtml}</div>` : ''}
@@ -4261,23 +4189,15 @@ function showAdditionalSettingsAlert() {
     }
 }
 
-            async function renderReviewsPage() {
+                        async function renderReviewsPage() {
         const container = document.getElementById("reviewsContent");
         if (!container) return;
 
         const oldFixed = document.getElementById("reviewsFixedAction");
         if (oldFixed) oldFixed.remove();
 
-        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-        const userId = tgUser?.id;
-
-        // Ждём данные один раз здесь — благодаря прогреву кэша при старте приложения
-        // это почти всегда уже готовый промис/массив, так что задержки не видно,
-        // а числа в бейджах сразу настоящие, без "0 и 0"
         const initialReviews = await getReviewsData();
         window.__allReviews = initialReviews;
-        const initialGoodCount = initialReviews.filter(r => (r.rating || (r.satisfied ? 'good' : 'bad')) !== 'bad').length;
-        const initialBadCount = initialReviews.length - initialGoodCount;
 
                 container.innerHTML = `
                 <div class="search-section" style="display:flex;gap:10px;margin-bottom:13px;align-items:center;">
@@ -4291,65 +4211,8 @@ function showAdditionalSettingsAlert() {
                         <select id="reviewGameSelect" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px;"></select>
                     </div>
                 </div>
-
-                <div class="review-card-wrapper reviews-summary-card" id="reviewsSummaryCard">
-    <div class="review-card">
-        <div class="review-header">
-            <span class="review-placed-badge" style="cursor:default;" id="reviewsServiceLabel">Все сервисы</span>
-            <div class="review-badge-stack" style="margin-left:auto;">
-                <span class="summary-badge-wrap" style="z-index:2;">
-                    <span class="summary-badge-backdrop"></span>
-                    <span class="summary-badge good" id="badgeGoodCount">${initialGoodCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg></span>
-                </span>
-                <span class="summary-badge-wrap" style="z-index:1;">
-                    <span class="summary-badge-backdrop"></span>
-                    <span class="summary-badge bad" id="badgeBadCount">${initialBadCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-sad"></use></svg></span>
-                </span>
-            </div>
-        </div>
-        <div class="form-section" style="margin-top:12px;margin-bottom:0;">
-            <select class="form-select2-native" id="reviewRatingSelect">
-                <option value="" disabled selected>Сортировать по оценкам</option>
-                <option value="all">Все оценки</option>
-                <option value="good">Нравится</option>
-                <option value="bad">Не нравится</option>
-            </select>
-        </div>
-    </div>
-    <div class="review-items-card">
-        <div class="reviews-toggle-wrap">
-            <div class="reviews-toggle-thumb" id="reviewsToggleThumb"></div>
-            <button class="reviews-toggle-btn active" data-toggle="all">Все отзывы</button>
-            <button class="reviews-toggle-btn" data-toggle="mine">Ваши отзывы</button>
-        </div>
-    </div>
-</div>
-                                <div id="reviewsList" style="margin-top:11px;"></div>
+                                <div id="reviewsList" style="margin-top:13px;"></div>
             `;
-        
-                reviewsViewMode = 'all';
-        document.querySelectorAll('.reviews-toggle-btn[data-toggle]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                hapticLight();
-                reviewsViewMode = btn.dataset.toggle;
-                document.querySelectorAll('.reviews-toggle-btn[data-toggle]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                                const thumb = document.getElementById('reviewsToggleThumb');
-                if (thumb) thumb.style.left = reviewsViewMode === 'mine' ? '50%' : '0';
-               if (window.__allReviews) applyReviewFilters(window.__allReviews);
-            });
-        });
-        document.getElementById('reviewRatingSelect')?.addEventListener('change', () => {
-    hapticLight();
-    if (window.__allReviews) applyReviewFilters(window.__allReviews);
-});
-        const ratingSelect = document.getElementById('reviewRatingSelect');
-function updateRatingSelectColor() {
-    if (!ratingSelect) return;
-    ratingSelect.style.color = ratingSelect.value === '' ? 'var(--text-muted)' : 'var(--text-primary)';
-}
-updateRatingSelectColor();
-ratingSelect?.addEventListener('change', updateRatingSelectColor);
 
                 await renderReviewsFixedAction();
         setupReviewsListUI(initialReviews);
@@ -4897,7 +4760,7 @@ body: JSON.stringify({
                 `<div class="review-item-row"><span class="review-item-name">${escapeHtml(i.name)}</span><span class="review-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">${i.originalPrice && i.originalPrice !== i.price ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(i.originalPrice * i.qty)}</span>` : ''}${formatPrice(i.price * i.qty)}</span></div>`
             ).join('');
         }
-        return `<div class="review-card-wrapper"><div class="review-card"><div class="review-header">${avatar}<div><div class="review-author-name">${escapeHtml(rv.user_name || 'Пользователь')}</div><div class="review-date">${dateStr}</div></div>${orderBadge}</div><div class="review-text">${escapeHtml(rv.text)}</div></div>${itemsHtml ? `<div class="review-items-card">${itemsHtml}</div>` : ''}</div>`;
+        return `<div class="review-card-wrapper"><div class="review-card"><div class="review-header">${avatar}<div class="review-header-info"><div class="review-author-name">${escapeHtml(rv.user_name || 'Пользователь')}</div><div class="review-date">${dateStr}</div></div>${orderBadge}</div><div class="review-text">${escapeHtml(rv.text)}</div></div>${itemsHtml ? `<div class="review-items-card">${itemsHtml}</div>` : ''}</div>`;
     }
 
     function attachReviewOrderBadgeHandlers(scopeEl) {
@@ -4956,28 +4819,18 @@ body: JSON.stringify({
             }, 0);
         }
     }
-    
-    function updateSummaryBadges(filteredByGame) {
-    const goodEl = document.getElementById('badgeGoodCount');
-    const badEl = document.getElementById('badgeBadCount');
-    const totalEl = document.getElementById('totalReviewsCount');
-    if (totalEl) totalEl.textContent = filteredByGame.length;
-    if (!goodEl || !badEl) return;
-    const good = filteredByGame.filter(r => (r.rating || (r.satisfied ? 'good' : 'bad')) !== 'bad').length;
-    const bad = filteredByGame.length - good;
-    goodEl.firstChild.textContent = good + ' ';
-    badEl.firstChild.textContent = bad + ' ';
-}
 
     function applyReviewFilters(list) {
     window.__allReviews = list;
     const searchVal = document.getElementById('reviewSearchInput')?.value.toLowerCase() || '';
-    const gameVal = document.getElementById('reviewGameSelect')?.value || 'Все сервисы';
-    const ratingVal = document.getElementById('reviewRatingSelect')?.value || 'all';
+    const gameVal = document.getElementById('reviewGameSelect')?.value || 'Все отзывы';
 
     let filtered = list;
 
-    if (gameVal !== 'Все сервисы') {
+    if (gameVal === 'Ваши отзывы') {
+        const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+        filtered = filtered.filter(rv => String(rv.user_id) === String(tgUserId));
+    } else if (gameVal !== 'Все отзывы') {
         filtered = filtered.filter(rv => {
             if (rv.order_game_name) {
                 return rv.order_game_name === gameVal;
@@ -4988,19 +4841,6 @@ body: JSON.stringify({
             if (!game) return false;
             return items.some(i => game.getProducts().some(p => p.name === i.name));
         });
-    }
-
-    updateSummaryBadges(filtered);
-
-    if (reviewsViewMode === 'mine') {
-        const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-        filtered = filtered.filter(rv => String(rv.user_id) === String(tgUserId));
-    }
-
-    if (ratingVal === 'good') {
-        filtered = filtered.filter(rv => (rv.rating || (rv.satisfied ? 'good' : 'bad')) === 'good');
-    } else if (ratingVal === 'bad') {
-        filtered = filtered.filter(rv => (rv.rating || (rv.satisfied ? 'good' : 'bad')) === 'bad');
     }
 
     if (searchVal.trim()) {
@@ -5048,27 +4888,25 @@ body: JSON.stringify({
         return reviewsFetchPromise;
     }
 
-    function updateServiceLabel(value) {
-    const label = document.getElementById('reviewsServiceLabel');
-    if (label) label.textContent = value;
-}
-
-        function setupReviewsListUI(list) {
+                function setupReviewsListUI(list) {
         const gameSelect = document.getElementById('reviewGameSelect');
         if (gameSelect) {
             const counts = countReviewsByGame(list);
             const totalCount = list.length;
-            const gameNames = ['Все сервисы', ...games.map(g => g.name)];
+            const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+            const mineCount = list.filter(rv => String(rv.user_id) === String(tgUserId)).length;
+            const gameNames = ['Все отзывы', 'Ваши отзывы', ...games.map(g => g.name)];
             gameSelect.innerHTML = gameNames.map(n => {
-                const count = n === 'Все сервисы' ? totalCount : (counts[n] || 0);
+                let count;
+                if (n === 'Все отзывы') count = totalCount;
+                else if (n === 'Ваши отзывы') count = mineCount;
+                else count = counts[n] || 0;
                 return `<option value="${escapeHtml(n)}">${escapeHtml(n)} (${count})</option>`;
             }).join('');
             gameSelect.onchange = () => {
                 hapticLight();
-                updateServiceLabel(gameSelect.value);
                 applyReviewFilters(list);
             };
-            updateServiceLabel(gameSelect.value);
         }
         const searchInput = document.getElementById('reviewSearchInput');
         if (searchInput) {
