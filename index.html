@@ -1654,6 +1654,56 @@
     padding-top: 39px;
 }
 
+.summary-stat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.summary-stat-row + .summary-stat-row {
+    margin-top: 10px;
+}
+.summary-label-pill {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    background: rgba(158, 158, 158, 0.10);
+    border: 1px solid rgba(158, 158, 158, 0.05);
+    border-radius: 20px;
+    height: 35px;
+    padding: 0 16px;
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text-primary);
+    box-sizing: border-box;
+}
+.summary-value-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 35px;
+    padding: 0 14px;
+    border-radius: 20px;
+    font-size: 17px;
+    font-weight: 500;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+.summary-value-pill.total {
+    background: var(--accent-blue-bg);
+    border: 1px solid rgba(76, 180, 233, 0.05);
+    color: #4cb4e9;
+}
+.summary-value-pill.bad {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.05);
+    color: #ef4444;
+}
+.summary-value-pill.good {
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.05);
+    color: #22c55e;
+}
+
 .summary-badge-wrap {
     position: relative;
     height: 35px;
@@ -4303,17 +4353,26 @@ function showAdditionalSettingsAlert() {
 
                 <div class="review-card-wrapper reviews-summary-card" id="reviewsSummaryCard">
     <div class="review-card">
-        <div class="order-detail-row" style="padding-top:0;">
-            <span class="order-detail-label">Всего отзывов</span>
-            <span class="order-detail-value" id="summaryTotalCount" style="color:var(--text-primary);">${pluralizeReviews(initialReviews.length)}</span>
+        <div class="summary-stat-row">
+            <span class="summary-label-pill">Всего отзывов</span>
+            <span class="summary-value-pill total">
+                <span id="summaryTotalNum">${initialReviews.length}</span>
+                <svg width="18" height="18" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg>
+            </span>
         </div>
-        <div class="order-detail-row">
-            <span class="order-detail-label">Отрицательные</span>
-            <span class="order-detail-value" id="badgeBadCount" style="color:#ef4444;">${pluralizeReviews(initialBadCount)}</span>
+        <div class="summary-stat-row">
+            <span class="summary-label-pill">Отрицательные</span>
+            <span class="summary-value-pill bad">
+                <span id="summaryBadNum">${initialBadCount}</span>
+                <svg width="18" height="18" viewBox="0 0 512 512"><use href="#icon-review-sad"></use></svg>
+            </span>
         </div>
-        <div class="order-detail-row" style="padding-bottom:0;">
-            <span class="order-detail-label">Положительные</span>
-            <span class="order-detail-value" id="badgeGoodCount" style="color:#22c55e;">${pluralizeReviews(initialGoodCount)}</span>
+        <div class="summary-stat-row">
+            <span class="summary-label-pill">Положительные</span>
+            <span class="summary-value-pill good">
+                <span id="summaryGoodNum">${initialGoodCount}</span>
+                <svg width="18" height="18" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg>
+            </span>
         </div>
     </div>
     <div class="review-items-card">
@@ -4958,14 +5017,14 @@ body: JSON.stringify({
     }
     
     function updateSummaryBadges(filteredByGame) {
-    const totalEl = document.getElementById('summaryTotalCount');
-    const goodEl = document.getElementById('badgeGoodCount');
-    const badEl = document.getElementById('badgeBadCount');
+    const totalNumEl = document.getElementById('summaryTotalNum');
+    const goodNumEl = document.getElementById('summaryGoodNum');
+    const badNumEl = document.getElementById('summaryBadNum');
     const good = filteredByGame.filter(r => (r.rating || (r.satisfied ? 'good' : 'bad')) !== 'bad').length;
     const bad = filteredByGame.length - good;
-    if (totalEl) totalEl.textContent = pluralizeReviews(filteredByGame.length);
-    if (goodEl) goodEl.textContent = pluralizeReviews(good);
-    if (badEl) badEl.textContent = pluralizeReviews(bad);
+    if (totalNumEl) totalNumEl.textContent = filteredByGame.length;
+    if (goodNumEl) goodNumEl.textContent = good;
+    if (badNumEl) badNumEl.textContent = bad;
 }
 
     function applyReviewFilters(list) {
