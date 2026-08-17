@@ -1657,15 +1657,16 @@
 .summary-stat-row {
     display: flex;
     align-items: center;
-    gap: 8px;
 }
 .summary-stat-row + .summary-stat-row {
     margin-top: 10px;
 }
 .summary-label-pill {
-    flex: 1;
-    display: inline-flex;
+    position: relative;
+    z-index: 2;
+    display: flex;
     align-items: center;
+    flex: 1;
     background: rgba(158, 158, 158, 0.10);
     border: 1px solid rgba(158, 158, 158, 0.05);
     border-radius: 20px;
@@ -1677,11 +1678,14 @@
     box-sizing: border-box;
 }
 .summary-value-pill {
+    position: relative;
+    z-index: 1;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     height: 35px;
-    padding: 0 14px;
+    padding: 0 14px 0 35px;
+    margin-left: -26px;
     border-radius: 20px;
     font-size: 17px;
     font-weight: 500;
@@ -4357,21 +4361,21 @@ function showAdditionalSettingsAlert() {
             <span class="summary-label-pill">Всего отзывов</span>
             <span class="summary-value-pill total">
                 <span id="summaryTotalNum">${initialReviews.length}</span>
-                <svg width="18" height="18" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg>
+                <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg>
             </span>
         </div>
         <div class="summary-stat-row">
             <span class="summary-label-pill">Отрицательные</span>
             <span class="summary-value-pill bad">
                 <span id="summaryBadNum">${initialBadCount}</span>
-                <svg width="18" height="18" viewBox="0 0 512 512"><use href="#icon-review-sad"></use></svg>
+                <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-sad"></use></svg>
             </span>
         </div>
         <div class="summary-stat-row">
             <span class="summary-label-pill">Положительные</span>
             <span class="summary-value-pill good">
                 <span id="summaryGoodNum">${initialGoodCount}</span>
-                <svg width="18" height="18" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg>
+                <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg>
             </span>
         </div>
     </div>
@@ -4383,6 +4387,7 @@ function showAdditionalSettingsAlert() {
         </div>
     </div>
 </div>
+
                                 <div id="reviewsList" style="margin-top:11px;"></div>
             `;
         
