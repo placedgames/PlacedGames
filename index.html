@@ -51,7 +51,7 @@
             --text-price-old: #9ca3af;
             --border-color: rgba(42, 42, 45, 1);
             --input-bg: #3a3a3d;
-            --input2-bg: #1c1c1e;
+            --input2-bg: #323235;
             --input-bg-dark: #303033;
             --sticky-bg: rgba(41, 41, 45, 0.99);
             --sticky-bg2: rgba(38, 38, 42, 0.99);
@@ -1601,14 +1601,14 @@
     position: relative;
     z-index: 1;
     border: 1px solid transparent;
-    height: 35px;
+    height: 38px;
     box-sizing: border-box;
 }
 
 .review-order-badge-wrap {
     position: relative;
     z-index: 2;
-    height: 35px;
+    height: 38px;
 }
 .review-order-badge-backdrop {
     position: absolute;
@@ -1624,9 +1624,9 @@
     border: 1px solid rgba(76, 180, 233, 0.05);
     border-radius: 20px;
     padding: 0 14px 0 12px;
-    height: 35px;
+    height: 38px;
     box-sizing: border-box;
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 500;
     color: #4cb4e9;
     cursor: pointer;
@@ -1654,73 +1654,9 @@
     padding-top: 39px;
 }
 
-.summary-stat-row {
-    display: flex;
-    align-items: center;
-}
-.summary-stat-row + .summary-stat-row {
-    margin-top: 10px;
-}
-.summary-label-wrap {
-    position: relative;
-    z-index: 2;
-    flex: 1;
-    height: 38px;
-}
-.summary-label-backdrop {
-    position: absolute;
-    inset: 0;
-    background: var(--card-bg);
-    border-radius: 20px;
-}
-.summary-label-pill {
-    position: relative;
-    display: flex;
-    align-items: center;
-    height: 38px;
-    padding: 0 16px;
-    border-radius: 20px;
-    background: rgba(158, 158, 158, 0.10);
-    border: 1px solid rgba(158, 158, 158, 0.05);
-    font-size: 17px;
-    font-weight: 500;
-    color: var(--text-primary);
-    box-sizing: border-box;
-}
-.summary-value-pill {
-    position: relative;
-    z-index: 1;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 38px;
-    padding: 0 12px 0 43px;
-    margin-left: -36px;
-    border-radius: 20px;
-    font-size: 17px;
-    font-weight: 500;
-    box-sizing: border-box;
-    flex-shrink: 0;
-}
-.summary-value-pill.total {
-    background: var(--accent-blue-bg);
-    border: 1px solid rgba(76, 180, 233, 0.05);
-    color: #4cb4e9;
-}
-.summary-value-pill.bad {
-    background: rgba(239, 68, 68, 0.12);
-    border: 1px solid rgba(239, 68, 68, 0.05);
-    color: #ef4444;
-}
-.summary-value-pill.good {
-    background: rgba(34, 197, 94, 0.12);
-    border: 1px solid rgba(34, 197, 94, 0.05);
-    color: #22c55e;
-}
-
 .summary-badge-wrap {
     position: relative;
-    height: 35px;
+    height: 38px;
 }
 .summary-badge-wrap + .summary-badge-wrap {
     margin-left: -30px;
@@ -1736,10 +1672,10 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    height: 35px;
+    height: 38px;
     box-sizing: border-box;
     border-radius: 20px;
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 500;
     padding: 0 11px 0 13px;
 }
@@ -2473,15 +2409,6 @@
             }
         }
     }
-    
-    function pluralizeReviews(n) {
-    const abs = Math.abs(n) % 100;
-    const last = abs % 10;
-    if (abs > 10 && abs < 20) return `${n} отзывов`;
-    if (last === 1) return `${n} отзыв`;
-    if (last >= 2 && last <= 4) return `${n} отзыва`;
-    return `${n} отзывов`;
-}
 
     function formatPrice(p) {
         return Math.round(p).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + "₽";
@@ -4367,35 +4294,26 @@ function showAdditionalSettingsAlert() {
 
                 <div class="review-card-wrapper reviews-summary-card" id="reviewsSummaryCard">
     <div class="review-card">
-        <div class="summary-stat-row">
-            <span class="summary-label-wrap">
-                <span class="summary-label-backdrop"></span>
-                <span class="summary-label-pill">Всего отзывов</span>
-            </span>
-            <span class="summary-value-pill total">
-                <span id="summaryTotalNum">${initialReviews.length}</span>
-                <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg>
-            </span>
+        <div class="review-header">
+            <span class="review-placed-badge" style="cursor:default;" id="reviewsServiceLabel">Все сервисы</span>
+            <div class="review-badge-stack" style="margin-left:auto;">
+                <span class="summary-badge-wrap" style="z-index:2;">
+                    <span class="summary-badge-backdrop"></span>
+                    <span class="summary-badge good" id="badgeGoodCount">${initialGoodCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg></span>
+                </span>
+                <span class="summary-badge-wrap" style="z-index:1;">
+                    <span class="summary-badge-backdrop"></span>
+                    <span class="summary-badge bad" id="badgeBadCount">${initialBadCount} <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-sad"></use></svg></span>
+                </span>
+            </div>
         </div>
-        <div class="summary-stat-row">
-            <span class="summary-label-wrap">
-                <span class="summary-label-backdrop"></span>
-                <span class="summary-label-pill">Отрицательные</span>
-            </span>
-            <span class="summary-value-pill bad">
-                <span id="summaryBadNum">${initialBadCount}</span>
-                <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-sad"></use></svg>
-            </span>
-        </div>
-        <div class="summary-stat-row">
-            <span class="summary-label-wrap">
-                <span class="summary-label-backdrop"></span>
-                <span class="summary-label-pill">Положительные</span>
-            </span>
-            <span class="summary-value-pill good">
-                <span id="summaryGoodNum">${initialGoodCount}</span>
-                <svg width="20" height="20" viewBox="0 0 512 512"><use href="#icon-review-happy"></use></svg>
-            </span>
+        <div class="form-section" style="margin-top:12px;margin-bottom:0;">
+            <select class="form-select2-native" id="reviewRatingSelect">
+                <option value="" disabled selected>Сортировать по оценкам</option>
+                <option value="all">Все оценки</option>
+                <option value="good">Нравится</option>
+                <option value="bad">Не нравится</option>
+            </select>
         </div>
     </div>
     <div class="review-items-card">
@@ -4406,7 +4324,6 @@ function showAdditionalSettingsAlert() {
         </div>
     </div>
 </div>
-
                                 <div id="reviewsList" style="margin-top:11px;"></div>
             `;
         
@@ -5041,14 +4958,15 @@ body: JSON.stringify({
     }
     
     function updateSummaryBadges(filteredByGame) {
-    const totalNumEl = document.getElementById('summaryTotalNum');
-    const goodNumEl = document.getElementById('summaryGoodNum');
-    const badNumEl = document.getElementById('summaryBadNum');
+    const goodEl = document.getElementById('badgeGoodCount');
+    const badEl = document.getElementById('badgeBadCount');
+    const totalEl = document.getElementById('totalReviewsCount');
+    if (totalEl) totalEl.textContent = filteredByGame.length;
+    if (!goodEl || !badEl) return;
     const good = filteredByGame.filter(r => (r.rating || (r.satisfied ? 'good' : 'bad')) !== 'bad').length;
     const bad = filteredByGame.length - good;
-    if (totalNumEl) totalNumEl.textContent = filteredByGame.length;
-    if (goodNumEl) goodNumEl.textContent = good;
-    if (badNumEl) badNumEl.textContent = bad;
+    goodEl.firstChild.textContent = good + ' ';
+    badEl.firstChild.textContent = bad + ' ';
 }
 
     function applyReviewFilters(list) {
