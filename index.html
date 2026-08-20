@@ -2726,6 +2726,38 @@ function showFormatSelectAlert() {
     }
 }
 
+let clearCacheConfirmPopupOpen = false;
+function showClearCacheConfirmAlert() {
+    if (clearCacheConfirmPopupOpen) return;
+    clearCacheConfirmPopupOpen = true;
+    const release = () => { clearCacheConfirmPopupOpen = false; };
+    if (window.Telegram?.WebApp?.showPopup) {
+        try {
+            window.Telegram.WebApp.showPopup({
+                message: 'Вы действительно хотите сбросить кэш приложения? Сброс кэша приложения не удалит ваши данные.',
+                buttons: [
+                    { id: 'cancel', type: 'cancel', text: 'Отмена' },
+                    { id: 'confirm', type: 'destructive', text: 'Сбросить' }
+                ]
+            }, (buttonId) => {
+                release();
+                if (buttonId === 'confirm') {
+                    hapticMedium();
+                    clearAppCache();
+                }
+            });
+        } catch (e) {
+            release();
+        }
+    } else {
+        if (window.confirm('Вы действительно хотите сбросить кэш приложения? Сброс кэша приложения не удалит ваши данные.')) {
+            hapticMedium();
+            clearAppCache();
+        }
+        release();
+    }
+}
+
 let additionalSettingsPopupOpen = false;
 function showAdditionalSettingsAlert() {
     if (additionalSettingsPopupOpen) return;
@@ -2739,11 +2771,11 @@ function showAdditionalSettingsAlert() {
                     { id: 'clear_cache', type: 'default', text: 'Сброс кэша приложения' },
                     { id: 'change_format', type: 'default', text: 'Из. формат приложения' }
                 ]
-            }, (buttonId) => {
+                        }, (buttonId) => {
                 release();
                 if (buttonId === 'clear_cache') {
-                    hapticMedium();
-                    clearAppCache();
+                    hapticLight();
+                    showClearCacheConfirmAlert();
                 } else if (buttonId === 'change_format') {
                     hapticLight();
                     showFormatSelectAlert();
