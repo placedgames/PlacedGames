@@ -927,6 +927,22 @@
             text-align: center;
             height: 48px;
         }
+        
+        .active-order-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #4cb4e9;
+    border: none;
+    border-radius: 34px;
+    height: 48px;
+    padding: 0 16px;
+    margin: 0 0 5px 0;
+    cursor: pointer;
+    color: #fff;
+    font-weight: 550;
+    font-size: 17px;
+}
 
         .promo-btn {
             width: 48px;
@@ -2419,7 +2435,40 @@
         const bank = getBankFromValue(value);
         return cardNumbers[bank] || "";
     }
+    
+    function renderActiveOrderBanner() {
+    const activePage = document.querySelector('.page.active-page');
+    if (!activePage) return;
+    activePage.querySelector('.active-order-banner-wrap')?.remove();
+    if (!activeOrdersList.length) return;
 
+    const count = activeOrdersList.length;
+    const label = count === 1 ? '1 активный заказ' : `${count} активных заказа`;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'active-order-banner-wrap';
+    wrap.innerHTML = `<div class="active-order-banner" id="activeOrderBannerBtn">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <svg class="icon" style="width:22px;height:22px;"><use href="#icon-orders"></use></svg>
+            <span>${label}</span>
+        </div>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`;
+
+    activePage.querySelector('.page-header-sticky')?.insertAdjacentElement('afterend', wrap);
+
+    document.getElementById('activeOrderBannerBtn')?.addEventListener('click', () => {
+        hapticLight();
+        if (activeOrdersList.length === 1) {
+            const curId = document.querySelector('.page.active-page')?.id.replace('-page', '');
+            if (curId && curId !== 'order-detail') navigationHistory.push(curId);
+            showOrderDetail(activeOrdersList[0], true);
+        } else {
+            showPage('orders');
+        }
+    });
+}
+    
     function renderPageHeader(title, currentPageId) {
     const navPages = [
     { id: 'catalog', title: 'Каталог' },
@@ -2480,6 +2529,7 @@
     let currentSort = "default";
     let searchQuery = "";
     let orders = [];
+    let activeOrdersList = [];
     let orderStatusFilter = "Все заказы";
     let navigationHistory = [];
     let currentGame = null;
@@ -3062,12 +3112,13 @@ function showAdditionalSettingsAlert() {
         };
     }
 
-    async function finalizeOrderAfterSuccess() {
+        async function finalizeOrderAfterSuccess() {
         cart = {};
         appliedPromo = null;
         isPromoMode = false;
         updateAllCards();
         renderCartPage();
+        await fetchActiveOrdersCount();
         navigationHistory = [afterPaymentBackPage];
         showPage("orders", true);
     }
@@ -3585,7 +3636,7 @@ function showAdditionalSettingsAlert() {
             });
         }, 0);
     }
-
+    
     async function loadUserOrders() {
         try {
             const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
@@ -3595,6 +3646,18 @@ function showAdditionalSettingsAlert() {
             if (r.ok) orders = await r.json();
         } catch (e) { console.error('Ошибка загрузки заказов:', e); }
     }
+    
+    async function fetchActiveOrdersCount() {
+    try {
+        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+        if (!tgUser?.id) { activeOrdersList = []; return; }
+        const r = await fetch(`https://placedgames.up.railway.app/api/user-orders?userId=${tgUser.id}`);
+        const all = await r.json();
+        activeOrdersList = all.filter(o =>
+            !['completed', 'done', 'cancelled', 'notfound'].includes(String(o.status_code).toLowerCase())
+        );
+    } catch (e) { activeOrdersList = []; }
+}
 
     async function showProfileInfoAlert() {
         const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
@@ -4124,7 +4187,7 @@ function showAdditionalSettingsAlert() {
                                                     body: JSON.stringify({ orderId: order
                                                             .id, code: code })
                                                 });
-                                            if (response.ok) {
+                                                                                        if (response.ok) {
                                                 showAppAlert(
                                                     "Код отправлен. Пожалуйста, не заходите на аккаунт пока ваш заказ не будет выполнен.\n\nВ противном случае ваш заказ может быть отменён без возврата денежных средств"
                                                 );
@@ -4133,6 +4196,7 @@ function showAdditionalSettingsAlert() {
                                                 order.verification_code = code;
                                                 showOrderDetail(order, true);
                                                 renderOrdersPage();
+                                                fetchActiveOrdersCount().then(renderActiveOrderBanner);
                                             } else showAppAlert(
                                                 "Ошибка отправки кода");
                                         } catch (e) { showAppAlert(
@@ -5547,6 +5611,7 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
                 showPage(target);
             };
         }
+        renderActiveOrderBanner();
     }
 
     function showPage(pageId, skipHistoryAdd = false) {
@@ -5793,6 +5858,8 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
                 checkoutData = { ...checkoutData, ...parsed };
             } catch (e) {}
         }
+
+                await fetchActiveOrdersCount();
 
         const lastPage = getLastPage();
 
@@ -6046,7 +6113,7 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
             case 'reviews':
                 await loadReviewsList(true);
                 break;
-            case 'order-detail':
+                        case 'order-detail':
                 if (currentOpenOrder) {
                     await fetch('https://placedgames.up.railway.app/api/refresh-order', {
                         method: 'POST',
@@ -6054,13 +6121,15 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
                         body: JSON.stringify({ orderId: currentOpenOrder.id })
                     })
                     .then(r => r.json())
-                    .then(updatedOrder => {
+                    .then(async updatedOrder => {
                         currentOpenOrder = updatedOrder;
                         const index = orders.findIndex(o => o.id == updatedOrder.id);
                         if (index !== -1) orders[index] = updatedOrder;
                         const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
                         const isOwner = String(updatedOrder.user_id) === String(tgUserId);
                         showOrderDetail(updatedOrder, isOwner);
+                        await fetchActiveOrdersCount();
+                        renderActiveOrderBanner();
                         hapticLight();
                     });
                 }
