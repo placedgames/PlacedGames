@@ -2806,8 +2806,8 @@ function showAdditionalSettingsAlert() {
         }
     }
 
-        function renderQuickBuyButtonHtml(productId) {
-        return `<div class="quick-buy-btn" data-quickbuy="${productId}"><svg class="icon icon-quickbuy icon--accent"><use href="#icon-card"></use></svg></div>`;
+            function renderQuickBuyButtonHtml(productId) {
+        return `<div class="quick-buy-btn" data-cartadd="${productId}"><svg class="icon icon-quickbuy icon--accent"><use href="#icon-cart"></use></svg></div>`;
     }
 
     function startQuickOrder(productId) {
@@ -2835,7 +2835,8 @@ function showAdditionalSettingsAlert() {
                     <span class="counter-plus" data-id="${productId}" style="${plusOpacity}"><svg class="icon icon-counter-plus icon--accent"><use href="#icon-plus"></use></svg></span>
                 </div>`;
         } else {
-            actionHtml = `<div class="card-action-btn cart-add-btn" data-add="${productId}">В корзину</div>`;
+            const prod = games.flatMap(g => g.getProducts()).find(p => p.id == productId);
+            actionHtml = `<div class="card-action-btn price-quickorder-btn" data-quickorder="${productId}">${formatPrice(prod?.price || 0)}</div>`;
         }
         return `<div style="display:flex;gap:8px;align-items:center;"><div style="flex:1;min-width:0;">${actionHtml}</div>${renderQuickBuyButtonHtml(productId)}</div>`;
     }
@@ -4703,15 +4704,11 @@ body: JSON.stringify({
                          </div>
                          ${imgs.length > 1 ? `<div class="card-img-dots">${imgs.map((_, i) => `<span class="card-img-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : ''}
                      </div>`;
-            return `
+                        return `
                         <div class="product-card" data-id="${p.id}">
                             ${carouselHtml}
                             <div class="card-info">
                                 <div class="product-title">${escapeHtml(p.name)}</div>
-                                <div class="price-row">
-                                    <span class="current-price">${formatPrice(p.price)}</span>
-                                    <span class="old-price">${formatPrice(p.oldPrice)}</span>
-                                </div>
                                 ${renderCartButtonHtml(p.id)}
                             </div>
                         </div>
@@ -4869,29 +4866,29 @@ body: JSON.stringify({
             });
         });
 
-                document.querySelectorAll('#game-page .product-card').forEach(card => {
+                        document.querySelectorAll('#game-page .product-card').forEach(card => {
             const cardId = card.dataset.id;
-            const quickBtn = card.querySelector('[data-quickbuy]');
-            if (quickBtn) {
-                quickBtn.replaceWith(quickBtn.cloneNode(true));
-                card.querySelector('[data-quickbuy]')?.addEventListener('click', (e) => {
+            const cartAddBtn = card.querySelector('[data-cartadd]');
+            if (cartAddBtn) {
+                cartAddBtn.replaceWith(cartAddBtn.cloneNode(true));
+                card.querySelector('[data-cartadd]')?.addEventListener('click', (e) => {
                     e.stopPropagation();
                     hapticLight();
-                    startQuickOrder(cardId);
+                    handleCartAction(cardId, true);
+                    const wrap = card.querySelector('.card-info > div:last-child');
+                    if (wrap) wrap.outerHTML = renderCartButtonHtml(cardId);
+                    attachGameCardEvents();
                 });
             }
             const actionBtn = card.querySelector('.card-action-btn');
             if (!actionBtn) return;
-            if (actionBtn.classList.contains('cart-add-btn')) {
+            if (actionBtn.classList.contains('price-quickorder-btn')) {
                 actionBtn.replaceWith(actionBtn.cloneNode(true));
-                const newBtn = card.querySelector('.cart-add-btn');
+                const newBtn = card.querySelector('.price-quickorder-btn');
                 newBtn?.addEventListener('click', (e) => {
                     e.stopPropagation();
                     hapticLight();
-                    handleCartAction(cardId, true);
-                    const btn2 = card.querySelector('.card-action-btn, .card-info > div:last-child');
-                    if (btn2) btn2.outerHTML = renderCartButtonHtml(cardId);
-                    attachGameCardEvents();
+                    startQuickOrder(cardId);
                 });
             } else if (actionBtn.classList.contains('counter-btn')) {
                 const minus = actionBtn.querySelector('.counter-minus');
