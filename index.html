@@ -4150,7 +4150,7 @@ function showAdditionalSettingsAlert() {
                                         hapticLight();
                                         const confirmed = await new Promise(resolve => {
                                             window.Telegram.WebApp.showPopup({
-                                                message: `Указанный вами код: ${code}\n\nПожалуйста, убедитесь, что код указан правильно. В противном случае выполнение заказа может задержаться`,
+                                                message: `Указанный вами код: ${code}\n\nПожалуйста, убедитесь, что код указан правильно, чтобы избежать возможной задержки в выполнении вашего заказа.`,
                                                 buttons: [
                                                     { id: 'send_code', type: 'default', text: 'Отправить код' }
                                                 ]
