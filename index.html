@@ -4105,7 +4105,7 @@ function showAdditionalSettingsAlert() {
             } else if (isAwaitingCode) {
                 fixedBlock.style.display = "block";
                 fixedBlock.innerHTML =
-                    `<div id="codeActionBlock" class="checkout-card"><div class="checkout-buttons-row"><button class="checkout-button" id="showCodeInputBtn">Указать код</button><button onclick="hapticLight();window.open('https://t.me/PlacedHelpBot','_blank')" class="promo-btn"><svg class="icon icon-order-code-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
+                    `<div id="codeActionBlock" class="checkout-card"><div class="checkout-buttons-row"><button class="checkout-button" id="showCodeInputBtn">Указать код</button><button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn"><svg class="icon icon-order-code-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
             } else if (!isCompleted) {
                 fixedBlock.style.display = "none";
                         } else {
@@ -4119,7 +4119,7 @@ function showAdditionalSettingsAlert() {
                     } else {
                         fixedBlock.style.display = "block";
                         fixedBlock.innerHTML =
-                            `<div class="checkout-card"><div class="checkout-buttons-row"><button onclick="hapticMedium();showPage('write-review')" class="checkout-button">Оставить отзыв</button><button onclick="hapticLight();window.open('https://t.me/PlacedHelpBot','_blank')" class="promo-btn"><svg class="icon icon-order-review-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
+                            `<div class="checkout-card"><div class="checkout-buttons-row"><button onclick="hapticMedium();showPage('write-review')" class="checkout-button">Оставить отзыв</button><button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn"><svg class="icon icon-order-review-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
                     }
                 }).catch(() => {
                     fixedBlock.style.display = "none";
@@ -4208,7 +4208,7 @@ function showAdditionalSettingsAlert() {
         fixedEl.innerHTML = `<div class="checkout-card">
                 <div class="checkout-buttons-row">
                     <button class="checkout-button" id="goWriteReviewBtn">Оставить отзыв</button>
-                    <button onclick="hapticLight();window.open('https://t.me/PlacedHelpBot','_blank')" class="promo-btn">
+                    <button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn">
                         <svg class="icon icon-reviews-help icon--accent"><use href="#icon-support"></use></svg>
                     </button>
                 </div>
@@ -4371,7 +4371,7 @@ function showAdditionalSettingsAlert() {
                             <div class="checkout-card">
                                 <div class="checkout-buttons-row">
                                     <button class="checkout-button" id="reviewSubmitBtnFixed">Отправить отзыв</button>
-                                    <button class="promo-btn" onclick="hapticLight();window.open('https://t.me/PlacedHelpBot','_blank')">
+                                    <button class="promo-btn" onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')">
                                         <svg class="icon icon-writereview-help icon--accent"><use href="#icon-support"></use></svg>
                                     </button>
                                 </div>
@@ -5811,7 +5811,7 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
                     document.body.innerHTML = `
                             <div style="position:fixed;inset:0;background:var(--app-bg);z-index:99999;display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px;">
                                 <div style="font-size:22px;font-weight:600;color:white;margin-bottom:12px;">Доступ к приложению ограничен</div>
-                                <button onclick="window.open('https://t.me/PlacedHelpBot','_blank')" style="background:#4cb4e9;border:none;border-radius:34px;padding:14px 28px;color:white;font-size:17px;font-weight:600;cursor:pointer;margin-top:16px;">Связаться с поддержкой</button>
+                                <button onclick="window.open('https://t.me/PlacedSupport','_blank')" style="background:#4cb4e9;border:none;border-radius:34px;padding:14px 28px;color:white;font-size:17px;font-weight:600;cursor:pointer;margin-top:16px;">Связаться с поддержкой</button>
                             </div>`;
                     return;
                 }
