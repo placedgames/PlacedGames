@@ -3098,7 +3098,7 @@ function showAdditionalSettingsAlert() {
             rawTotal;
         if (isPromoMode) {
             fixedBlock.innerHTML =
-                `<div class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="total-row"><span class="promo-label">Введите промокод на скидку</span></div><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;"><input type="text" class="promo-input" id="promoInput" placeholder="Введите промокод" value="${appliedPromo ? appliedPromo.code : ''}" oninput="this.value=this.value.toUpperCase()" style="flex: 1; min-width: 0; box-sizing: border-box;"><button class="promo-action-btn apply-btn" id="promoApplyBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-apply icon--accent"><use href="#icon-success"></use></svg></button><button class="promo-action-btn back-btn" id="promoBackBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-back icon--danger"><use href="#icon-cancel"></use></svg></button></div></div>`;
+                `<div class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="total-row"><span class="promo-label">Введите промокод на скидку</span></div><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;"><input type="text" class="promo-input" id="promoInput" placeholder="Введите промокод" value="${appliedPromo ? appliedPromo.code : ''}" oninput="this.value=this.value.toUpperCase()" style="flex: 1; min-width: 0; box-sizing: border-box;"><button class="promo-action-btn back-btn" id="promoBackBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-back icon--danger"><use href="#icon-cancel"></use></svg></button><button class="promo-action-btn apply-btn" id="promoApplyBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-apply icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
             setTimeout(() => {
                 const promoInput = document.getElementById("promoInput");
                 const backBtn = document.getElementById("promoBackBtn");
@@ -3295,7 +3295,7 @@ function showAdditionalSettingsAlert() {
             "Перейти к оплате";
         if (isPromoMode) {
             fixedBlock.innerHTML =
-                `<div class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="total-row"><span class="promo-label">Введите промокод на скидку</span></div><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;"><input type="text" class="promo-input" id="checkoutPromoInput" placeholder="Введите промокод" value="${appliedPromo ? appliedPromo.code : ''}" oninput="this.value=this.value.toUpperCase()" style="flex: 1; min-width: 0; box-sizing: border-box;"><button class="promo-action-btn apply-btn" id="checkoutPromoApplyBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-apply icon--accent"><use href="#icon-success"></use></svg></button><button class="promo-action-btn back-btn" id="checkoutPromoBackBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-back icon--danger"><use href="#icon-cancel"></use></svg></button></div></div>`;
+                `<div class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="total-row"><span class="promo-label">Введите промокод на скидку</span></div><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;"><input type="text" class="promo-input" id="checkoutPromoInput" placeholder="Введите промокод" value="${appliedPromo ? appliedPromo.code : ''}" oninput="this.value=this.value.toUpperCase()" style="flex: 1; min-width: 0; box-sizing: border-box;"><button class="promo-action-btn back-btn" id="checkoutPromoBackBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-back icon--danger"><use href="#icon-cancel"></use></svg></button><button class="promo-action-btn apply-btn" id="checkoutPromoApplyBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-apply icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
         } else {
             fixedBlock.innerHTML =
                 `<div class="checkout-card"><div class="total-row"><span class="total-label">Общая стоимость:</span><span class="total-price-wrapper">${appliedPromo ? `<span class="total-old-price">${formatPrice(rawTotal)}</span>` : ''}<span class="total-price">${formatPrice(discountedTotal)}</span></span></div><div class="checkout-buttons-row"><button class="checkout-button" id="payBtn">${initialPayBtnText}</button><button class="promo-btn" id="openCheckoutPromoBtn"><svg class="icon icon-promo-open icon--accent"><use href="#icon-promo"></use></svg></button></div></div>`;
@@ -4114,7 +4114,7 @@ function showAdditionalSettingsAlert() {
                                             "verificationCodeInput");
                                         const code = codeInput?.value.trim();
                                         if (!code) { showAppAlert(
-                                                "Введите код"); return; }
+                                                "Пожалуйста введите код который был отправлен на указанную вами почту."); return; }
                                         hapticLight();
                                         try {
                                             const response = await fetch(
