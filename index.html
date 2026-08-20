@@ -966,7 +966,7 @@
         }
 
         .promo-input::placeholder {
-            color: #a1a1aa;
+            color: #a1a1ab;
             font-size: 18px;
         }
 
@@ -4150,7 +4150,7 @@ function showAdditionalSettingsAlert() {
                                         hapticLight();
                                         const confirmed = await new Promise(resolve => {
                                             window.Telegram.WebApp.showPopup({
-                                                message: `Подтверждение кода:\n\nВаш код: ${code}\nПожалуйста, убедитесь, что код указан правильно, чтобы избежать возможной задержки в выполнении заказа.`,
+                                                message: `Указанный вами код: ${code}\n\nПожалуйста, убедитесь, что код указан правильно. В противном случае выполнение заказа может задержаться`,
                                                 buttons: [
                                                     { id: 'send_code', type: 'default', text: 'Отправить код' }
                                                 ]
