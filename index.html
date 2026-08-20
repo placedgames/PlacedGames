@@ -4134,7 +4134,7 @@ function showAdditionalSettingsAlert() {
                         const fixedBlock = document.getElementById("cartCheckoutFixed");
                         if (fixedBlock) {
                             fixedBlock.innerHTML =
-                           `<div id="codeActionBlock" class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%;"><input type="text" id="verificationCodeInput" class="promo-input" placeholder="Введите код с почты" style="flex: 1; min-width: 0; box-sizing: border-box;"><button id="submitCodeBtn" class="promo-action-btn apply-btn" style="flex-shrink: 0;"><svg class="icon icon-order-code-submit icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
+                           `<div id="codeActionBlock" class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%;"><input type="tel" id="verificationCodeInput" class="promo-input" placeholder="Введите код с почты" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" oninput="this.value=this.value.replace(/\D/g,'')" style="flex: 1; min-width: 0; box-sizing: border-box;"><button id="submitCodeBtn" class="promo-action-btn apply-btn" style="flex-shrink: 0;"><svg class="icon icon-order-code-submit icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
                             setTimeout(() => {
                                 const inp = document.getElementById(
                                     "verificationCodeInput");
@@ -4148,6 +4148,16 @@ function showAdditionalSettingsAlert() {
                                         if (!code) { showAppAlert(
                                                 "Пожалуйста введите код который был отправлен на указанную вами почту."); return; }
                                         hapticLight();
+                                        const confirmed = await new Promise(resolve => {
+                                            window.Telegram.WebApp.showPopup({
+                                                message: `Подтверждение кода:\n\nВаш код: ${code}\n\nПожалуйста, проверьте правильность кода. После отправки кода ваш заказ получит статус «Ожидает выполнения».`,
+                                                buttons: [
+                                                    { id: 'send_code', type: 'default', text: 'Отправить код' }
+                                                ]
+                                            }, (buttonId) => resolve(buttonId === 'send_code'));
+                                        });
+                                        if (!confirmed) return;
+                                        hapticMedium();
                                         try {
                                             const response = await fetch(
                                                 'https://placedgames.up.railway.app/api/submit-code', {
@@ -4158,7 +4168,7 @@ function showAdditionalSettingsAlert() {
                                                 });
                                             if (response.ok) {
                                                 showAppAlert(
-                                                    "Код отправлен. Пожалуйста, не заходите на аккаунт пока ваш заказ не будет выполнен.\n\nВ противном случае ваш заказ может быть отменён без возврата денежных средств"
+                                                    "Код успешно отправлен!\n\nПосле изменения статуса заказа на «Выполняется», пожалуйста не заходите в аккаунт до успешного завершения заказа."
                                                 );
                                                 order.status_code = 'processing';
                                                 order.status = 'Ожидает выполнения';
