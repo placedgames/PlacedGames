@@ -4102,7 +4102,7 @@ function showAdditionalSettingsAlert() {
                         const fixedBlock = document.getElementById("cartCheckoutFixed");
                         if (fixedBlock) {
                             fixedBlock.innerHTML =
-                                `<div id="codeActionBlock" class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="promo-label">Введите код который вам пришел</div><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%;"><input type="text" id="verificationCodeInput" class="promo-input" placeholder="Введите код" style="flex: 1; min-width: 0; box-sizing: border-box;"><button id="submitCodeBtn" class="promo-action-btn apply-btn" style="flex-shrink: 0;"><svg class="icon icon-order-code-submit icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
+                           `<div id="codeActionBlock" class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%;"><input type="text" id="verificationCodeInput" class="promo-input" placeholder="Введите код с почты" style="flex: 1; min-width: 0; box-sizing: border-box;"><button id="submitCodeBtn" class="promo-action-btn apply-btn" style="flex-shrink: 0;"><svg class="icon icon-order-code-submit icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
                             setTimeout(() => {
                                 const inp = document.getElementById(
                                     "verificationCodeInput");
