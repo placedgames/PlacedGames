@@ -115,8 +115,11 @@
             --icon-size-empty-game-reload: 80px;
             --icon-size-empty-game-notfound: 80px;
 
-            /* Профиль */
+                        /* Профиль */
             --icon-size-profile-referral-copy: 17px;
+
+            /* Быстрое оформление */
+            --icon-size-quickbuy: 18px;
 
             /* ===== Цвета иконок (редактируй здесь) ===== */
             --icon-color-accent: #4cb4e9;
@@ -696,10 +699,27 @@
             justify-content: center;
         }
 
-        .counter-value {
+            .counter-value {
             font-size: 16px;
             font-weight: 500;
             color: var(--text-primary);
+        }
+
+        .quick-buy-btn {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            border-radius: 50%;
+            background: var(--accent-blue-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: transform 0.1s ease;
+        }
+        .quick-buy-btn:active {
+            transform: scale(0.9);
         }
 
         .empty-state-icon {
@@ -1950,8 +1970,9 @@
         .icon-empty-game-reload { width: var(--icon-size-empty-game-reload); height: var(--icon-size-empty-game-reload); opacity: 0.4; margin-bottom: 16px; }
         .icon-empty-game-notfound { width: var(--icon-size-empty-game-notfound); height: var(--icon-size-empty-game-notfound); opacity: 0.4; margin-bottom: 16px; }
 
-        .icon-profile-referral-copy { width: var(--icon-size-profile-referral-copy); height: var(--icon-size-profile-referral-copy); cursor: pointer; transition: transform 0.1s ease; }
-
+                .icon-profile-referral-copy { width: var(--icon-size-profile-referral-copy); height: var(--icon-size-profile-referral-copy); cursor: pointer; transition: transform 0.1s ease; }
+        .icon-quickbuy { width: var(--icon-size-quickbuy); height: var(--icon-size-quickbuy); }
+        
         .icon-payment-copy:active,
         .icon-profile-referral-copy:active {
             transform: scale(0.85);
@@ -2005,6 +2026,7 @@
 <symbol id="icon-chevron-down" viewBox="0 0 24 24">
     <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
 </symbol>
+<symbol id="icon-card" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M4,3 C2.343,3 1,4.343 1,6 L1,8 L23,8 L23,6 C23,4.343 21.657,3 20,3 L4,3 Z M1,10 L1,18 C1,19.657 2.343,21 4,21 L20,21 C21.657,21 23,19.657 23,18 L23,10 L1,10 Z M16,15 L19,15 C19.552,15 20,15.448 20,16 C20,16.552 19.552,17 19,17 L16,17 C15.448,17 15,16.552 15,16 C15,15.448 15.448,15 16,15 Z"/></symbol>
 </svg>
 
 <div id="tgTopLoader" class="tg-top-loader"><span></span><span></span><span></span></div>
@@ -2086,8 +2108,8 @@
     <div id="helpContent"></div>
 </div>
 
-    <div id="game-page" class="page">
-    <div class="search-section" style="display:flex;gap:10px;margin-bottom:13px;align-items:center;position:relative;">
+        <div id="game-page" class="page">
+    <div id="gameSearchSection" class="search-section" style="display:flex;gap:10px;margin-bottom:13px;align-items:center;position:relative;">
         <div class="search-bar">
             <img class="search-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E">
             <input type="text" class="search-input" id="gameSearchInput" placeholder="Найти товар по названию">
@@ -2484,6 +2506,10 @@
     let navigationHistory = [];
     let currentGame = null;
     let savedGameScrollY = 0;
+    let isQuickOrder = false;
+    let savedCartBeforeQuickOrder = null;
+    let gameQuickOrderMode = false;
+    let quickOrderSelection = { gameId: null, category: null, productId: null };
     let savedReviewsScrollY = 0;
     let savedOrdersScrollY = 0;   
     const games = [{
@@ -2780,20 +2806,38 @@ function showAdditionalSettingsAlert() {
         }
     }
 
+        function renderQuickBuyButtonHtml(productId) {
+        return `<div class="quick-buy-btn" data-quickbuy="${productId}"><svg class="icon icon-quickbuy icon--accent"><use href="#icon-card"></use></svg></div>`;
+    }
+
+    function startQuickOrder(productId) {
+        savedCartBeforeQuickOrder = cart;
+        isQuickOrder = true;
+        cart = {};
+        cart[productId] = 1;
+        appliedPromo = null;
+        isPromoMode = false;
+        navigationHistory = ["catalog"];
+        showPage("checkout");
+    }
+
     function renderCartButtonHtml(productId) {
         const qty = cart[productId] || 0;
+        let actionHtml;
         if (qty > 0) {
             const prod = games.flatMap(g => g.getProducts()).find(p => p.id == productId);
             const maxQty = prod?.maxQty || 1;
             const atLimit = qty >= maxQty;
             const plusOpacity = atLimit ? 'opacity:0.4;pointer-events:none;' : '';
-            return `<div class="card-action-btn counter-btn">
+            actionHtml = `<div class="card-action-btn counter-btn">
                     <span class="counter-minus" data-id="${productId}"><svg class="icon icon-counter-minus icon--accent"><use href="#icon-minus"></use></svg></span>
                     <span class="counter-value">${qty}</span>
                     <span class="counter-plus" data-id="${productId}" style="${plusOpacity}"><svg class="icon icon-counter-plus icon--accent"><use href="#icon-plus"></use></svg></span>
                 </div>`;
+        } else {
+            actionHtml = `<div class="card-action-btn cart-add-btn" data-add="${productId}">В корзину</div>`;
         }
-        return `<div class="card-action-btn cart-add-btn" data-add="${productId}">В корзину</div>`;
+        return `<div style="display:flex;gap:8px;align-items:center;"><div style="flex:1;min-width:0;">${actionHtml}</div>${renderQuickBuyButtonHtml(productId)}</div>`;
     }
 
     function handleCartAction(pid, isIncrement) {
@@ -2948,15 +2992,16 @@ function showAdditionalSettingsAlert() {
                     this.value = "Все сервисы";
                     return;
                 }
-                catalogServiceFilter = "Все сервисы";
+                                catalogServiceFilter = "Все сервисы";
                 currentGame = g;
+                gameQuickOrderMode = false;
                 savedGameScrollY = 0;
                 gameCategoryFilter = "Все категории";
                 gameSearchQuery = "";
                 showPage("game");
             };
         }
-        grid.innerHTML = filteredGames.map(game => `
+                grid.innerHTML = filteredGames.map(game => `
                 <div class="product-card" data-game-id="${game.id}">
                     <img class="card-img" src="${game.image}" alt="${escapeHtml(game.name)}">
                     <div class="card-info">
@@ -2965,7 +3010,10 @@ function showAdditionalSettingsAlert() {
                             <span class="current-price" style="font-size:19px;color:var(--text-primary);font-weight:500;">от ${formatPrice(game.minPrice)}</span>
                             <span class="old-price">${formatPrice(game.oldMinPrice)}</span>
                         </div>
-                        <div class="card-action-btn cart-add-btn" data-open-game="${game.id}">Смотреть</div>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <div style="flex:1;min-width:0;"><div class="card-action-btn cart-add-btn" data-open-game="${game.id}">Смотреть</div></div>
+                            <div class="quick-buy-btn" data-quick-game="${game.id}"><svg class="icon icon-quickbuy icon--accent"><use href="#icon-card"></use></svg></div>
+                        </div>
                     </div>
                 </div>
             `).join("");
@@ -2981,11 +3029,124 @@ function showAdditionalSettingsAlert() {
                     return;
                 }
                 currentGame = g;
+                gameQuickOrderMode = false;
                 savedGameScrollY = 0;
                 gameCategoryFilter = "Все категории";
                 gameSearchQuery = "";
                 showPage("game");
             });
+        });
+        document.querySelectorAll("[data-quick-game]").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                hapticLight();
+                openGameQuickOrder(btn.dataset.quickGame);
+            });
+        });
+    }
+
+    function openGameQuickOrder(gameId) {
+        const g = games.find(g => g.id === gameId);
+        if (!g) return;
+        if (g.enabled === false) {
+            showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
+            return;
+        }
+        currentGame = g;
+        gameQuickOrderMode = true;
+        savedGameScrollY = 0;
+        const prods = g.getProducts();
+        const firstCat = prods.length ? prods[0].category : null;
+        quickOrderSelection = {
+            gameId: g.id,
+            category: firstCat,
+            productId: prods.find(p => p.category === firstCat)?.id || (prods[0]?.id ?? null)
+        };
+        showPage("game");
+    }
+
+    function renderGameQuickOrderBuilder() {
+        const grid = document.getElementById("gameProductsGrid");
+        if (!grid) return;
+        grid.style.display = "none";
+        document.getElementById('gameQuickOrderCard')?.remove();
+
+        const selectedGame = games.find(g => g.id === quickOrderSelection.gameId) || currentGame;
+        const prodsAll = selectedGame.getProducts();
+        const categories = [...new Set(prodsAll.map(p => p.category))];
+        if (!quickOrderSelection.category || !categories.includes(quickOrderSelection.category)) {
+            quickOrderSelection.category = categories[0] || null;
+        }
+        const prodsInCat = prodsAll.filter(p => p.category === quickOrderSelection.category);
+        if (!quickOrderSelection.productId || !prodsInCat.some(p => p.id === quickOrderSelection.productId)) {
+            quickOrderSelection.productId = prodsInCat[0]?.id || null;
+        }
+
+        const html = `<div class="content-card" id="gameQuickOrderCard" style="border-radius:34px;">
+            <div class="form-section">
+                <div class="form-label">Выберите сервис</div>
+                <select class="form-select-native" id="quickOrderGameSelect">
+                    ${games.map(g => `<option value="${g.id}" ${g.id === selectedGame.id ? 'selected' : ''}>${escapeHtml(g.name)}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-section">
+                <div class="form-label">Выберите категорию</div>
+                <select class="form-select-native" id="quickOrderCategorySelect">
+                    ${categories.map(c => `<option value="${escapeHtml(c)}" ${c === quickOrderSelection.category ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-section" style="margin-bottom:0;">
+                <div class="form-label">Выберите товар</div>
+                <select class="form-select-native" id="quickOrderProductSelect">
+                    ${prodsInCat.map(p => `<option value="${p.id}" ${p.id === quickOrderSelection.productId ? 'selected' : ''}>${escapeHtml(p.name)} - ${formatPrice(p.price)}</option>`).join('')}
+                </select>
+            </div>
+        </div>`;
+
+        grid.insertAdjacentHTML('afterend', html);
+
+        document.getElementById("quickOrderGameSelect")?.addEventListener('change', function() {
+            hapticLight();
+            const g = games.find(g => g.id === this.value);
+            if (!g) return;
+            if (g.enabled === false) {
+                showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
+                this.value = selectedGame.id;
+                return;
+            }
+            currentGame = g;
+            quickOrderSelection = { gameId: g.id, category: null, productId: null };
+            const titleSpan = document.querySelector('#game-page .page-header-title-btn span');
+            if (titleSpan) titleSpan.textContent = g.name;
+            renderGameQuickOrderBuilder();
+        });
+        document.getElementById("quickOrderCategorySelect")?.addEventListener('change', function() {
+            hapticLight();
+            quickOrderSelection.category = this.value;
+            quickOrderSelection.productId = null;
+            renderGameQuickOrderBuilder();
+        });
+        document.getElementById("quickOrderProductSelect")?.addEventListener('change', function() {
+            hapticLight();
+            quickOrderSelection.productId = this.value;
+            renderQuickOrderCheckoutBlock();
+        });
+
+        renderQuickOrderCheckoutBlock();
+    }
+
+    function renderQuickOrderCheckoutBlock() {
+        const fixedBlock = document.getElementById("cartCheckoutFixed");
+        if (!fixedBlock) return;
+        const selectedGame = games.find(g => g.id === quickOrderSelection.gameId) || currentGame;
+        const prod = selectedGame?.getProducts().find(p => p.id == quickOrderSelection.productId);
+        if (!prod) { fixedBlock.style.display = "none"; return; }
+        fixedBlock.style.display = "block";
+        fixedBlock.innerHTML = `<div class="checkout-card"><div class="total-row"><span class="total-label">${escapeHtml(prod.name)}</span><span class="total-price-wrapper"><span class="total-price">${formatPrice(prod.price)}</span></span></div><div class="checkout-buttons-row"><button class="checkout-button" id="quickOrderCheckoutBtn">Перейти к оформлению</button></div></div>`;
+        document.getElementById("quickOrderCheckoutBtn")?.addEventListener('click', () => {
+            hapticMedium();
+            gameQuickOrderMode = false;
+            startQuickOrder(prod.id);
         });
     }
 
@@ -3062,8 +3223,15 @@ function showAdditionalSettingsAlert() {
         };
     }
 
-    async function finalizeOrderAfterSuccess() {
-        cart = {};
+        async function finalizeOrderAfterSuccess() {
+        if (isQuickOrder) {
+            cart = savedCartBeforeQuickOrder || {};
+            savedCartBeforeQuickOrder = null;
+            isQuickOrder = false;
+            saveCartToLocalStorage();
+        } else {
+            cart = {};
+        }
         appliedPromo = null;
         isPromoMode = false;
         updateAllCards();
@@ -4465,12 +4633,22 @@ body: JSON.stringify({
     let gameSearchQuery = "";
     let gameCategoryFilter = "Все категории";
 
-    function renderGamePage() {
+        function renderGamePage() {
         const grid = document.getElementById("gameProductsGrid");
         if (!grid || !currentGame) return;
 
         const titleSpan = document.querySelector('#game-page .page-header-title-btn span');
         if (titleSpan) titleSpan.textContent = currentGame.name;
+
+        const searchSection = document.getElementById('gameSearchSection');
+        if (searchSection) searchSection.style.display = gameQuickOrderMode ? 'none' : 'flex';
+
+        if (gameQuickOrderMode) {
+            renderGameQuickOrderBuilder();
+            return;
+        }
+
+        document.getElementById('gameQuickOrderCard')?.remove();
 
         let prods = currentGame.getProducts();
 
@@ -4691,8 +4869,17 @@ body: JSON.stringify({
             });
         });
 
-        document.querySelectorAll('#game-page .product-card').forEach(card => {
+                document.querySelectorAll('#game-page .product-card').forEach(card => {
             const cardId = card.dataset.id;
+            const quickBtn = card.querySelector('[data-quickbuy]');
+            if (quickBtn) {
+                quickBtn.replaceWith(quickBtn.cloneNode(true));
+                card.querySelector('[data-quickbuy]')?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    hapticLight();
+                    startQuickOrder(cardId);
+                });
+            }
             const actionBtn = card.querySelector('.card-action-btn');
             if (!actionBtn) return;
             if (actionBtn.classList.contains('cart-add-btn')) {
@@ -5581,8 +5768,15 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
         const targetPage = document.getElementById(pageId + "-page");
         if (targetPage) targetPage.classList.add("active-page");
         const checkoutBlock = document.getElementById("cartCheckoutFixed");
-        if (pageId === "catalog") {
+                if (pageId === "catalog") {
             window.scrollTo({ top: 0, behavior: 'instant' });
+            if (isQuickOrder) {
+                cart = savedCartBeforeQuickOrder || {};
+                savedCartBeforeQuickOrder = null;
+                isQuickOrder = false;
+                saveCartToLocalStorage();
+            }
+            gameQuickOrderMode = false;
             currentGame = null;
             savedGameScrollY = 0;
             catalogServiceFilter = "Все сервисы";
