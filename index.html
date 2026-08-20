@@ -2726,6 +2726,7 @@ function showFormatSelectAlert() {
     }
 }
 
+let clearCacheConfirmPopupOpen = false;
 function showClearCacheConfirmAlert() {
     if (clearCacheConfirmPopupOpen) return;
     clearCacheConfirmPopupOpen = true;
@@ -2735,7 +2736,7 @@ function showClearCacheConfirmAlert() {
             window.Telegram.WebApp.showPopup({
                 message: 'Вы действительно хотите сбросить кэш приложения? Сброс кэша приложения не удалит ваши данные.',
                 buttons: [
-                    { id: 'cancel', type: 'default', text: 'Отмена' },
+                    { id: 'cancel', type: 'cancel', text: 'Отмена' },
                     { id: 'confirm', type: 'default', text: 'Сбросить' }
                 ]
             }, (buttonId) => {
