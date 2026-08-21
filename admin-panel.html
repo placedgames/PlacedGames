@@ -72,15 +72,17 @@
       --danger-bg: rgba(239, 68, 68, 0.12);
       --danger-color: #ef4444;
     }
-        body {
+        html { overflow-x: hidden; }
+    body {
       background-color: var(--app-bg);
       font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       color: var(--text-primary);
       padding-bottom: 130px;
-      padding-top: var(--tg-content-safe-area-inset-top, 0px);
+      padding-top: var(--tg-safe-area-inset-top, 0px);
       -webkit-user-select: text !important;
       user-select: text !important;
       -webkit-touch-callout: default !important;
+      overflow-x: hidden;
     }
 
     * {
@@ -95,7 +97,7 @@
       top: 0;
       z-index: 500;
       margin: 0 -16px 5px -16px;
-      padding: calc(var(--tg-content-safe-area-inset-top, 12px) + 6px) 16px 8px 16px;
+      padding: calc(var(--tg-safe-area-inset-top, 12px) + 6px) 16px 8px 16px;
       background: var(--app-bg);
     }
     .page-header-inner {
@@ -123,13 +125,16 @@
       cursor: pointer;
     }
     .page-header-icon-wrap {
-      width: 23px;
+      width: 22px;
+      height: 22px;
       margin-right: 8px;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      overflow: visible;
     }
+    .page-header-icon-wrap svg { width: 22px; height: 22px; position: relative; top: 0.5px; }
     .page-header-title-btn span {
       font-size: 18px;
       font-weight: 550;
@@ -148,13 +153,13 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 12px;
-      padding: 0 14px;
+      gap: 20px;
+      padding: 0 13px;
       cursor: pointer;
     }
-    .page-header-double-btn svg { width: 22px; height: 22px; flex-shrink: 0; }
-    #headerRefreshIcon { width: 23.5px !important; height: 23.5px !important; transition: transform 0.15s linear; }
-    #headerThemeIcon { width: 21.7px; height: 21.7px; transition: transform 0.3s ease; }
+    .page-header-double-btn svg { flex-shrink: 0; }
+    #headerRefreshIcon { width: 27.3px !important; height: 27.3px !important; transition: transform 0.15s linear; }
+    #headerThemeIcon { width: 25.3px; height: 25.3px; transition: transform 0.3s ease; }
     #headerRefreshIcon.spinning { animation: adminSpin 0.7s linear infinite; }
     .icon.spinning { animation: adminSpin 0.7s linear infinite; }
     @keyframes adminSpin { to { transform: rotate(360deg); } }
@@ -210,14 +215,15 @@
     #profileMenuWrapper.active { background: var(--profile-wrapper-active) !important; }
 
     .orders-list { display: flex; flex-direction: column; gap: 13px; }
-    .order-wrapper { position: relative; margin-bottom: 0; }
+    .order-wrapper { position: relative; margin-bottom: 14px; }
     .order-main-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 30px; padding: 14px; position: relative; z-index: 2; cursor: pointer;
     }
-    .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .order-id { font-weight: 600; color: #4cb4e9; font-size: 17px; }
+    .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+    .order-id { font-weight: 600; color: #4cb4e9; font-size: 18px; }
+    .order-header-right { display: flex; align-items: center; gap: 8px; }
     .order-card-status { padding: 4px 12px; border-radius: 20px; font-size: 16px; font-weight: 500; }
     .status-pending-text { color: #4cb4e9; }
     .status-pending-bg { background: rgba(76,180,233,0.1); }
@@ -235,8 +241,9 @@
     .status-notfound-bg { background: rgba(239,68,68,0.1); }
     .status-inprogress-text { color: #eab308; }
 .status-inprogress-bg { background: rgba(234,179,8,0.1); }
-    .order-date { color: var(--text-secondary); font-size: 14px; margin-bottom: 8px; }
-    .order-total { font-weight: 600; color: var(--text-primary); font-size: 17px; }
+    .order-date { color: #a1a1aa; font-size: 15px; margin-bottom: 8px; }
+    .order-total { font-weight: 550; color: var(--text-primary); font-size: 18px; }
+    .order-status-info-icon { position: absolute; bottom: 17px; right: 18px; width: 21px; height: 21px; cursor: pointer; }
     .order-items-card {
       background: var(--col-bg);
       border: 1px solid var(--border-color);
@@ -337,7 +344,6 @@
       cursor: pointer; flex-shrink: 0;
     }
     .status-apply-btn svg { width: 19px; height: 19px; }
-    .status-apply-btn.loading svg { animation: adminSpin 0.7s linear infinite; }
 
     .stats-card {
       background: var(--card-bg);
@@ -397,12 +403,12 @@
     .review-badge-stack { position: relative; display: flex; align-items: center; margin-left: auto; flex-shrink: 0; }
     .review-order-badge-wrap { position: relative; z-index: 2; height: 37px; display: flex; align-items: center; }
     .review-order-badge-backdrop {
-      position: absolute; inset: 0; background: var(--card-bg); border-radius: 20px; z-index: -1;
+      position: absolute; inset: 0; background: var(--card-bg); border-radius: 20px;
     }
     .review-order-badge {
-      display: inline-flex; align-items: center; height: 37px; box-sizing: border-box;
-      background: var(--accent-blue-bg); border-radius: 20px; padding: 0 12px;
-      font-size: 15px; font-weight: 600; color: #4cb4e9; cursor: pointer;
+      position: relative; display: inline-flex; align-items: center; height: 37px; box-sizing: border-box;
+      background: var(--accent-blue-bg); border: 1px solid rgba(76, 180, 233, 0.05); border-radius: 20px;
+      padding: 0 14px 0 12px; font-size: 18px; font-weight: 500; color: #4cb4e9; cursor: pointer;
     }
     .review-rating-badge {
       display: inline-flex; align-items: center; border-radius: 20px; padding: 0 10px 0 45px;
@@ -414,21 +420,21 @@
     .review-username-link:active { opacity: 0.7; }
 
     /* Поиск + фильтр (как в index.html) */
-    .search-section { display: flex; gap: 10px; margin-bottom: 13px; align-items: center; }
+    .search-section { display: flex; gap: 10px; margin-bottom: 13px; align-items: center; min-width: 0; }
     .search-bar {
-      flex: 1; background: var(--card-bg); height: 53px; border-radius: 36px;
+      flex: 1; min-width: 0; background: var(--card-bg); height: 53px; border-radius: 36px;
       border: 1px solid var(--border-color); display: flex; align-items: center;
-      padding: 0 16px; gap: 10px; position: relative; z-index: 2;
+      padding: 0 16px; gap: 10px; position: relative; z-index: 2; overflow: hidden;
     }
     .search-icon { width: 20px; height: 20px; filter: brightness(0) saturate(100%) invert(70%); flex-shrink: 0; }
     .search-input {
-      flex: 1; background: transparent; border: none; outline: none; color: var(--text-primary);
-      font-size: 17px; font-weight: 500; min-width: 0;
+      flex: 1 1 auto; min-width: 0; width: 100%; background: transparent; border: none; outline: none;
+      color: var(--text-primary); font-size: 19px; font-weight: 500;
     }
-    .search-input::placeholder { color: #a1a1aa; font-size: 17px; }
+    .search-input::placeholder { color: #a1a1aa; font-size: 19px; }
     .search-clear-btn {
       display: none; align-items: center; justify-content: center;
-      width: 22px; height: 22px; flex-shrink: 0; cursor: pointer; opacity: 0.7;
+      width: 23px; height: 23px; flex-shrink: 0; cursor: pointer; opacity: 0.7;
     }
     .search-clear-btn.visible { display: flex; }
     .filter-btn {
@@ -436,7 +442,7 @@
       width: 110px; height: 53px; border-radius: 36px;
       display: flex; align-items: center; justify-content: flex-end;
       padding-right: 18px; cursor: pointer; flex-shrink: 0; margin-left: -65px;
-      position: relative; z-index: 1;
+      position: relative; z-index: 1; overflow: hidden;
     }
     .filter-btn svg { width: 25px; height: 25px; }
     .filter-btn select {
@@ -448,19 +454,26 @@
     .referral-wrapper { position: relative; margin-bottom: 13px; }
     .referral-main-card {
       background: var(--card-bg); border: 1px solid var(--border-color);
-      border-radius: 30px; padding: 16px 18px; position: relative; z-index: 2;
+      border-radius: 30px; padding: 16px 17px 16px 19px; position: relative; z-index: 2;
     }
-    .referral-title { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .referral-title { font-size: 19px; font-weight: 550; color: var(--text-primary); margin-bottom: 5px; }
     .referral-bottom-card {
       background: var(--col-bg); border: 1px solid var(--border-color);
-      border-radius: 0 0 30px 30px; padding: 4px 4px 6px 4px; margin-top: -28px; padding-top: 36px;
+      border-radius: 0 0 35px 35px; padding: 11px; margin-top: -29px; padding-top: 41px;
       position: relative; z-index: 1;
     }
-    .referral-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; }
-    .referral-row-name { font-size: 16px; color: var(--text-muted); cursor: pointer; }
-    .referral-row-value { font-size: 16px; color: var(--text-primary); font-weight: 500; }
-    .referral-row-value.negative { color: #ef4444; }
-    .referral-row-value.positive { color: #22c55e; }
+    .wallet-tx-row { padding: 12px 0; display: flex; flex-direction: column; gap: 2px; }
+    .wallet-tx-row:first-child { padding-top: 0; }
+    .wallet-tx-row:last-child { padding-bottom: 0; }
+    .wallet-tx-row + .wallet-tx-row { border-top: 1px solid var(--border-color); }
+    .wallet-tx-line1, .wallet-tx-line2 { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    .wallet-tx-title, .wallet-tx-amount { font-size: 18px; font-weight: 550; color: var(--text-primary); }
+    .wallet-tx-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .wallet-tx-amount { flex-shrink: 0; }
+    .wallet-tx-amount.positive { color: #22c55e; }
+    .wallet-tx-amount.negative { color: #ef4444; }
+    .wallet-tx-date, .wallet-tx-subtitle { font-size: 15px; font-weight: 500; color: var(--text-secondary); }
+    .wallet-tx-subtitle { flex-shrink: 0; }
 
     .profile-wrapper { position: relative; margin-bottom: 13px; }
     .profile-main-card {
@@ -548,6 +561,11 @@
     <symbol id="icon-copy" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M3.375,4.500 L2.719,5.109 L2.109,6.141 L1.875,7.031 L1.875,20.719 L2.109,21.609 L2.578,22.453 L3.141,23.062 L3.656,23.438 L4.219,23.719 L5.109,23.953 L15.047,23.953 L15.938,23.719 L16.781,23.250 L17.391,22.688 L17.766,22.172 L18.047,21.609 L18.281,20.719 L18.281,7.031 L18.047,6.141 L17.578,5.297 L16.969,4.641 L15.938,4.031 L15.047,3.797 L5.109,3.797 L4.219,4.031 Z M4.547,5.953 L5.438,5.625 L14.719,5.625 L15.469,5.859 L16.125,6.469 L16.453,7.359 L16.453,20.391 L16.219,21.141 L15.609,21.797 L14.719,22.125 L5.438,22.125 L4.688,21.891 L4.031,21.281 L3.703,20.391 L3.703,7.359 L3.938,6.609 Z M7.359,0.141 L6.984,0.656 L6.984,1.172 L7.125,1.453 L7.641,1.828 L18.469,1.828 L19.219,2.062 L19.734,2.484 L20.062,3.000 L20.203,3.562 L20.203,18.141 L20.344,18.422 L20.859,18.797 L21.375,18.797 L21.656,18.656 L22.031,18.141 L22.031,3.234 L21.797,2.344 L21.188,1.312 L20.250,0.516 L19.688,0.234 L18.797,0.000 L7.641,0.000 Z"/></symbol>
     <symbol id="icon-success" viewBox="0 0 24 24"><path fill="currentColor" d="M23.859,4.594 L23.578,4.078 L22.781,3.469 L21.703,3.375 L20.953,3.703 L8.625,16.031 L3.141,10.547 L2.625,10.219 L1.688,10.078 L1.266,10.172 L0.562,10.594 L0.234,11.016 L0.000,11.625 L0.094,12.656 L0.516,13.312 L7.547,20.297 L8.250,20.578 L9.328,20.484 L9.844,20.156 L23.531,6.469 L23.953,5.578 Z"/></symbol>
     <symbol id="icon-cancel" viewBox="0 0 24 24"><path fill="currentColor" d="M0.797,0.469 L0.328,0.984 L0.000,1.828 L0.000,2.578 L0.328,3.422 L8.578,11.719 L8.625,12.094 L0.469,20.344 L0.047,21.188 L0.000,22.078 L0.141,22.594 L0.516,23.203 L1.078,23.672 L1.875,23.953 L2.766,23.906 L3.609,23.484 L11.719,15.375 L12.094,15.328 L20.531,23.625 L21.375,23.953 L22.125,23.953 L23.156,23.484 L23.625,22.969 L23.953,22.125 L23.953,21.375 L23.625,20.531 L15.375,12.234 L15.328,11.859 L23.625,3.422 L23.953,2.578 L23.953,1.828 L23.484,0.797 L22.969,0.328 L22.125,0.000 L21.375,0.000 L20.531,0.328 L12.234,8.578 L11.859,8.625 L3.422,0.328 L2.578,0.000 L1.828,0.000 Z"/></symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M11.109,0.000 L9.938,0.141 L8.391,0.516 L6.281,1.406 L4.453,2.625 L2.859,4.172 L1.406,6.281 L0.516,8.391 L0.047,10.594 L0.000,12.844 L0.141,14.016 L0.516,15.562 L1.406,17.672 L2.625,19.500 L4.172,21.094 L6.281,22.547 L8.391,23.438 L10.594,23.906 L12.844,23.953 L14.016,23.812 L15.562,23.438 L17.672,22.547 L19.500,21.328 L21.094,19.781 L22.547,17.672 L23.438,15.562 L23.906,13.359 L23.953,11.109 L23.812,9.938 L23.438,8.391 L22.547,6.281 L21.328,4.453 L19.781,2.859 L17.672,1.406 L15.562,0.516 L13.359,0.047 Z M11.250,2.156 L13.172,2.203 L14.906,2.578 L16.828,3.422 L18.188,4.359 L19.594,5.766 L20.531,7.125 L21.375,9.047 L21.797,11.250 L21.750,13.172 L21.375,14.906 L20.531,16.828 L19.594,18.188 L18.188,19.594 L16.828,20.531 L14.906,21.375 L12.703,21.797 L10.781,21.750 L9.047,21.375 L7.125,20.531 L5.766,19.594 L4.359,18.188 L3.422,16.828 L2.578,14.906 L2.156,12.703 L2.203,10.781 L2.578,9.047 L3.422,7.125 L4.359,5.766 L5.766,4.359 L7.125,3.422 L9.047,2.578 Z"/>
+        <path fill="currentColor" d="M11.766,10.172 L11.344,10.359 L11.062,10.641 L10.875,11.250 L10.875,17.812 L10.969,18.234 L11.297,18.656 L12.047,18.891 L12.516,18.750 L12.844,18.469 L13.078,17.812 L13.078,11.250 L12.891,10.641 L12.609,10.359 L12.188,10.172 Z"/>
+        <path fill="currentColor" d="M11.906,5.062 L11.203,5.297 L10.828,5.625 L10.547,6.234 L10.547,6.844 L10.781,7.359 L11.156,7.734 L11.766,7.969 L12.188,7.969 L12.797,7.734 L13.172,7.359 L13.406,6.797 L13.406,6.234 L13.219,5.766 L12.891,5.391 L12.469,5.156 Z"/>
+    </symbol>
     <symbol id="icon-logo" viewBox="0 0 24 24">
     <path fill="currentColor" d="M 20.732,1.769 L 20.647,1.725 Q 20.266,1.524 19.837,1.559 L 19.645,1.575 Q 19.137,1.618 18.642,1.740 L 5.405,5.017 Q 4.604,5.216 3.916,5.671 L 3.460,5.972 Q 3.076,6.227 2.832,6.618 L 2.778,6.705 Q 2.535,7.097 2.425,7.545 L 2.392,7.679 Q 2.276,8.155 2.276,8.645 L 2.276,19.547 Q 2.276,20.148 2.562,20.677 L 2.625,20.795 Q 2.911,21.324 3.447,21.598 L 4.899,22.339 Q 5.169,22.476 5.465,22.413 L 5.531,22.399 Q 5.827,22.335 6.027,22.108 L 6.112,22.012 Q 6.344,21.747 6.347,21.395 L 6.413,10.718 Q 6.415,10.389 6.500,10.072 L 6.518,10.001 Q 6.603,9.684 6.854,9.471 L 6.939,9.399 Q 7.214,9.166 7.564,9.078 L 16.719,6.773 Q 16.927,6.721 17.138,6.752 L 17.202,6.762 Q 17.397,6.791 17.513,6.950 L 17.539,6.985 Q 17.656,7.144 17.657,7.341 L 17.677,10.542 Q 17.679,10.906 17.499,11.224 L 17.459,11.295 Q 17.279,11.612 16.926,11.704 L 10.722,13.318 Q 10.319,13.423 9.980,13.666 L 9.770,13.817 Q 9.566,13.964 9.471,14.196 L 9.450,14.248 Q 9.354,14.481 9.354,14.733 L 9.354,16.842 Q 9.354,17.303 9.630,17.673 L 9.775,17.869 Q 9.966,18.126 10.283,18.168 L 10.354,18.178 Q 10.671,18.220 10.982,18.142 L 18.893,16.165 Q 19.608,15.986 20.232,15.594 L 20.371,15.507 Q 20.995,15.116 21.285,14.439 L 21.383,14.211 Q 21.700,13.470 21.700,12.664 L 21.700,3.804 Q 21.700,3.193 21.436,2.643 L 21.299,2.359 Q 21.113,1.970 20.732,1.769 Z"/>
 </symbol>
@@ -1043,55 +1061,101 @@
       const sd = getStatusDisplayText(order.status_code);
       const itemsHtml = items.map(i => `<div class="order-item-row"><span class="order-item-name">${escapeHtml(i.name)} ${i.qty > 1 ? `x${i.qty}` : ''}</span><span class="order-item-price">${formatPrice(i.price * i.qty)}</span></div>`).join('');
       return `<div class="order-wrapper" data-order-id="${order.id}">
-        <div class="order-main-card" style="position:relative;">
+        <div class="order-main-card">
           <div class="order-header">
             <span class="order-id">Заказ #${order.order_number}</span>
-            <span class="order-card-status ${tc} ${bc}">${sd}</span>
+            <div class="order-header-right">
+              <span class="order-card-status ${tc} ${bc}">${sd}</span>
+            </div>
           </div>
           <div class="order-date">${order.date} ${order.time || ''}</div>
           <div class="order-total">${formatPrice(order.total)}</div>
-          <button class="admin-delete-order-btn" data-id="${order.id}" data-num="${order.order_number}" style="position:absolute;bottom:12px;right:12px;background:rgba(239,68,68,0.12);border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
-            <img src="https://storage.botpapa.me/files/19b700d0-4a0d-11f1-bef9-f1ec7a2c6e45.png" style="width:18px;height:18px;">
-          </button>
+          <svg class="icon icon--accent order-status-info-icon" data-status-info="${order.id}"><use href="#icon-info"></use></svg>
         </div>
         <div class="order-items-card">${itemsHtml}</div>
       </div>`;
     }).join('');
 
     container.querySelectorAll('.order-wrapper').forEach(w => {
-      w.addEventListener('click', () => {
+      w.addEventListener('click', (e) => {
+        if (e.target.closest('.order-status-info-icon')) return;
         hapticLight();
         const order = allOrders.find(o => o.id === parseInt(w.dataset.orderId));
         if (order) showOrderDetail(order);
       });
     });
 
-    container.querySelectorAll('.admin-delete-order-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
+    container.querySelectorAll('.order-status-info-icon').forEach(icon => {
+      icon.addEventListener('click', (e) => {
         e.stopPropagation();
         hapticLight();
-        const orderId = btn.dataset.id;
-        const orderNum = btn.dataset.num;
-        window.Telegram.WebApp.showPopup({
-          message: `Удалить заказ #${orderNum}?`,
-          buttons: [
-            { id: 'ok', type: 'destructive', text: 'Удалить' },
-            { id: 'cancel', type: 'cancel' }
-          ]
-        }, async (buttonId) => {
-          if (buttonId !== 'ok') return;
-          try {
-            const r = await fetch(`${API}/api/orders/${orderId}`, {
-              method: 'DELETE',
-              headers: { 'Authorization': `Bearer ${getAdminToken()}` }
-            });
-            if (r.ok) { hapticLight(); await loadOrders(); }
-            else alert('Ошибка удаления');
-          } catch(e) { alert('Ошибка соединения'); }
-        });
+        const order = allOrders.find(o => o.id === parseInt(icon.dataset.statusInfo));
+        if (order) showOrderStatusInfoAdmin(order);
       });
     });
   }
+
+  function deleteOrderConfirm(order) {
+    hapticLight();
+    window.Telegram.WebApp.showPopup({
+      message: `Удалить заказ #${order.order_number}?`,
+      buttons: [
+        { id: 'ok', type: 'destructive', text: 'Удалить' },
+        { id: 'cancel', type: 'cancel' }
+      ]
+    }, async (buttonId) => {
+      if (buttonId !== 'ok') return;
+      try {
+        const r = await fetch(`${API}/api/orders/${order.id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+        });
+        if (r.ok) {
+          hapticLight();
+          await loadOrders();
+          if (document.getElementById('detail-page')?.classList.contains('active-page')) {
+            showAdminPage('orders');
+          }
+        } else alert('Ошибка удаления');
+      } catch(e) { alert('Ошибка соединения'); }
+    });
+  }
+
+  // Тот же алерт с информацией о заказе, что и на фронтенде, плюс кнопка «Удалить заказ» для админа
+  function showOrderStatusInfoAdmin(order) {
+    if (!order) return;
+    let items = [];
+    try { items = JSON.parse(order.items || '[]'); } catch(e) {}
+    const serviceName = items[0]?.name || '—';
+    const statusDisplay = getStatusDisplayText(order.status_code);
+    const message =
+      `Информация о заказе:\n\n` +
+      `Номер заказа: #${order.order_number}\n` +
+      `Сервис: ${serviceName}\n` +
+      `Дата: ${order.date} ${order.time || ''}\n` +
+      `Статус: ${statusDisplay}\n` +
+      `Сумма заказа: ${formatPrice(order.total)}`;
+
+    if (window.Telegram?.WebApp?.showPopup) {
+      window.Telegram.WebApp.showPopup({
+        message: message,
+        buttons: [
+          { id: 'goto_order', type: 'default', text: 'Перейти к заказу' },
+          { id: 'delete_order', type: 'destructive', text: 'Удалить заказ' }
+        ]
+      }, (buttonId) => {
+        if (buttonId === 'goto_order') {
+          hapticLight();
+          showOrderDetail(order);
+        } else if (buttonId === 'delete_order') {
+          deleteOrderConfirm(order);
+        }
+      });
+    } else {
+      alert(message);
+    }
+  }
+
 
   document.addEventListener('input', (e) => {
     if (e.target.id === 'orderSearchInput') {
@@ -1202,19 +1266,14 @@ if (order.user_id) {
         <button class="status-apply-btn" id="adminUpdateStatusBtn" title="Применить статус">
           <svg class="icon icon--accent"><use href="#icon-success"></use></svg>
         </button>
-        <button class="refresh-circle-btn" id="adminRefreshBtn" title="Обновить заказ">
-          <svg class="icon icon--accent"><use href="#icon-refresh"></use></svg>
-        </button>
       </div>
     </div>`;
     document.body.appendChild(fixedBar);
 
     document.getElementById('adminUpdateStatusBtn').addEventListener('click', async function() {
-      const btn = this;
       const newCode = document.getElementById('adminStatusSelect').value;
       const statusMap = {'awaiting_code':'Ожидание кода','processing':'Ожидает выполнения','in_progress':'Выполняется','done':'Заказ выполнен','notfound':'Заказ отменён'};
       hapticMedium();
-      btn.classList.add('loading');
       showTopLoader();
       try {
         const r = await fetch(`${API}/api/update-status`, { 
@@ -1231,22 +1290,7 @@ if (order.user_id) {
           if (upd) showOrderDetail(upd); 
         } else alert('Ошибка обновления статуса');
       } catch(e) { alert('Ошибка соединения'); }
-      finally { btn.classList.remove('loading'); hideTopLoader(); }
-    });
-
-    document.getElementById('adminRefreshBtn').addEventListener('click', async function() {
-      const btn = this;
-      hapticLight();
-      btn.querySelector('svg')?.classList.add('spinning');
-      showTopLoader();
-      try {
-        await loadOrders();
-        const upd = allOrders.find(o => o.id === order.id);
-        if (upd) showOrderDetail(upd);
-      } finally {
-        btn.querySelector('svg')?.classList.remove('spinning');
-        hideTopLoader();
-      }
+      finally { hideTopLoader(); }
     });
 
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
@@ -1450,17 +1494,25 @@ if (order.user_id) {
       const card = document.getElementById('userReferralCard');
       if (!card) return;
       const rowsHtml = list.length ? list.map(ref => `
-        <div class="referral-row">
-          <span class="referral-row-name review-username-link" data-user-id="${ref.user_id || ''}">${escapeHtml(ref.nickname || 'Пользователь')}</span>
-          <span class="referral-row-value positive">+${formatPrice(ref.earned || 0)}</span>
-        </div>`).join('') : `<div class="referral-row"><span class="referral-row-name" style="cursor:default;">Пока никого не пригласил</span></div>`;
+        <div class="wallet-tx-row review-username-link" data-user-id="${ref.user_id || ''}" style="cursor:pointer;">
+          <div class="wallet-tx-line1">
+            <span class="wallet-tx-title">${escapeHtml(ref.nickname || 'Пользователь')}</span>
+            <span class="wallet-tx-amount" style="color:var(--text-primary);">${formatPrice(ref.earned || 0)}</span>
+          </div>
+          <div class="wallet-tx-line2">
+            <span class="wallet-tx-date">Пользователь</span>
+            <span class="wallet-tx-subtitle">Заработано</span>
+          </div>
+        </div>`).join('') : `<div class="review-empty">Пока никого не пригласил</div>`;
       card.innerHTML = `
         <div class="referral-wrapper" style="margin-top:13px;">
           <div class="referral-main-card">
             <div class="referral-title">Приглашенные пользователи</div>
-            <div style="color:var(--text-secondary);font-size:14px;">Приглашено: ${stats.invited} · Заработано: ${formatPrice(stats.earned)}</div>
+            <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">Приглашено: ${stats.invited} · Заработано: ${formatPrice(stats.earned)}</div>
           </div>
-          <div class="referral-bottom-card">${rowsHtml}</div>
+          <div class="referral-bottom-card">
+            <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;">${rowsHtml}</div>
+          </div>
         </div>`;
       card.querySelectorAll('.review-username-link[data-user-id]').forEach(el => {
         if (!el.dataset.userId) return;
@@ -1483,20 +1535,30 @@ if (order.user_id) {
       const rowsHtml = (txList || []).length ? txList.map(tx => {
         const isNeg = tx.amount < 0;
         const dt = tx.created_at ? new Date(tx.created_at) : null;
-        const dateStr = dt ? `${dt.toLocaleDateString('ru-RU')} ${dt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}` : '';
-        return `<div class="referral-row" data-tx-id="${tx.id}" style="cursor:pointer;">
-          <span class="referral-row-name" style="cursor:pointer;">${typeLabels[tx.type] || tx.type || 'Операция'}${tx.order_number ? ' #' + tx.order_number : ''}<br><span style="font-size:12px;color:var(--text-secondary);">${dateStr}</span></span>
-          <span class="referral-row-value ${isNeg ? 'negative' : 'positive'}">${isNeg ? '' : '+'}${formatPrice(tx.amount)}</span>
+        const dateStr = dt ? `${dt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} ${dt.toLocaleDateString('ru-RU')}` : '';
+        const title = `${typeLabels[tx.type] || tx.type || 'Операция'}${tx.order_number ? ' #' + tx.order_number : ''}`;
+        return `<div class="wallet-tx-row" data-tx-id="${tx.id}" style="cursor:pointer;">
+          <div class="wallet-tx-line1">
+            <span class="wallet-tx-title">${escapeHtml(title)}</span>
+            <span class="wallet-tx-amount ${isNeg ? 'negative' : 'positive'}">${isNeg ? '' : '+'}${formatPrice(tx.amount)}</span>
+          </div>
+          <div class="wallet-tx-line2">
+            <span class="wallet-tx-date">${dateStr}</span>
+            <span class="wallet-tx-subtitle">Нажмите, чтобы удалить</span>
+          </div>
         </div>`;
-      }).join('') : `<div class="referral-row"><span class="referral-row-name" style="cursor:default;">История операций пуста</span></div>`;
+      }).join('') : `<div class="review-empty">История операций пуста</div>`;
       card.innerHTML = `
         <div class="referral-wrapper" style="margin-top:13px;">
           <div class="referral-main-card">
             <div class="referral-title">История операций</div>
+            <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">История всех операций пользователя</div>
           </div>
-          <div class="referral-bottom-card">${rowsHtml}</div>
+          <div class="referral-bottom-card">
+            <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;">${rowsHtml}</div>
+          </div>
         </div>`;
-      card.querySelectorAll('.referral-row[data-tx-id]').forEach(row => {
+      card.querySelectorAll('.wallet-tx-row[data-tx-id]').forEach(row => {
         row.addEventListener('click', () => {
           hapticLight();
           const txId = row.dataset.txId;
@@ -1649,6 +1711,9 @@ if (order.user_id) {
           try { items = JSON.parse(rv.order_items || '[]'); } catch(e) {}
           const itemsHtml = items.map(i => `<div class="review-item-row"><span class="review-item-name">${escapeHtml(i.name)}</span><span class="review-item-price">${formatPrice(i.price)}</span></div>`).join('');
           const isBad = rv.rating === 'bad';
+          const badgeBg = isBad ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)';
+          const badgeColor = isBad ? '#ef4444' : '#22c55e';
+          const badgeBorder = isBad ? 'rgba(239,68,68,0.05)' : 'rgba(34,197,94,0.05)';
           return `<div class="review-card-wrapper" data-review-id="${rv.id}">
             <div class="review-card">
               <div class="review-header">
@@ -1658,9 +1723,9 @@ if (order.user_id) {
                   <div class="review-date">${dateStr}</div>
                 </div>
                 <div class="review-badge-stack">
-                  ${rv.order_number ? `<div class="review-order-badge-wrap"><div class="review-order-badge-backdrop"></div><span class="review-order-badge">#${rv.order_number}</span></div>` : ''}
-                  <button class="review-rating-badge" data-id="${rv.id}" title="Удалить отзыв" style="background:${isBad ? 'rgba(239,68,68,0.12)' : 'rgba(34,197,94,0.12)'};color:${isBad ? '#ef4444' : '#22c55e'};">
-                    <svg class="icon"><use href="#icon-review-${isBad ? 'sad' : 'happy'}"></use></svg>
+                  ${rv.order_number ? `<div class="review-order-badge-wrap"><div class="review-order-badge-backdrop"></div><span class="review-order-badge review-order-nav-btn" data-order-number="${escapeHtml(String(rv.order_number))}">#${rv.order_number}</span></div>` : ''}
+                  <button class="review-rating-badge" data-id="${rv.id}" title="Удалить отзыв" style="background:${badgeBg};border-color:${badgeBorder};">
+                    <svg class="icon" style="color:${badgeColor};"><use href="#icon-review-${isBad ? 'sad' : 'happy'}"></use></svg>
                   </button>
                 </div>
               </div>
@@ -1669,6 +1734,21 @@ if (order.user_id) {
             ${itemsHtml ? `<div class="review-items-card">${itemsHtml}</div>` : ''}
           </div>`;
         }).join('');
+
+        listEl.querySelectorAll('.review-order-nav-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hapticLight();
+            const num = btn.dataset.orderNumber;
+            const order = allOrders.find(o => String(o.order_number) === String(num));
+            if (order) { showOrderDetail(order); return; }
+            // Если заказы ещё не загружены — подгружаем и открываем нужный
+            loadOrders().then(() => {
+              const o2 = allOrders.find(o => String(o.order_number) === String(num));
+              if (o2) showOrderDetail(o2);
+            });
+          });
+        });
 
         listEl.querySelectorAll('.review-rating-badge').forEach(btn => {
           btn.addEventListener('click', async (e) => {
