@@ -97,7 +97,7 @@
       top: 0;
       z-index: 500;
       margin: 0 -16px 5px -16px;
-      padding: calc(var(--tg-safe-area-inset-top, 12px) + 2px) 16px 8px 16px;
+      padding: var(--tg-safe-area-inset-top, 12px) 16px 8px 16px;
       background: var(--app-bg);
     }
     .page-header-inner {
@@ -215,7 +215,7 @@
     #profileMenuWrapper.active { background: var(--profile-wrapper-active) !important; }
 
     .orders-list { display: flex; flex-direction: column; gap: 13px; }
-    .order-wrapper { position: relative; margin-bottom: 14px; }
+    .order-wrapper { position: relative; margin-bottom: 0; }
     .order-main-card {
       background: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -386,7 +386,7 @@
     .user-spent-label { font-size: 15px; color: var(--text-secondary); }
     .user-spent-value { font-size: 15px; color: var(--text-primary); font-weight: 600; }
 
-    .review-card-wrapper { position: relative; margin-bottom: 10px; }
+    .review-card-wrapper { position: relative; margin-bottom: 13px; }
     .review-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 30px; padding: 16px; position: relative; z-index: 2; margin-bottom: 0; }
     .review-items-card { background: var(--col-bg); border: 1px solid var(--border-color); border-radius: 0 0 30px 30px; padding: 12px 16px; margin-top: -28px; padding-top: 36px; position: relative; z-index: 1; margin-bottom: 0; }
     .review-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -504,6 +504,44 @@
     .profile-stats-row:last-child { padding-bottom: 0; }
     .profile-stats-label { font-size: 16px; color: var(--text-muted); font-weight: 500; }
     .profile-stats-value { font-size: 16px; color: var(--text-primary); font-weight: 500; }
+    .profile-info { flex: 1; }
+    .icon-info-profile { width: 24px; height: 24px; cursor: pointer; }
+    .icon-profile-referral-copy { width: 17px; height: 17px; cursor: pointer; transition: transform 0.1s ease; }
+
+    /* Карточка "Реферальная программа" со ссылкой и статистикой (1в1 фронтенд) */
+    .referral-link-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .referral-link-text {
+      font-size: 17px; font-weight: 500; color: var(--text-secondary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+    }
+    .referral-copy-icon:active { transform: scale(0.85); }
+    .referral-stats-inner { background: var(--card-bg); border-radius: 29px; padding: 16px 18px; display: flex; align-items: center; }
+    .referral-stat-item { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .referral-stat-item.left { align-items: flex-start; text-align: left; }
+    .referral-stat-item.right { align-items: flex-start; text-align: left; padding-left: 16px; }
+    .referral-stat-value { font-size: 20px; font-weight: 550; color: var(--text-primary); }
+    .referral-stat-label { font-size: 15px; color: var(--text-secondary); font-weight: 500; }
+    .referral-stat-divider { width: 1px; align-self: stretch; background: var(--border-color); margin: 6px 0; }
+    .referral-badge { font-size: 14px; font-weight: 550; color: #4cb4e9; background: var(--accent-blue-bg); border-radius: 20px; padding: 2px 8px; }
+
+    /* Слайдер категорий (Кошелёк / Рефералы) на странице пользователя */
+    .category-slider {
+      position: relative; display: flex; background: var(--card-bg);
+      border: 1px solid var(--border-color); border-radius: 20px;
+      padding: 4px; margin-bottom: 13px; height: 48px;
+    }
+    .category-slider-thumb {
+      position: absolute; top: 4px; left: 4px;
+      width: calc(50% - 4px); height: calc(100% - 8px);
+      background: var(--menu-slider-bg); border-radius: 16px;
+      transition: left 0.2s cubic-bezier(0.4,0,0.2,1);
+    }
+    .category-slider-btn {
+      flex: 1; border: none; background: transparent; position: relative; z-index: 1;
+      font-size: 16px; font-weight: 600; color: var(--text-secondary);
+      cursor: pointer; height: 100%; border-radius: 16px;
+    }
+    .category-slider-btn.active { color: var(--text-primary); }
     
     .subscribe-card {
       background: var(--card-bg);
@@ -1443,7 +1481,7 @@ if (order.user_id) {
         document.getElementById('userSearchClearBtn')?.classList.remove('visible');
         renderUsersList();
       });
-      document.getElementById('userFilterBtn')?.addEventListener('click', () => hapticLight());
+      document.getElementById('userFilterBtn')?.addEventListener('click', () => {});
       document.getElementById('userStatusFilterSelect')?.addEventListener('change', (e) => {
         hapticLight();
         window.__usersFilter = e.target.value;
@@ -1452,6 +1490,267 @@ if (order.user_id) {
 
     } catch(e) {
       container.innerHTML = `<div class="empty-state">Ошибка загрузки: ${e.message}</div>`;
+    }
+  }
+
+  const txLabelsAdmin = { admin_topup: 'Админ', purchase: 'Покупка', cashback_referral: 'Реферал', cashback_own: 'Кэшбэк' };
+
+  function buildAdminWalletTxRowHtml(tx) {
+    const isNeg = tx.amount < 0;
+    const dt = tx.created_at ? new Date(tx.created_at) : null;
+    let dateStr = '';
+    if (dt && !isNaN(dt)) {
+      const hh = String(dt.getHours()).padStart(2,'0');
+      const mm = String(dt.getMinutes()).padStart(2,'0');
+      const dd = String(dt.getDate()).padStart(2,'0');
+      const mo = String(dt.getMonth()+1).padStart(2,'0');
+      const yy = String(dt.getFullYear()).slice(2);
+      dateStr = `${hh}:${mm} ${dd}.${mo}.${yy}`;
+    }
+    const title = tx.order_number ? `Заказ #${tx.order_number}` : (txLabelsAdmin[tx.type] || 'Операция');
+    return `<div class="wallet-tx-row" data-tx-id="${tx.id}" style="cursor:pointer;">
+      <div class="wallet-tx-line1">
+        <span class="wallet-tx-title">${escapeHtml(title)}</span>
+        <span class="wallet-tx-amount ${isNeg ? 'negative' : 'positive'}">${isNeg ? '' : '+'}${formatPrice(tx.amount)}</span>
+      </div>
+      <div class="wallet-tx-line2">
+        <span class="wallet-tx-date">${dateStr}</span>
+        <span class="wallet-tx-subtitle">${escapeHtml(txLabelsAdmin[tx.type] || '')}</span>
+      </div>
+    </div>`;
+  }
+
+  function buildAdminReferralRowHtml(ref) {
+    return `<div class="wallet-tx-row review-username-link" data-user-id="${ref.user_id || ''}" style="cursor:pointer;">
+      <div class="wallet-tx-line1">
+        <span class="wallet-tx-title">${escapeHtml(ref.nickname || 'Пользователь')}</span>
+        <span class="wallet-tx-amount" style="color:var(--text-primary);">${formatPrice(ref.earned || 0)}</span>
+      </div>
+      <div class="wallet-tx-line2">
+        <span class="wallet-tx-date">Пользователь</span>
+        <span class="wallet-tx-subtitle">Заработано</span>
+      </div>
+    </div>`;
+  }
+
+  function wireReferralRowClicks(root) {
+    root.querySelectorAll('.review-username-link[data-user-id]').forEach(el => {
+      if (!el.dataset.userId) return;
+      el.addEventListener('click', async () => {
+        hapticLight();
+        try {
+          const rr = await fetch(`${API}/api/user/${el.dataset.userId}`, { headers: { 'Authorization': `Bearer ${getAdminToken()}` } });
+          const u = await rr.json();
+          if (u && u.user_id) showUserDetail(u);
+        } catch(e) {}
+      });
+    });
+  }
+
+  function wireHistoryRowClicks(root, user) {
+    root.querySelectorAll('.wallet-tx-row[data-tx-id]').forEach(row => {
+      row.addEventListener('click', () => {
+        hapticLight();
+        const txId = row.dataset.txId;
+        window.Telegram.WebApp.showPopup({
+          message: 'Удалить операцию?',
+          buttons: [{ id: 'ok', type: 'destructive', text: 'Удалить' }, { id: 'cancel', type: 'cancel' }]
+        }, async (buttonId) => {
+          if (buttonId !== 'ok') return;
+          try {
+            const dr = await fetch(`${API}/api/wallet-transactions/${txId}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+            });
+            if (dr.ok) { hapticLight(); showUserDetail(user); }
+            else alert('Ошибка удаления');
+          } catch(e) { alert('Ошибка соединения'); }
+        });
+      });
+    });
+  }
+
+  function adminAppAlert(msg) {
+    window.Telegram?.WebApp ? window.Telegram.WebApp.showAlert(msg) : alert(msg);
+  }
+
+  async function loadUserWalletTab(user) {
+    const el = document.getElementById('userTabWalletContent');
+    if (!el) return;
+    el.innerHTML = '<div class="review-empty">Загрузка...</div>';
+    try {
+      const txList = await fetch(`${API}/api/wallet-transactions?userId=${user.user_id}&limit=5`).then(r => r.json()).catch(() => []);
+      const txRowsHtml = (txList || []).length
+        ? txList.map(buildAdminWalletTxRowHtml).join('') + (txList.length >= 5 ? `<div class="wallet-show-more-row" id="userHistoryShowMoreBtn">Показать все операции</div>` : '')
+        : `<div class="review-empty">История операций пуста</div>`;
+      el.innerHTML = `
+        <div class="profile-wrapper">
+            <div class="referral-main-card">
+                <div class="referral-title">Кошелёк Placed Games</div>
+                <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">Внутренний кошелёк приложения</div>
+            </div>
+            <div class="referral-bottom-card">
+                <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="padding-left:2px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:20px;font-weight:550;color:var(--text-primary);">${formatPrice(user.balance || 0)}</span>
+                            <span id="userWalletCashbackInfoBtn" style="font-size:15px;font-weight:550;color:#4cb4e9;background:var(--accent-blue-bg);border-radius:20px;padding:2px 8px;cursor:pointer;">2%</span>
+                        </div>
+                        <div style="font-size:15px;color:var(--text-secondary);margin-top:4px;">Баланс кошелька</div>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-shrink:0;">
+                        <button id="userWalletDepositBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4cb4e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                        </button>
+                        <button id="userWalletWithdrawBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4cb4e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="profile-wrapper" style="margin-top:13px;">
+            <div class="referral-main-card">
+                <div class="referral-title">История всех операций</div>
+                <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">История всех операций кошелька</div>
+            </div>
+            <div class="referral-bottom-card">
+                <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;" id="userHistoryListWrap">${txRowsHtml}</div>
+            </div>
+        </div>`;
+      wireHistoryRowClicks(el, user);
+      document.getElementById('userWalletDepositBtn')?.addEventListener('click', () => { hapticLight(); adminAppAlert('В данный момент пополнить кошелёк нельзя, попробуйте позже'); });
+      document.getElementById('userWalletWithdrawBtn')?.addEventListener('click', () => { hapticLight(); adminAppAlert('Вывод денежных средств в данный момент недоступен'); });
+      document.getElementById('userWalletCashbackInfoBtn')?.addEventListener('click', () => { hapticLight(); adminAppAlert('Процент кэшбэка пользователя - 2%\n\nКэшбэк начисляется за каждую покупку и за каждую покупку приглашенного друга'); });
+      document.getElementById('userHistoryShowMoreBtn')?.addEventListener('click', async function() {
+        hapticLight();
+        this.textContent = 'Загрузка...';
+        try {
+          const r = await fetch(`${API}/api/wallet-transactions?userId=${user.user_id}&limit=1000`);
+          const allTx = await r.json();
+          const wrap = document.getElementById('userHistoryListWrap');
+          if (wrap) {
+            wrap.innerHTML = (allTx || []).length ? allTx.map(buildAdminWalletTxRowHtml).join('') : `<div class="review-empty">История операций пуста</div>`;
+            wireHistoryRowClicks(wrap, user);
+          }
+        } catch(e) { this.textContent = 'Показать все операции'; }
+      });
+    } catch(e) { el.innerHTML = '<div class="review-empty">Ошибка загрузки</div>'; }
+  }
+
+  async function loadUserReferralsTab(user) {
+    const el = document.getElementById('userTabReferralsContent');
+    if (!el) return;
+    el.innerHTML = '<div class="review-empty">Загрузка...</div>';
+    const referralLink = `t.me/PlacedGamesBot?startapp=ref${user.user_id}`;
+    try {
+      const [stats, refList] = await Promise.all([
+        fetch(`${API}/api/referral-stats?userId=${user.user_id}`).then(r => r.json()).catch(() => ({ invited: 0, invited24h: 0, earned: 0, earned24h: 0 })),
+        fetch(`${API}/api/referral-list?userId=${user.user_id}&limit=5`).then(r => r.json()).catch(() => [])
+      ]);
+      const refRowsHtml = (refList || []).length
+        ? refList.map(buildAdminReferralRowHtml).join('') + (refList.length >= 5 ? `<div class="wallet-show-more-row" id="userReferralsShowMoreBtn">Показать всех рефералов</div>` : '')
+        : `<div class="review-empty">Пока никого не пригласил</div>`;
+      el.innerHTML = `
+        <div class="referral-wrapper">
+            <div class="referral-main-card">
+                <div class="referral-title">Реферальная программа</div>
+                <div class="referral-link-row">
+                    <span class="referral-link-text">${referralLink}</span>
+                    <svg class="icon icon-profile-referral-copy referral-copy-icon icon--muted" id="userReferralCopyBtn"><use href="#icon-copy"></use></svg>
+                </div>
+            </div>
+            <div class="referral-bottom-card">
+                <div class="referral-stats-inner">
+                    <div class="referral-stat-item left">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span class="referral-stat-value">${stats.invited || 0}</span>
+                            <span class="referral-badge">+${stats.invited24h || 0}</span>
+                        </div>
+                        <div class="referral-stat-label">Приглашено</div>
+                    </div>
+                    <div class="referral-stat-divider"></div>
+                    <div class="referral-stat-item right">
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <span class="referral-stat-value">${formatPrice(stats.earned || 0)}</span>
+                            <span class="referral-badge">2%</span>
+                        </div>
+                        <div class="referral-stat-label">Заработано</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="profile-wrapper" style="margin-top:13px;">
+            <div class="referral-main-card">
+                <div class="referral-title">Приглашенные рефералы</div>
+                <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">Список приглашенных рефералов</div>
+            </div>
+            <div class="referral-bottom-card">
+                <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;" id="userReferralListWrap">${refRowsHtml}</div>
+            </div>
+        </div>`;
+      wireReferralRowClicks(el);
+      document.getElementById('userReferralCopyBtn')?.addEventListener('click', async (e) => {
+        hapticLight();
+        e.stopPropagation();
+        if (navigator.clipboard) {
+          const btn = e.currentTarget;
+          btn.style.transform = 'scale(0.85)';
+          await navigator.clipboard.writeText(`https://${referralLink}`);
+          setTimeout(() => { btn.style.transform = 'scale(1)'; }, 150);
+        }
+      });
+      document.getElementById('userReferralsShowMoreBtn')?.addEventListener('click', async function() {
+        hapticLight();
+        this.textContent = 'Загрузка...';
+        try {
+          const r = await fetch(`${API}/api/referral-list?userId=${user.user_id}&limit=1000`);
+          const allRefs = await r.json();
+          const wrap = document.getElementById('userReferralListWrap');
+          if (wrap) {
+            wrap.innerHTML = (allRefs || []).length ? allRefs.map(buildAdminReferralRowHtml).join('') : `<div class="review-empty">Пока никого не пригласил</div>`;
+            wireReferralRowClicks(wrap);
+          }
+        } catch(e) { this.textContent = 'Показать всех рефералов'; }
+      });
+    } catch(e) { el.innerHTML = '<div class="review-empty">Ошибка загрузки</div>'; }
+  }
+
+  function showUserInfoAlert(user, isBlocked, firstSeenFullStr) {
+    const message =
+      `Имя: ${user.user_name || 'Без имени'}\n` +
+      `ID: ${user.user_id}\n` +
+      `Регистрация: ${firstSeenFullStr}\n` +
+      `Статус: ${isBlocked ? 'заблокирован' : 'активен'}\n` +
+      `Всего заказов: ${user.orders_count}\n` +
+      `Объем покупок: ${formatPrice(user.total_spent)}\n` +
+      `Баланс кошелька: ${formatPrice(user.balance || 0)}`;
+
+    if (window.Telegram?.WebApp?.showPopup) {
+      window.Telegram.WebApp.showPopup({
+        message,
+        buttons: [
+          { id: 'toggleStatus', type: isBlocked ? 'default' : 'destructive', text: isBlocked ? 'Разбл. пользователя' : 'Заблок. пользователя' },
+          { type: 'cancel' }
+        ]
+      }, async (buttonId) => {
+        if (buttonId !== 'toggleStatus') return;
+        const newStatus = isBlocked ? 'active' : 'blocked';
+        try {
+          const r = await fetch(`${API}/api/user/${user.user_id}/status`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAdminToken()}` },
+            body: JSON.stringify({ status: newStatus })
+          });
+          if (r.ok) {
+            hapticLight();
+            user.status = newStatus;
+            showUserDetail(user);
+          } else alert('Ошибка сохранения');
+        } catch(e) { alert('Ошибка соединения'); }
+      });
+    } else {
+      alert(message);
     }
   }
 
@@ -1472,208 +1771,71 @@ if (order.user_id) {
     const isBlocked = user.status === 'blocked';
 
     const firstSeenDate = user.first_seen ? new Date(user.first_seen) : null;
-    const firstSeenStr = firstSeenDate 
-        ? `${String(firstSeenDate.getDate()).padStart(2,'0')}.${String(firstSeenDate.getMonth()+1).padStart(2,'0')}`
-        : '—';
+    const firstSeenFullStr = firstSeenDate ? firstSeenDate.toLocaleDateString('ru-RU') : '—';
 
     const avatarHtml = user.photo_url
-        ? `<div class="user-avatar-circle" style="width:60px;height:60px;font-size:28px;"><img src="${user.photo_url}" alt="avatar"></div>`
-        : `<div class="user-avatar-circle" style="width:60px;height:60px;font-size:28px;">👤</div>`;
+        ? `<img class="profile-avatar" src="${user.photo_url}" alt="avatar">`
+        : `<div class="profile-avatar" style="background:var(--input-bg-dark);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text-secondary);">👤</div>`;
 
     const tgLink = user.user_username ? `https://t.me/${user.user_username}` : null;
 
     container.innerHTML = `
         <div class="profile-wrapper">
-            <div class="profile-main-card" ${tgLink ? `onclick="window.open('${tgLink}','_blank')" style="cursor:pointer;"` : ''}>
+            <div class="profile-main-card" id="userProfileMainCard" ${tgLink ? `style="cursor:pointer;"` : ''}>
                 ${avatarHtml}
-                <div>
-                    <div class="profile-nickname">${escapeHtml(user.user_name || 'Без имени')}</div>
-                    ${user.user_username ? `<div class="profile-username">@${escapeHtml(user.user_username)}</div>` : ''}
-                </div>
-            </div>
-            <div class="profile-bottom-card">
-                <div class="profile-stats-row">
-                    <span class="profile-stats-label">Регистрация</span>
-                    <span class="profile-stats-value">${firstSeenStr}</span>
-                </div>
-                <div class="profile-stats-row">
-                    <span class="profile-stats-label">Статус польз.</span>
-                    <span class="profile-stats-value" style="color:${isBlocked ? '#ef4444' : '#22c55e'};">${isBlocked ? 'заблок.' : 'активен'}</span>
-                </div>
-                <div class="profile-stats-row">
-                    <span class="profile-stats-label">Всего заказов</span>
-                    <span class="profile-stats-value">${user.orders_count}</span>
-                </div>
-                                <div class="profile-stats-row">
-                    <span class="profile-stats-label">Объем покупок</span>
-                    <span class="profile-stats-value">${formatPrice(user.total_spent)}</span>
-                </div>
-                <div class="profile-stats-row">
-                    <span class="profile-stats-label">Баланс кошелька</span>
-                    <span class="profile-stats-value">${formatPrice(user.balance || 0)}</span>
+                <div class="profile-info" style="display:flex;align-items:flex-end;justify-content:space-between;">
+                    <div>
+                        <div class="profile-nickname">${escapeHtml(user.user_name || 'Без имени')}</div>
+                        ${user.user_username ? `<div style="margin-top:4px;"><div class="profile-username">@${escapeHtml(user.user_username)}</div></div>` : ''}
+                    </div>
+                    <div id="userProfileInfoBtn" title="Информация" style="cursor:pointer;flex-shrink:0;align-self:flex-end;display:flex;align-items:center;justify-content:center;margin-bottom:3px;margin-right:4px;opacity:0.95;">
+                        <svg class="icon icon-info-profile icon--accent"><use href="#icon-info"></use></svg>
+                    </div>
                 </div>
             </div>
         </div>
-        <div id="userReferralCard"></div>
-        <div id="userHistoryCard" style="margin-bottom:160px;"></div>`;
-
-    const txLabelsAdmin = { admin_topup: 'Админ', purchase: 'Покупка', cashback_referral: 'Реферал', cashback_own: 'Кэшбэк' };
-
-    function buildAdminWalletTxRowHtml(tx) {
-      const isNeg = tx.amount < 0;
-      const dt = tx.created_at ? new Date(tx.created_at) : null;
-      let dateStr = '';
-      if (dt && !isNaN(dt)) {
-        const hh = String(dt.getHours()).padStart(2,'0');
-        const mm = String(dt.getMinutes()).padStart(2,'0');
-        const dd = String(dt.getDate()).padStart(2,'0');
-        const mo = String(dt.getMonth()+1).padStart(2,'0');
-        const yy = String(dt.getFullYear()).slice(2);
-        dateStr = `${hh}:${mm} ${dd}.${mo}.${yy}`;
-      }
-      const title = tx.order_number ? `Заказ #${tx.order_number}` : (txLabelsAdmin[tx.type] || 'Операция');
-      return `<div class="wallet-tx-row" data-tx-id="${tx.id}" style="cursor:pointer;">
-        <div class="wallet-tx-line1">
-          <span class="wallet-tx-title">${escapeHtml(title)}</span>
-          <span class="wallet-tx-amount ${isNeg ? 'negative' : 'positive'}">${isNeg ? '' : '+'}${formatPrice(tx.amount)}</span>
+        <div class="category-slider" id="userDetailCategorySlider">
+            <div class="category-slider-thumb" id="userDetailSliderThumb"></div>
+            <button class="category-slider-btn active" data-tab="wallet" id="userTabWalletBtn">Кошелёк</button>
+            <button class="category-slider-btn" data-tab="referrals" id="userTabReferralsBtn">Рефералы</button>
         </div>
-        <div class="wallet-tx-line2">
-          <span class="wallet-tx-date">${dateStr}</span>
-          <span class="wallet-tx-subtitle">${escapeHtml(txLabelsAdmin[tx.type] || '')}</span>
-        </div>
-      </div>`;
+        <div id="userTabWalletContent"></div>
+        <div id="userTabReferralsContent" style="display:none;"></div>
+        <div style="height:160px;"></div>`;
+
+    document.getElementById('userProfileMainCard')?.addEventListener('click', (e) => {
+      if (e.target.closest('#userProfileInfoBtn')) return;
+      if (tgLink) window.open(tgLink, '_blank');
+    });
+
+    document.getElementById('userProfileInfoBtn')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      hapticLight();
+      showUserInfoAlert(user, isBlocked, firstSeenFullStr);
+    });
+
+    function switchUserTab(tab) {
+      const thumb = document.getElementById('userDetailSliderThumb');
+      if (thumb) thumb.style.left = tab === 'wallet' ? '4px' : '50%';
+      document.getElementById('userTabWalletBtn')?.classList.toggle('active', tab === 'wallet');
+      document.getElementById('userTabReferralsBtn')?.classList.toggle('active', tab === 'referrals');
+      const walletEl = document.getElementById('userTabWalletContent');
+      const refEl = document.getElementById('userTabReferralsContent');
+      if (walletEl) walletEl.style.display = tab === 'wallet' ? '' : 'none';
+      if (refEl) refEl.style.display = tab === 'referrals' ? '' : 'none';
     }
+    document.getElementById('userTabWalletBtn')?.addEventListener('click', () => { hapticLight(); switchUserTab('wallet'); });
+    document.getElementById('userTabReferralsBtn')?.addEventListener('click', () => { hapticLight(); switchUserTab('referrals'); });
 
-    function buildAdminReferralRowHtml(ref) {
-      return `<div class="wallet-tx-row review-username-link" data-user-id="${ref.user_id || ''}" style="cursor:pointer;">
-        <div class="wallet-tx-line1">
-          <span class="wallet-tx-title">${escapeHtml(ref.nickname || 'Пользователь')}</span>
-          <span class="wallet-tx-amount" style="color:var(--text-primary);">${formatPrice(ref.earned || 0)}</span>
-        </div>
-        <div class="wallet-tx-line2">
-          <span class="wallet-tx-date">Пользователь</span>
-          <span class="wallet-tx-subtitle">Заработано</span>
-        </div>
-      </div>`;
-    }
+    loadUserWalletTab(user);
+    loadUserReferralsTab(user);
 
-    function wireReferralRowClicks(root) {
-      root.querySelectorAll('.review-username-link[data-user-id]').forEach(el => {
-        if (!el.dataset.userId) return;
-        el.addEventListener('click', async () => {
-          hapticLight();
-          try {
-            const rr = await fetch(`${API}/api/user/${el.dataset.userId}`, { headers: { 'Authorization': `Bearer ${getAdminToken()}` } });
-            const u = await rr.json();
-            if (u && u.user_id) showUserDetail(u);
-          } catch(e) {}
-        });
-      });
-    }
-
-    function wireHistoryRowClicks(root) {
-      root.querySelectorAll('.wallet-tx-row[data-tx-id]').forEach(row => {
-        row.addEventListener('click', () => {
-          hapticLight();
-          const txId = row.dataset.txId;
-          window.Telegram.WebApp.showPopup({
-            message: 'Удалить операцию?',
-            buttons: [{ id: 'ok', type: 'destructive', text: 'Удалить' }, { id: 'cancel', type: 'cancel' }]
-          }, async (buttonId) => {
-            if (buttonId !== 'ok') return;
-            try {
-              const dr = await fetch(`${API}/api/wallet-transactions/${txId}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${getAdminToken()}` }
-              });
-              if (dr.ok) { hapticLight(); showUserDetail(user); }
-              else alert('Ошибка удаления');
-            } catch(e) { alert('Ошибка соединения'); }
-          });
-        });
-      });
-    }
-
-    // Загружаем рефералов и историю операций ПАРАЛЛЕЛЬНО и выводим их одновременно,
-    // чтобы карточка рефералов всегда была выше карточки истории (без «прыжков» порядка)
-    Promise.all([
-      fetch(`${API}/api/referral-stats?userId=${user.user_id}`).then(r => r.json()).catch(() => ({ invited: 0, earned: 0 })),
-      fetch(`${API}/api/referral-list?userId=${user.user_id}&limit=5`).then(r => r.json()).catch(() => []),
-      fetch(`${API}/api/wallet-transactions?userId=${user.user_id}&limit=5`).then(r => r.json()).catch(() => [])
-    ]).then(([stats, refList, txList]) => {
-      const referralCard = document.getElementById('userReferralCard');
-      if (referralCard) {
-        const refRowsHtml = (refList || []).length
-          ? refList.map(buildAdminReferralRowHtml).join('') + (refList.length >= 5 ? `<div class="wallet-show-more-row" id="userReferralsShowMoreBtn">Показать всех рефералов</div>` : '')
-          : `<div class="review-empty">Пока никого не пригласил</div>`;
-        referralCard.innerHTML = `
-          <div class="referral-wrapper" style="margin-top:13px;">
-            <div class="referral-main-card">
-              <div class="referral-title">Приглашенные пользователи</div>
-              <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">Приглашено: ${stats.invited || 0} · Заработано: ${formatPrice(stats.earned || 0)}</div>
-            </div>
-            <div class="referral-bottom-card">
-              <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;" id="userReferralListWrap">${refRowsHtml}</div>
-            </div>
-          </div>`;
-        wireReferralRowClicks(referralCard);
-        document.getElementById('userReferralsShowMoreBtn')?.addEventListener('click', async function() {
-          hapticLight();
-          this.textContent = 'Загрузка...';
-          try {
-            const r = await fetch(`${API}/api/referral-list?userId=${user.user_id}&limit=1000`);
-            const allRefs = await r.json();
-            const wrap = document.getElementById('userReferralListWrap');
-            if (wrap) {
-              wrap.innerHTML = (allRefs || []).length ? allRefs.map(buildAdminReferralRowHtml).join('') : `<div class="review-empty">Пока никого не пригласил</div>`;
-              wireReferralRowClicks(wrap);
-            }
-          } catch(e) { this.textContent = 'Показать всех рефералов'; }
-        });
-      }
-
-      const historyCard = document.getElementById('userHistoryCard');
-      if (historyCard) {
-        const txRowsHtml = (txList || []).length
-          ? txList.map(buildAdminWalletTxRowHtml).join('') + (txList.length >= 5 ? `<div class="wallet-show-more-row" id="userHistoryShowMoreBtn">Показать все операции</div>` : '')
-          : `<div class="review-empty">История операций пуста</div>`;
-        historyCard.innerHTML = `
-          <div class="referral-wrapper" style="margin-top:13px;">
-            <div class="referral-main-card">
-              <div class="referral-title">История операций</div>
-              <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">История всех операций пользователя</div>
-            </div>
-            <div class="referral-bottom-card">
-              <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;" id="userHistoryListWrap">${txRowsHtml}</div>
-            </div>
-          </div>`;
-        wireHistoryRowClicks(historyCard);
-        document.getElementById('userHistoryShowMoreBtn')?.addEventListener('click', async function() {
-          hapticLight();
-          this.textContent = 'Загрузка...';
-          try {
-            const r = await fetch(`${API}/api/wallet-transactions?userId=${user.user_id}&limit=1000`);
-            const allTx = await r.json();
-            const wrap = document.getElementById('userHistoryListWrap');
-            if (wrap) {
-              wrap.innerHTML = (allTx || []).length ? allTx.map(buildAdminWalletTxRowHtml).join('') : `<div class="review-empty">История операций пуста</div>`;
-              wireHistoryRowClicks(wrap);
-            }
-          } catch(e) { this.textContent = 'Показать все операции'; }
-        });
-      }
-    }).catch(() => {});
-
-        const oldFixed = document.getElementById('adminFixedBar');
+    const oldFixed = document.getElementById('adminFixedBar');
     if (oldFixed) oldFixed.remove();
     const fixedBar = document.createElement('div');
     fixedBar.id = 'adminFixedBar';
     fixedBar.className = 'fixed-bottom-bar';
     fixedBar.innerHTML = `<div class="action-card">
-        <select class="status-select" id="userStatusSelect">
-            <option value="active" ${!isBlocked ? 'selected' : ''}>Активен</option>
-            <option value="blocked" ${isBlocked ? 'selected' : ''}>Заблокирован</option>
-        </select>
         <input class="balance-input" id="balanceAmountInput" type="number" placeholder="Сумма (можно отрицательную, необязательно)">
         <div class="action-buttons-row">
             <button class="update-status-btn" id="saveUserChangesBtn">Сохранить изменения</button>
@@ -1683,30 +1845,20 @@ if (order.user_id) {
 
     document.getElementById('saveUserChangesBtn')?.addEventListener('click', async () => {
         hapticMedium();
-        const newStatus = document.getElementById('userStatusSelect')?.value;
         const amountVal = document.getElementById('balanceAmountInput')?.value;
         const amt = parseInt(amountVal);
         const hasAmount = amountVal && !isNaN(amt) && amt !== 0;
+        if (!hasAmount) { alert('Введите сумму'); return; }
         try {
-            const requests = [
-                fetch(`${API}/api/user/${user.user_id}/status`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAdminToken()}` },
-                    body: JSON.stringify({ status: newStatus })
-                })
-            ];
-            if (hasAmount) {
-                requests.push(fetch(`${API}/api/user/${user.user_id}/balance`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAdminToken()}` },
-                    body: JSON.stringify({ amount: amt })
-                }));
-            }
-            const results = await Promise.all(requests);
-            if (results.every(r => r.ok)) {
+            const r = await fetch(`${API}/api/user/${user.user_id}/balance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAdminToken()}` },
+                body: JSON.stringify({ amount: amt })
+            });
+            if (r.ok) {
                 hapticLight();
-                user.status = newStatus;
-                if (hasAmount) { const data = await results[1].json(); user.balance = data.balance; }
+                const data = await r.json();
+                user.balance = data.balance;
                 showUserDetail(user);
             } else alert('Ошибка сохранения');
         } catch(e) { alert('Ошибка соединения'); }
@@ -1876,7 +2028,7 @@ if (order.user_id) {
         document.getElementById('reviewSearchClearBtn')?.classList.remove('visible');
         renderReviewsList();
       });
-      document.getElementById('reviewFilterBtn')?.addEventListener('click', () => hapticLight());
+      document.getElementById('reviewFilterBtn')?.addEventListener('click', () => {});
       document.getElementById('reviewStatusFilterSelect')?.addEventListener('change', (e) => {
         hapticLight();
         window.__reviewsFilter = e.target.value;
