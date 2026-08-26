@@ -1824,7 +1824,7 @@
         .help-faq-question {
             font-size: 18px;
             font-weight: 500;
-            color: var(--text-muted);
+            color: var(--text-primary);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -4872,6 +4872,10 @@ body: JSON.stringify({
     if (gameVal === 'Ваши отзывы') {
         const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
         filtered = filtered.filter(rv => String(rv.user_id) === String(tgUserId));
+    } else if (gameVal === 'Нравится') {
+        filtered = filtered.filter(rv => (rv.rating || (rv.satisfied ? 'good' : 'bad')) === 'good');
+    } else if (gameVal === 'Не нравится') {
+        filtered = filtered.filter(rv => (rv.rating || (rv.satisfied ? 'good' : 'bad')) === 'bad');
     } else if (gameVal !== 'Все отзывы') {
         filtered = filtered.filter(rv => {
             if (rv.order_game_name) {
@@ -4913,6 +4917,15 @@ body: JSON.stringify({
     return counts;
 }
 
+function countReviewsByRating(list) {
+    let good = 0, bad = 0;
+    list.forEach(rv => {
+        const rating = rv.rating || (rv.satisfied ? 'good' : 'bad');
+        if (rating === 'good') good++; else bad++;
+    });
+    return { good, bad };
+}
+
                     async function getReviewsData(forceRefresh = false) {
         if (reviewsListCache && !forceRefresh) return reviewsListCache;
         if (reviewsFetchPromise && !forceRefresh) return reviewsFetchPromise;
@@ -4931,37 +4944,43 @@ body: JSON.stringify({
     }
 
                 function setupReviewsListUI(list) {
-        const gameSelect = document.getElementById('reviewGameSelect');
-        if (gameSelect) {
-            const counts = countReviewsByGame(list);
-            const totalCount = list.length;
-            const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-            const mineCount = list.filter(rv => String(rv.user_id) === String(tgUserId)).length;
-            const gameNames = ['Все отзывы', 'Ваши отзывы', ...games.map(g => g.name)];
-            gameSelect.innerHTML = gameNames.map(n => {
-                let count;
-                if (n === 'Все отзывы') count = totalCount;
-                else if (n === 'Ваши отзывы') count = mineCount;
-                else count = counts[n] || 0;
-                return `<option value="${escapeHtml(n)}">${escapeHtml(n)} (${count})</option>`;
-            }).join('');
-            gameSelect.onchange = () => {
-                hapticLight();
-                applyReviewFilters(list);
-            };
-        }
-        const searchInput = document.getElementById('reviewSearchInput');
-        if (searchInput) {
-            searchInput.oninput = () => applyReviewFilters(list);
-        }
-        setupSearchClear('reviewSearchInput', 'reviewSearchClearBtn');
+    const gameSelect = document.getElementById('reviewGameSelect');
+    if (gameSelect) {
+        const counts = countReviewsByGame(list);
+        const ratingCounts = countReviewsByRating(list);
+        const totalCount = list.length;
+        const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+        const mineCount = list.filter(rv => String(rv.user_id) === String(tgUserId)).length;
 
-        applyReviewFilters(list);
-        if (!list.length) {
-            const container = document.getElementById('reviewsList');
-            if (container) container.innerHTML = `<div class="review-empty">Пока нет отзывов</div>`;
-        }
+        const options = [
+            { value: 'Все отзывы', count: totalCount },
+            { value: 'Нравится', count: ratingCounts.good },
+            { value: 'Не нравится', count: ratingCounts.bad },
+            { value: 'Ваши отзывы', count: mineCount },
+            ...games.map(g => ({ value: g.name, count: counts[g.name] || 0 }))
+        ];
+
+        gameSelect.innerHTML = options.map(o =>
+            `<option value="${escapeHtml(o.value)}">${escapeHtml(o.value)} (${o.count})</option>`
+        ).join('');
+
+        gameSelect.onchange = () => {
+            hapticLight();
+            applyReviewFilters(list);
+        };
     }
+    const searchInput = document.getElementById('reviewSearchInput');
+    if (searchInput) {
+        searchInput.oninput = () => applyReviewFilters(list);
+    }
+    setupSearchClear('reviewSearchInput', 'reviewSearchClearBtn');
+
+    applyReviewFilters(list);
+    if (!list.length) {
+        const container = document.getElementById('reviewsList');
+        if (container) container.innerHTML = `<div class="review-empty">Пока нет отзывов</div>`;
+    }
+}
 
     async function loadReviewsList(forceRefresh = false) {
         const container = document.getElementById('reviewsList');
@@ -5517,20 +5536,19 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
     }
 
         function attachHelpFaqHandlers() {
-        document.querySelectorAll('.help-faq-row').forEach(row => {
-            if (row.dataset.bound === 'true') return;
-            row.dataset.bound = 'true';
-            row.addEventListener('click', () => {
-                hapticLight();
-                const item = row.closest('.help-faq-item');
-                const group = row.closest('.help-faq-group');
-                if (!item || !group) return;
-                const wasOpen = item.classList.contains('open');
-                group.querySelectorAll('.help-faq-item.open').forEach(el => el.classList.remove('open'));
-                if (!wasOpen) item.classList.add('open');
-            });
+    document.querySelectorAll('.help-faq-row').forEach(row => {
+        if (row.dataset.bound === 'true') return;
+        row.dataset.bound = 'true';
+        row.addEventListener('click', () => {
+            hapticLight();
+            const item = row.closest('.help-faq-item');
+            if (!item) return;
+            const wasOpen = item.classList.contains('open');
+            document.querySelectorAll('#helpContent .help-faq-item.open').forEach(el => el.classList.remove('open'));
+            if (!wasOpen) item.classList.add('open');
         });
-    }
+    });
+}
 
     function renderHelpPage() {
         const container = document.getElementById("helpContent");
@@ -5994,18 +6012,23 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
         }
 
         const pages = ["catalog", "cart", "orders"];
-        const index = pages.indexOf(pageId);
-        if (index === -1) {
-            slider.style.opacity = "0";
-            return;
-        }
-        const pillRect = pill.getBoundingClientRect();
-        const segmentWidth = (pillRect.width - 8) / 3;
-        slider.style.opacity = "1";
-        slider.style.left = (pillRect.left - wrapperRect.left + 4 + index * segmentWidth) + "px";
-        slider.style.width = segmentWidth + "px";
-        slider.style.borderRadius = "50px";
-    }
+const index = pages.indexOf(pageId);
+if (index === -1) {
+    slider.style.opacity = "0";
+    return;
+}
+const pillRect = pill.getBoundingClientRect();
+const segmentWidth = (pillRect.width - 8) / 3;
+
+let offset = 0;
+if (index === 0) offset = -2;
+else if (index === 2) offset = 2;
+
+slider.style.opacity = "1";
+slider.style.left = (pillRect.left - wrapperRect.left + 4 + index * segmentWidth + offset) + "px";
+slider.style.width = segmentWidth + "px";
+slider.style.borderRadius = "50px";
+   }
 
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
     initApp().catch(e => showCrashRecoveryUI(e.message));
