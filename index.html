@@ -438,6 +438,16 @@
         .menu-item.active .menu-label {
             color: #4cb4e9;
         }
+        
+        .menu-item:nth-child(1) .menu-icon-wrap,
+.menu-item:nth-child(1) .menu-label {
+    transform: translateX(2px);
+}
+
+.menu-item:nth-child(3) .menu-icon-wrap,
+.menu-item:nth-child(3) .menu-label {
+    transform: translateX(-2px);
+}
 
         .search-section {
             display: flex;
@@ -6019,13 +6029,8 @@ if (index === -1) {
 }
 const pillRect = pill.getBoundingClientRect();
 const segmentWidth = (pillRect.width - 8) / 3;
-
-let offset = 0;
-if (index === 0) offset = -2;
-else if (index === 2) offset = 2;
-
 slider.style.opacity = "1";
-slider.style.left = (pillRect.left - wrapperRect.left + 4 + index * segmentWidth + offset) + "px";
+slider.style.left = (pillRect.left - wrapperRect.left + 4 + index * segmentWidth) + "px";
 slider.style.width = segmentWidth + "px";
 slider.style.borderRadius = "50px";
    }
