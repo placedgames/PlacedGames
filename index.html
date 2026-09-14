@@ -2623,15 +2623,15 @@
         }
 
         const uniqueCount = Object.keys(cart).length;
-        if (!cart[productId] && uniqueCount >= 4) {
-            return { allowed: false, reason: "В корзину можно добавить не более 4 различных товаров" };
+        if (!cart[productId] && uniqueCount >= 9) {
+            return { allowed: false, reason: "В корзину можно добавить не более 9 различных товаров" };
         }
-
-                const currentQty = cart[productId] || 0;
-        const maxAllowedQty = 9;
-        if (currentQty >= maxAllowedQty) {
-            return { allowed: false, reason: `Максимум ${maxAllowedQty} шт.` };
-        }
+         
+        const currentQty = cart[productId] || 0;
+const maxAllowedQty = product.maxQty;
+if (maxAllowedQty && currentQty >= maxAllowedQty) {
+    return { allowed: false, reason: `Максимум ${maxAllowedQty} шт.` };
+}
 
         if (product.conflictGroup && product.conflictGroup.length > 0) {
             const conflicts = product.conflictGroup.filter(id => id !== productId && cart[id]);
@@ -2854,11 +2854,11 @@ function showAdditionalSettingsAlert() {
     }
 
     function renderCartButtonHtml(productId) {
-        const qty = cart[productId] || 0;
-        if (qty > 0) {
-            const prod = games.flatMap(g => g.getProducts()).find(p => p.id == productId);
-            const maxQty = 9;
-            const atLimit = qty >= maxQty;
+    const qty = cart[productId] || 0;
+    if (qty > 0) {
+        const prod = games.flatMap(g => g.getProducts()).find(p => p.id == productId);
+        const maxQty = prod?.maxQty;
+        const atLimit = maxQty && qty >= maxQty;
             const plusOpacity = atLimit ? 'opacity:0.4;pointer-events:none;' : '';
             return `<div class="card-action-btn counter-btn">
                     <span class="counter-minus" data-id="${productId}"><svg class="icon icon-counter-minus icon--accent"><use href="#icon-minus"></use></svg></span>
@@ -2925,24 +2925,19 @@ function showAdditionalSettingsAlert() {
     }
 
     function holdIncrementCart(pid) {
-        const qty = cart[pid] || 0;
-        if (qty >= 9) { stopHold(); return; }
-        const check = canAddToCart(pid);
-        if (!check.allowed) { stopHold(); return; }
-        cart[pid] = qty + 1;
-        updateSingleCard(pid);
-        renderCartPage();
-        saveCartToLocalStorage();
-    }
+    const check = canAddToCart(pid);
+    if (!check.allowed) { stopHold(); return; }
+    cart[pid] = (cart[pid] || 0) + 1;
+    updateSingleCard(pid);
+    renderCartPage();
+    saveCartToLocalStorage();
+}
 
-    function holdDecrementCart(pid) {
-        const qty = cart[pid] || 0;
-        if (qty <= 1) { stopHold(); return; }
-        cart[pid] = qty - 1;
-        updateSingleCard(pid);
-        renderCartPage();
-        saveCartToLocalStorage();
-    }
+    function holdIncrementCard(pid) {
+    const check = canAddToCart(pid);
+    if (!check.allowed) { stopHold(); return; }
+    handleCartAction(pid, true);
+}
 
     function holdIncrementCard(pid) {
         const qty = cart[pid] || 0;
@@ -3011,7 +3006,7 @@ function showAdditionalSettingsAlert() {
                     ${prod.warn ? `<svg class="icon icon-cart-warn warn-icon icon--warning" data-id="${id}" data-type="warn"><use href="#icon-warning"></use></svg>` : ''}
                     <svg class="icon icon-info-cart icon--accent instruction-icon" data-id="${id}" data-type="instruction"><use href="#icon-info"></use></svg>
                 </div>
-                <div class="cart-quantity"><button class="cart-qty-btn" data-dec="${id}"><svg class="icon icon-cart-qty-minus icon--accent"><use href="#icon-minus"></use></svg></button><span class="cart-qty-value">${qty}</span><button class="cart-qty-btn" data-inc="${id}" style="${qty >= 9 ? 'opacity:0.4;pointer-events:none;' : ''}"><svg class="icon icon-cart-qty-plus icon--accent"><use href="#icon-plus"></use></svg></button></div>
+                <div class="cart-quantity"><button class="cart-qty-btn" data-dec="${id}"><svg class="icon icon-cart-qty-minus icon--accent"><use href="#icon-minus"></use></svg></button><span class="cart-qty-value">${qty}</span><button class="cart-qty-btn" data-inc="${id}" style="${prod?.maxQty && qty >= prod.maxQty ? 'opacity:0.4;pointer-events:none;' : ''}"><svg class="icon icon-cart-qty-plus icon--accent"><use href="#icon-plus"></use></svg></button></div>
             </div></div><div class="cart-item-delivery"><span class="cart-item-delivery-label">Способ получения</span><span class="cart-item-delivery-value">${games.find(g => g.getProducts().some(p => p.id == id))?.deliveryText || 'вход в аккаунт'}</span></div></div>`;
         }
         container.innerHTML = html;
