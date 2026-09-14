@@ -2632,8 +2632,8 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
         }
 
         const uniqueCount = Object.keys(cart).length;
-        if (!cart[productId] && uniqueCount >= 9) {
-            return { allowed: false, reason: "В корзину можно добавить не более 9 различных товаров" };
+        if (!cart[productId] && uniqueCount >= 6) {
+            return { allowed: false, reason: "В корзину можно добавить не более 6 различных товаров" };
         }
          
         const currentQty = cart[productId] || 0;
@@ -4367,19 +4367,8 @@ function showAdditionalSettingsAlert() {
         let reviewedOrderIds = [];
 
                 function buildItemsHtml(itemsArr) {
-            if (!itemsArr || !itemsArr.length) return '';
-            return itemsArr.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty)).map(i =>
-                `<div class="review-item-row">
-                            <span class="review-item-name">${escapeHtml(i.name)}</span>
-                            <span class="review-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-                                ${i.originalPrice && i.originalPrice !== i.price 
-                                    ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(i.originalPrice * i.qty)}</span>` 
-                                    : ''}
-                                ${formatPrice(i.price * i.qty)}
-                            </span>
-                        </div>`
-            ).join('');
-        }
+    return buildCollapsedItemsHtml(itemsArr, 'review-item-row', 'review-item-name', 'review-item-price');
+}
 
         if (!userId) {
             container.innerHTML =
