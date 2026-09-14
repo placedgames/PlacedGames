@@ -2388,7 +2388,7 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
     if (sorted.length <= 2) {
         return sorted.map(i => `
             <div class="${rowClass}">
-                <span class="${nameClass}">${escapeHtml(i.name)}${i.qty > 1 ? ` x${i.qty}` : ''}</span>
+                <span class="${nameClass}">${escapeHtml(i.name)}${i.qty > 1 ? ` ${i.qty}шт.` : ''}</span>
                 ${buildItemPriceHtml(i.price * i.qty, i.originalPrice ? i.originalPrice * i.qty : null, priceClass)}
             </div>`).join('');
     }
@@ -2398,11 +2398,11 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
     const restOriginalSum = rest.reduce((s, i) => s + (i.originalPrice ? i.originalPrice * i.qty : i.price * i.qty), 0);
     return `
         <div class="${rowClass}">
-            <span class="${nameClass}">${escapeHtml(first.name)}${first.qty > 1 ? ` x${first.qty}` : ''}</span>
+            <span class="${nameClass}">${escapeHtml(first.name)}${first.qty > 1 ? ` ${first.qty}шт.` : ''}</span>
             ${buildItemPriceHtml(first.price * first.qty, first.originalPrice ? first.originalPrice * first.qty : null, priceClass)}
         </div>
         <div class="${rowClass}">
-            <span class="${nameClass}">Еще ${rest.length} ${pluralizeTovar(rest.length)}</span>
+            <span class="${nameClass}">Ещё ${rest.length} ${pluralizeTovar(rest.length)}</span>
             ${buildItemPriceHtml(restSum, restOriginalSum !== restSum ? restOriginalSum : null, priceClass)}
         </div>`;
 }
@@ -3388,7 +3388,7 @@ function showAdditionalSettingsAlert() {
                 Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100)) :
                 prod.price * qty;
             return `<div class="order-item-row">
-                    <span class="order-item-name">${escapeHtml(prod.name)}${qty > 1 ? ` x${qty}` : ''}</span>
+                    <span class="order-item-name">${escapeHtml(prod.name)}${qty > 1 ? ` ${qty}шт.` : ''}</span>
                     <span class="order-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
                         ${appliedPromo ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(prod.price * qty)}</span>` : ''}
                         ${formatPrice(newPrice)}
@@ -3883,7 +3883,7 @@ function showAdditionalSettingsAlert() {
         return loadUserOrders().then(() => {
             if (!orders.length) {
                 container.innerHTML =
-                    `<div class="empty-state-icon"><svg class="icon icon-empty-orders icon--muted"><use href="#icon-orders"></use></svg><div class="empty-title">Заказов еще нет</div><button class="empty-catalog-btn" id="emptyOrdersToCatalog">Перейти в каталог</button></div>`;
+                    `<div class="empty-state-icon"><svg class="icon icon-empty-orders icon--muted"><use href="#icon-orders"></use></svg><div class="empty-title">Заказов ещё нет</div><button class="empty-catalog-btn" id="emptyOrdersToCatalog">Перейти в каталог</button></div>`;
                 setTimeout(() => {
                     document.getElementById("emptyOrdersToCatalog")?.addEventListener("click", () =>
                         showPage("catalog"));
@@ -4072,7 +4072,7 @@ function showAdditionalSettingsAlert() {
 
                 const itemsHtml = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty)).map(i => {
             return `<div class="order-item-row">
-                        <span class="order-item-name">${escapeHtml(i.name)}${i.qty > 1 ? ` x${i.qty}` : ''}</span>
+                        <span class="order-item-name">${escapeHtml(i.name)}${i.qty > 1 ? ` ${i.qty}шт.` : ''}</span>
                         <span class="order-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
                             ${i.originalPrice && i.originalPrice !== i.price 
                                 ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(i.originalPrice * i.qty)}</span>` 
