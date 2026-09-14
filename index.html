@@ -2374,29 +2374,38 @@
         return 'товаров';
     }
 
-    function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
-        if (!items || !items.length) return '';
-        const sorted = items.slice().sort((a, b) => a.price - b.price);
-        if (sorted.length <= 2) {
-            return sorted.map(i => `
-                <div class="${rowClass}">
-                    <span class="${nameClass}">${escapeHtml(i.name)}${i.qty > 1 ? ` x${i.qty}` : ''}</span>
-                    <span class="${priceClass}">${formatPrice(i.price * i.qty)}</span>
-                </div>`).join('');
-        }
-        const shown = sorted.slice(0, 2);
-        const rest = sorted.slice(2);
-        const restSum = rest.reduce((s, i) => s + i.price * i.qty, 0);
-        const shownHtml = shown.map(i => `
+    function buildItemPriceHtml(price, originalPrice, priceClass) {
+    const hasDiscount = originalPrice && originalPrice !== price;
+    return `<span class="${priceClass}" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        ${hasDiscount ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(originalPrice)}</span>` : ''}
+        ${formatPrice(price)}
+    </span>`;
+}
+
+function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
+    if (!items || !items.length) return '';
+    const sorted = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty));
+    if (sorted.length <= 2) {
+        return sorted.map(i => `
             <div class="${rowClass}">
                 <span class="${nameClass}">${escapeHtml(i.name)}${i.qty > 1 ? ` x${i.qty}` : ''}</span>
+                ${buildItemPriceHtml(i.price * i.qty, i.originalPrice ? i.originalPrice * i.qty : null, priceClass)}
             </div>`).join('');
-        return shownHtml + `
-            <div class="${rowClass}">
-                <span class="${nameClass}">Еще ${rest.length} ${pluralizeTovar(rest.length)}</span>
-                <span class="${priceClass}">${formatPrice(restSum)}</span>
-            </div>`;
     }
+    const first = sorted[0];
+    const rest = sorted.slice(1);
+    const restSum = rest.reduce((s, i) => s + i.price * i.qty, 0);
+    const restOriginalSum = rest.reduce((s, i) => s + (i.originalPrice ? i.originalPrice * i.qty : i.price * i.qty), 0);
+    return `
+        <div class="${rowClass}">
+            <span class="${nameClass}">${escapeHtml(first.name)}${first.qty > 1 ? ` x${first.qty}` : ''}</span>
+            ${buildItemPriceHtml(first.price * first.qty, first.originalPrice ? first.originalPrice * first.qty : null, priceClass)}
+        </div>
+        <div class="${rowClass}">
+            <span class="${nameClass}">Еще ${rest.length} ${pluralizeTovar(rest.length)}</span>
+            ${buildItemPriceHtml(restSum, restOriginalSum !== restSum ? restOriginalSum : null, priceClass)}
+        </div>`;
+}
 
     function hapticLight() {
         if (window.Telegram?.WebApp?.HapticFeedback) {
@@ -3367,11 +3376,11 @@ function showAdditionalSettingsAlert() {
             rawTotal;
 
                 const itemsListHtml = Object.entries(cart)
-            .sort(([idA], [idB]) => {
-                const pa = games.flatMap(g => g.getProducts()).find(p => p.id == idA);
-                const pb = games.flatMap(g => g.getProducts()).find(p => p.id == idB);
-                return (pa?.price || 0) - (pb?.price || 0);
-            })
+    .sort(([idA, qtyA], [idB, qtyB]) => {
+        const pa = games.flatMap(g => g.getProducts()).find(p => p.id == idA);
+        const pb = games.flatMap(g => g.getProducts()).find(p => p.id == idB);
+        return ((pa?.price || 0) * qtyA) - ((pb?.price || 0) * qtyB);
+    })
             .map(([id, qty]) => {
             const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
             if (!prod) return '';
@@ -3611,11 +3620,11 @@ function showAdditionalSettingsAlert() {
             rawTotal;
 
                 const itemsListHtml = Object.entries(cart)
-            .sort(([idA], [idB]) => {
-                const pa = games.flatMap(g => g.getProducts()).find(p => p.id == idA);
-                const pb = games.flatMap(g => g.getProducts()).find(p => p.id == idB);
-                return (pa?.price || 0) - (pb?.price || 0);
-            })
+    .sort(([idA, qtyA], [idB, qtyB]) => {
+        const pa = games.flatMap(g => g.getProducts()).find(p => p.id == idA);
+        const pb = games.flatMap(g => g.getProducts()).find(p => p.id == idB);
+        return ((pa?.price || 0) * qtyA) - ((pb?.price || 0) * qtyB);
+    })
             .map(([id, qty]) => {
             const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
             if (!prod) return '';
@@ -4061,7 +4070,7 @@ function showAdditionalSettingsAlert() {
         const email = isOwner ? (order.email || '—') : '***';
         const verCode = isOwner ? order.verification_code : null;
 
-                const itemsHtml = items.slice().sort((a, b) => a.price - b.price).map(i => {
+                const itemsHtml = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty)).map(i => {
             return `<div class="order-item-row">
                         <span class="order-item-name">${escapeHtml(i.name)}${i.qty > 1 ? ` x${i.qty}` : ''}</span>
                         <span class="order-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
@@ -4359,7 +4368,7 @@ function showAdditionalSettingsAlert() {
 
                 function buildItemsHtml(itemsArr) {
             if (!itemsArr || !itemsArr.length) return '';
-            return itemsArr.slice().sort((a, b) => a.price - b.price).map(i =>
+            return itemsArr.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty)).map(i =>
                 `<div class="review-item-row">
                             <span class="review-item-name">${escapeHtml(i.name)}</span>
                             <span class="review-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
