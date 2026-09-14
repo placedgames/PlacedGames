@@ -1204,7 +1204,7 @@
         }
 
         .order-card-status {
-            padding: 4px 12px;
+            padding: 5px 12px;
             border-radius: 20px;
             font-size: 16px;
             font-weight: 500;
@@ -2367,6 +2367,36 @@
             return m;
         });
     }
+    
+        function pluralizeTovar(n) {
+        if (n === 1) return 'товар';
+        if (n >= 2 && n <= 4) return 'товара';
+        return 'товаров';
+    }
+
+    function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
+        if (!items || !items.length) return '';
+        const sorted = items.slice().sort((a, b) => a.price - b.price);
+        if (sorted.length <= 2) {
+            return sorted.map(i => `
+                <div class="${rowClass}">
+                    <span class="${nameClass}">${escapeHtml(i.name)}${i.qty > 1 ? ` x${i.qty}` : ''}</span>
+                    <span class="${priceClass}">${formatPrice(i.price * i.qty)}</span>
+                </div>`).join('');
+        }
+        const shown = sorted.slice(0, 2);
+        const rest = sorted.slice(2);
+        const restSum = rest.reduce((s, i) => s + i.price * i.qty, 0);
+        const shownHtml = shown.map(i => `
+            <div class="${rowClass}">
+                <span class="${nameClass}">${escapeHtml(i.name)}${i.qty > 1 ? ` x${i.qty}` : ''}</span>
+            </div>`).join('');
+        return shownHtml + `
+            <div class="${rowClass}">
+                <span class="${nameClass}">Еще ${rest.length} ${pluralizeTovar(rest.length)}</span>
+                <span class="${priceClass}">${formatPrice(restSum)}</span>
+            </div>`;
+    }
 
     function hapticLight() {
         if (window.Telegram?.WebApp?.HapticFeedback) {
@@ -2597,9 +2627,10 @@
             return { allowed: false, reason: "В корзину можно добавить не более 4 различных товаров" };
         }
 
-        const currentQty = cart[productId] || 0;
-        if (currentQty >= product.maxQty) {
-            return { allowed: false, reason: `Максимум ${product.maxQty} шт.` };
+                const currentQty = cart[productId] || 0;
+        const maxAllowedQty = 9;
+        if (currentQty >= maxAllowedQty) {
+            return { allowed: false, reason: `Максимум ${maxAllowedQty} шт.` };
         }
 
         if (product.conflictGroup && product.conflictGroup.length > 0) {
@@ -2826,7 +2857,7 @@ function showAdditionalSettingsAlert() {
         const qty = cart[productId] || 0;
         if (qty > 0) {
             const prod = games.flatMap(g => g.getProducts()).find(p => p.id == productId);
-            const maxQty = prod?.maxQty || 1;
+            const maxQty = 9;
             const atLimit = qty >= maxQty;
             const plusOpacity = atLimit ? 'opacity:0.4;pointer-events:none;' : '';
             return `<div class="card-action-btn counter-btn">
@@ -2881,6 +2912,75 @@ function showAdditionalSettingsAlert() {
         renderCartPage();
         saveCartToLocalStorage();
     }
+    
+        // === Быстрое изменение количества при удержании (+/-) ===
+    let holdTimeout = null;
+    let holdInterval = null;
+
+    function stopHold() {
+        clearTimeout(holdTimeout);
+        clearInterval(holdInterval);
+        holdTimeout = null;
+        holdInterval = null;
+    }
+
+    function holdIncrementCart(pid) {
+        const qty = cart[pid] || 0;
+        if (qty >= 9) { stopHold(); return; }
+        const check = canAddToCart(pid);
+        if (!check.allowed) { stopHold(); return; }
+        cart[pid] = qty + 1;
+        updateSingleCard(pid);
+        renderCartPage();
+        saveCartToLocalStorage();
+    }
+
+    function holdDecrementCart(pid) {
+        const qty = cart[pid] || 0;
+        if (qty <= 1) { stopHold(); return; }
+        cart[pid] = qty - 1;
+        updateSingleCard(pid);
+        renderCartPage();
+        saveCartToLocalStorage();
+    }
+
+    function holdIncrementCard(pid) {
+        const qty = cart[pid] || 0;
+        if (qty >= 9) { stopHold(); return; }
+        const check = canAddToCart(pid);
+        if (!check.allowed) { stopHold(); return; }
+        handleCartAction(pid, true);
+    }
+
+    function holdDecrementCard(pid) {
+        const qty = cart[pid] || 0;
+        if (qty <= 1) { stopHold(); return; }
+        handleCartAction(pid, false);
+    }
+
+    document.addEventListener('pointerdown', function(e) {
+        const incCartBtn = e.target.closest('[data-inc]');
+        const decCartBtn = e.target.closest('[data-dec]');
+        const counterPlus = e.target.closest('.counter-plus');
+        const counterMinus = e.target.closest('.counter-minus');
+
+        let action = null;
+        if (incCartBtn) action = () => holdIncrementCart(incCartBtn.dataset.inc);
+        else if (decCartBtn) action = () => holdDecrementCart(decCartBtn.dataset.dec);
+        else if (counterPlus) action = () => holdIncrementCard(counterPlus.dataset.id);
+        else if (counterMinus) action = () => holdDecrementCard(counterMinus.dataset.id);
+
+        if (!action) return;
+
+        stopHold();
+        holdTimeout = setTimeout(() => {
+            holdInterval = setInterval(action, 120);
+        }, 400);
+    });
+
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
+        document.addEventListener(evt, stopHold);
+    });
 
     function renderCartPage() {
         const container = document.getElementById("cartItemsList");
@@ -2911,7 +3011,7 @@ function showAdditionalSettingsAlert() {
                     ${prod.warn ? `<svg class="icon icon-cart-warn warn-icon icon--warning" data-id="${id}" data-type="warn"><use href="#icon-warning"></use></svg>` : ''}
                     <svg class="icon icon-info-cart icon--accent instruction-icon" data-id="${id}" data-type="instruction"><use href="#icon-info"></use></svg>
                 </div>
-                <div class="cart-quantity"><button class="cart-qty-btn" data-dec="${id}"><svg class="icon icon-cart-qty-minus icon--accent"><use href="#icon-minus"></use></svg></button><span class="cart-qty-value">${qty}</span><button class="cart-qty-btn" data-inc="${id}" style="${qty >= (prod.maxQty || 1) ? 'opacity:0.4;pointer-events:none;' : ''}"><svg class="icon icon-cart-qty-plus icon--accent"><use href="#icon-plus"></use></svg></button></div>
+                <div class="cart-quantity"><button class="cart-qty-btn" data-dec="${id}"><svg class="icon icon-cart-qty-minus icon--accent"><use href="#icon-minus"></use></svg></button><span class="cart-qty-value">${qty}</span><button class="cart-qty-btn" data-inc="${id}" style="${qty >= 9 ? 'opacity:0.4;pointer-events:none;' : ''}"><svg class="icon icon-cart-qty-plus icon--accent"><use href="#icon-plus"></use></svg></button></div>
             </div></div><div class="cart-item-delivery"><span class="cart-item-delivery-label">Способ получения</span><span class="cart-item-delivery-value">${games.find(g => g.getProducts().some(p => p.id == id))?.deliveryText || 'вход в аккаунт'}</span></div></div>`;
         }
         container.innerHTML = html;
@@ -3856,19 +3956,9 @@ function showAdditionalSettingsAlert() {
             const statusDisplay = getStatusDisplayText(o.status_code, o.status);
             const status = String(o.status_code).trim().toLowerCase();
             const textClass = getStatusTextClass(status);
-            const bgClass = getStatusBgClass(status);
+                        const bgClass = getStatusBgClass(status);
 
-            const itemsHtml = items.map(i => {
-                return `<div class="order-item-row">
-                            <span class="order-item-name">${escapeHtml(i.name)}${i.qty > 1 ? ` x${i.qty}` : ''}</span>
-                            <span class="order-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-                                ${i.originalPrice && i.originalPrice !== i.price 
-                                    ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(i.originalPrice * i.qty)}</span>` 
-                                    : ''}
-                                ${formatPrice(i.price * i.qty)}
-                            </span>
-                        </div>`;
-            }).join('');
+            const itemsHtml = buildCollapsedItemsHtml(items, 'order-item-row', 'order-item-name', 'order-item-price');
 
             return `<div class="order-wrapper" data-order-id="${o.id}">
                         <div class="order-main-card">
@@ -3938,18 +4028,9 @@ function showAdditionalSettingsAlert() {
             </div>` :
             '';
 
-        let orderItems = [];
+                let orderItems = [];
         try { orderItems = JSON.parse(order.items || '[]'); } catch (e) {}
-                const itemsHtml = orderItems.slice().sort((a, b) => a.price - b.price).map(i => `
-                    <div class="review-item-row">
-                        <span class="review-item-name">${escapeHtml(i.name)}</span>
-                        <span class="review-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-                            ${i.originalPrice && i.originalPrice !== i.price 
-                                ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(i.originalPrice * i.qty)}</span>` 
-                                : ''}
-                            ${formatPrice(i.price * i.qty)}
-                        </span>
-                    </div>`).join('');
+        const itemsHtml = buildCollapsedItemsHtml(orderItems, 'review-item-row', 'review-item-name', 'review-item-price');
 
         return `
                     <div style="margin-top:14px;" class="review-card-wrapper">
@@ -4804,14 +4885,9 @@ body: JSON.stringify({
         </span>
             </div>` :
             '';
-        let itemsHtml = '';
-        let items = [];
+                let items = [];
         try { items = JSON.parse(rv.order_items || '[]'); } catch (e) {}
-                if (items.length) {
-            itemsHtml = items.slice().sort((a, b) => a.price - b.price).map(i =>
-                `<div class="review-item-row"><span class="review-item-name">${escapeHtml(i.name)}</span><span class="review-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">${i.originalPrice && i.originalPrice !== i.price ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(i.originalPrice * i.qty)}</span>` : ''}${formatPrice(i.price * i.qty)}</span></div>`
-            ).join('');
-        }
+        const itemsHtml = buildCollapsedItemsHtml(items, 'review-item-row', 'review-item-name', 'review-item-price');
         return `<div class="review-card-wrapper"><div class="review-card"><div class="review-header">${avatar}<div class="review-header-info"><div class="review-author-name">${escapeHtml(rv.user_name || 'Пользователь')}</div><div class="review-date">${dateStr}</div></div>${orderBadge}</div><div class="review-text">${escapeHtml(rv.text)}</div></div>${itemsHtml ? `<div class="review-items-card">${itemsHtml}</div>` : ''}</div>`;
     }
 
