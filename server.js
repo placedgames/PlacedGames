@@ -543,18 +543,6 @@ function getBot() {
 // API ЭНДПОИНТЫ
 // =============================================
 
-// временно h
-app.get('/admin/export-db', (req, res) => {
-const secret = req.query.secret;
-if (secret !== process.env.IMPORT_SECRET) return res.status(401).send('Unauthorized');
-const filename = `backup-${Date.now()}.dump`;
-const filepath = `/tmp/${filename}`;
-exec(`pg_dump "${process.env.DATABASE_URL}" -F c -f ${filepath}`, (err) => {
-if (err) return res.status(500).send('Ошибка экспорта: ' + err.message);
-res.download(filepath, filename);
-});
-});
-
 app.get('/api/orders', adminAuth, async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM orders ORDER BY id DESC');
