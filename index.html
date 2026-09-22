@@ -124,7 +124,7 @@
             --icon-color-primary: var(--text-primary);
             --icon-color-warning: #eab308;
             --icon-color-danger: #ef4444;
-            --col-border-color: rgba(37, 37, 40, 1);
+            --col-border-color: rgba(35, 35, 38, 1);
         }
 
         [data-theme="light"] {
@@ -3644,8 +3644,8 @@ function showAdditionalSettingsAlert() {
             const newPrice = appliedPromo ?
                 Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100)) :
                 prod.price * qty;
-            return `<div class="order-item-row">
-                    <span class="order-item-name">${escapeHtml(prod.name)}${qty > 1 ? ` x${qty}` : ''}</span>
+                        return `<div class="order-item-row">
+                    <span class="order-item-name">${escapeHtml(prod.name)}${qty > 1 ? `, ${qty} шт.` : ''}</span>
                     <span class="order-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
                         ${appliedPromo ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(prod.price * qty)}</span>` : ''}
                         ${formatPrice(newPrice)}
@@ -3958,6 +3958,10 @@ function showAdditionalSettingsAlert() {
         renderOrdersList(filtered);
     }
 
+        function computeOrderRawTotal(items) {
+        return items.reduce((s, i) => s + (i.originalPrice != null ? i.originalPrice : i.price) * i.qty, 0);
+    }
+
     function renderOrdersList(list) {
         const container = document.getElementById("ordersList");
         if (!container) return;
@@ -3977,6 +3981,9 @@ function showAdditionalSettingsAlert() {
 
             const itemsHtml = buildCollapsedItemsHtml(items, 'order-item-row', 'order-item-name', 'order-item-price');
 
+            const rawTotal = computeOrderRawTotal(items);
+            const showOldTotal = o.promo_discount && rawTotal !== o.total;
+
             return `<div class="order-wrapper" data-order-id="${o.id}">
                         <div class="order-main-card">
                             <div class="order-header">
@@ -3988,7 +3995,7 @@ function showAdditionalSettingsAlert() {
                             <div class="order-date">${o.date} ${o.time || ''}</div>
                                <div class="order-total" style="display:flex;align-items:baseline;gap:8px;">
                                 ${formatPrice(o.total)}
-                                ${o.promo_discount ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:15px;">${formatPrice(Math.round(o.total / (1 - o.promo_discount / 100)))}</span>` : ''}
+                                ${showOldTotal ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:15px;">${formatPrice(rawTotal)}</span>` : ''}
                             </div>
                            <svg class="icon icon-info-order-status icon--accent order-status-info-icon" data-status-info="${o.id}"><use href="#icon-info"></use></svg>
                         </div>
