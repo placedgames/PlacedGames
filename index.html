@@ -124,6 +124,7 @@
             --icon-color-primary: var(--text-primary);
             --icon-color-warning: #eab308;
             --icon-color-danger: #ef4444;
+            --col-border-color: rgba(37, 37, 40, 1);
         }
 
         [data-theme="light"] {
@@ -142,10 +143,11 @@
             --input-bg-dark: #dddde2;
             --sticky-bg: rgba(254, 254, 255, 0.9);
             --sticky-bg2: rgba(254, 254, 255, 0.9);
-            --bottom-menu-border: #e3e3ea;
+                        --bottom-menu-border: #e3e3ea;
             --fixed-border: #e3e3ea;
             --menu-slider-bg: rgba(80, 80, 83, 0.08);
             --accent-blue-bg: rgba(56, 150, 200, 0.1);
+            --col-border-color: var(--border-color);
         }
 
         body {
@@ -758,9 +760,9 @@
             z-index: 2;
         }
 
-        .cart-item-delivery {
+                .cart-item-delivery {
             background: var(--col-bg);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--col-border-color);
             border-radius: 0 0 29px 29px;
             padding: 16px 16px;
             margin-top: -30px;
@@ -1296,9 +1298,10 @@
             gap: 16px;
         }
 
-        .profile-bottom-card {
+                .profile-bottom-card {
             background: var(--col-bg);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--col-border-color);
+            border-radius: 0 0 35px 35px;
             border-radius: 0 0 35px 35px;
             padding: 11px 11px;
             margin-top: -29px;
@@ -1410,7 +1413,7 @@
 
         .referral-bottom-card {
             background: var(--col-bg);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--col-border-color);
             border-radius: 0 0 35px 35px;
             padding: 11px 11px;
             margin-top: -29px;
@@ -1576,7 +1579,7 @@
 
         .review-items-card {
             background: var(--col-bg);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--col-border-color);
             border-radius: 0 0 30px 30px;
             padding: 12px 16px;
             margin-top: -28px;
@@ -1738,7 +1741,7 @@
 
         .order-items-card {
             background: var(--col-bg);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--col-border-color);
             border-radius: 0 0 30px 30px;
             padding: 12px 16px;
             margin-top: -28px;
@@ -2517,6 +2520,7 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
     let profileLongPressFired = false;
     let cart = {};
     let currentOpenOrder = null;
+    let writeReviewEntryPage = 'reviews';
     let appliedPromo = null;
     let reviewsListCache = null;       // только в памяти, не в localStorage — сбрасывается при каждом новом открытии приложения
     let reviewsFetchPromise = null;    // чтобы не запускать параллельно два одинаковых запроса
@@ -2933,10 +2937,19 @@ function showAdditionalSettingsAlert() {
         holdInterval = null;
     }
 
-    function holdIncrementCart(pid) {
+        function holdIncrementCart(pid) {
     const check = canAddToCart(pid);
     if (!check.allowed) { stopHold(); return; }
     cart[pid] = (cart[pid] || 0) + 1;
+    updateSingleCard(pid);
+    renderCartPage();
+    saveCartToLocalStorage();
+}
+
+    function holdDecrementCart(pid) {
+    const qty = cart[pid] || 0;
+    if (qty <= 1) { stopHold(); return; }
+    cart[pid] = qty - 1;
     updateSingleCard(pid);
     renderCartPage();
     saveCartToLocalStorage();
@@ -4201,9 +4214,12 @@ function showAdditionalSettingsAlert() {
                 fixedBlock.style.display = "block";
                 fixedBlock.innerHTML =
                     `<div id="codeActionBlock" class="checkout-card"><div class="checkout-buttons-row"><button class="checkout-button" id="showCodeInputBtn">Указать код</button><button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn"><svg class="icon icon-order-code-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
-            } else if (!isCompleted) {
+                        } else if (!isCompleted) {
                 fixedBlock.style.display = "none";
                         } else {
+                fixedBlock.style.display = "block";
+                fixedBlock.innerHTML =
+                    `<div class="checkout-card"><div class="checkout-buttons-row"><button onclick="hapticMedium();writeReviewEntryPage='order';showPage('write-review')" class="checkout-button">Оставить отзыв</button><button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn"><svg class="icon icon-order-review-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
                 getReviewsData().then(allReviews => {
                     const alreadyReviewed = allReviews.some(rv =>
                  String(rv.user_id) === String(tgUserForReview?.id) && String(rv.order_id) ===
@@ -4211,14 +4227,8 @@ function showAdditionalSettingsAlert() {
                     );
                     if (alreadyReviewed) {
                         fixedBlock.style.display = "none";
-                    } else {
-                        fixedBlock.style.display = "block";
-                        fixedBlock.innerHTML =
-                            `<div class="checkout-card"><div class="checkout-buttons-row"><button onclick="hapticMedium();showPage('write-review')" class="checkout-button">Оставить отзыв</button><button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn"><svg class="icon icon-order-review-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
                     }
-                }).catch(() => {
-                    fixedBlock.style.display = "none";
-                });
+                }).catch(() => {});
             }
 
             setTimeout(() => {
@@ -4319,8 +4329,9 @@ function showAdditionalSettingsAlert() {
                 </div>
             </div>`;
         document.body.appendChild(fixedEl);
-        document.getElementById('goWriteReviewBtn')?.addEventListener('click', () => {
+                document.getElementById('goWriteReviewBtn')?.addEventListener('click', () => {
             hapticLight();
+            writeReviewEntryPage = 'reviews';
             showPage('write-review');
         });
     }
@@ -4355,13 +4366,28 @@ function showAdditionalSettingsAlert() {
         setupReviewsListUI(initialReviews);
     }
 
-    function renderWriteReviewPage() {
+        function renderWriteReviewPage() {
         const container = document.getElementById("writeReviewContent");
         if (!container) return;
         const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
         const userId = tgUser?.id;
         const nickname = tgUser?.first_name || "Пользователь";
         const photoUrl = tgUser?.photo_url || "";
+
+        const earlyFixedBlock = document.getElementById("cartCheckoutFixed");
+        if (earlyFixedBlock && userId) {
+            earlyFixedBlock.style.display = "block";
+            earlyFixedBlock.innerHTML = `
+                <div class="checkout-card">
+                    <div class="checkout-buttons-row">
+                        <button class="checkout-button" id="reviewSubmitBtnFixed" disabled style="opacity:0.6;">Отправить отзыв</button>
+                        <button class="promo-btn" onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')">
+                            <svg class="icon icon-writereview-help icon--accent"><use href="#icon-support"></use></svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
 
         let completedOrders = [];
         let reviewedOrderIds = [];
@@ -4754,9 +4780,11 @@ body: JSON.stringify({
         setTimeout(refreshAllCarousels, 300);
     });
 
-    function getCurrentActiveMenuPage() {
+        function getCurrentActiveMenuPage() {
         const activeBtn = document.querySelector('.menu-item.active');
-        return activeBtn ? activeBtn.dataset.page : null;
+        if (activeBtn) return activeBtn.dataset.page;
+        if (document.getElementById('profileMenuWrapper')?.classList.contains('active')) return 'profile';
+        return null;
     }
 
         function refreshMenuSliderOnResize() {
@@ -4776,11 +4804,23 @@ body: JSON.stringify({
         setTimeout(refreshMenuSliderOnResize, 300);
     });
 
-    document.addEventListener('focusout', (e) => {
+        document.addEventListener('focusout', (e) => {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
             setTimeout(refreshMenuSliderOnResize, 150); // пересчитать позицию после закрытия клавиатуры
         }
     });
+
+    if (typeof ResizeObserver !== 'undefined') {
+        let bodyRoDebounce = null;
+        const bodyRo = new ResizeObserver(() => {
+            clearTimeout(bodyRoDebounce);
+            bodyRoDebounce = setTimeout(() => {
+                refreshAllCarousels();
+                refreshMenuSliderOnResize();
+            }, 120);
+        });
+        bodyRo.observe(document.body);
+    }
 
     function attachGameCardEvents() {
         document.querySelectorAll('#game-page .card-img-carousel').forEach(carousel => {
@@ -5786,10 +5826,15 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
             }
             saveCurrentPage(pageId);
             updateMenuSlider(pageId);
-        } else if (profileLinkedPages.includes(pageId)) {
+                } else if (profileLinkedPages.includes(pageId)) {
             document.querySelectorAll(".menu-item").forEach(btn => btn.classList.remove("active"));
-            document.getElementById("profileMenuWrapper")?.classList.add("active");
-            updateMenuSlider("profile");
+            if (pageId === 'write-review' && writeReviewEntryPage === 'order') {
+                document.querySelector('.menu-item[data-page="orders"]')?.classList.add("active");
+                updateMenuSlider("orders");
+            } else {
+                document.getElementById("profileMenuWrapper")?.classList.add("active");
+                updateMenuSlider("profile");
+            }
         }
 
         injectPageHeader();
@@ -5833,7 +5878,7 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
             injectPageHeader();
             tg.BackButton.show();
             window.scrollTo({ top: savedOrdersScrollY, behavior: 'instant' });
-        } else if (previousPage === "reviews") {          // ← новая ветка
+                } else if (previousPage === "reviews") {          // ← новая ветка
             document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
             document.getElementById("reviews-page")?.classList.add("active-page");
             document.getElementById("cartCheckoutFixed").style.display = "none";
@@ -5844,6 +5889,14 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
             renderReviewsFixedAction();
             tg.BackButton.show();
             window.scrollTo({ top: savedReviewsScrollY, behavior: 'instant' });
+        } else if (previousPage === "order-detail") {
+            if (currentOpenOrder) {
+                const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+                const isOwner = String(currentOpenOrder.user_id) === String(tgUserId);
+                showOrderDetail(currentOpenOrder, isOwner);
+            } else {
+                showPage(previousPage, true);
+            }
         } else {
                         showPage(previousPage, true);
                     }
