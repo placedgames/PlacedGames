@@ -626,7 +626,7 @@ app.post('/api/order', async (req, res) => {
         const priceMap = {};
         priceRows.rows.forEach(r => { priceMap[r.id] = r.price; });
 
-        let realTotal = 0;
+                let realTotal = 0;
         const verifiedItems = [];
         for (const item of o.items) {
             const idStr = String(item.id);
@@ -636,11 +636,11 @@ app.post('/api/order', async (req, res) => {
                 return res.status(400).json({ error: 'Неизвестный товар: ' + idStr });
             }
             const qty = parseInt(item.qty) || 1;
-            const discountedPrice = o.promo_discount
-                ? Math.round(realPrice * (1 - o.promo_discount / 100))
-                : realPrice;
-            realTotal += discountedPrice * qty;
-            verifiedItems.push({ id: item.id, name: item.name, qty, price: discountedPrice, originalPrice: realPrice });
+            const lineTotal = o.promo_discount
+                ? Math.round(realPrice * qty * (1 - o.promo_discount / 100))
+                : realPrice * qty;
+            realTotal += lineTotal;
+            verifiedItems.push({ id: item.id, name: item.name, qty, price: lineTotal / qty, originalPrice: realPrice });
         }
 
         await client.query('BEGIN');
