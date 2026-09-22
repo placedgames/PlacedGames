@@ -3182,17 +3182,18 @@ function showAdditionalSettingsAlert() {
         });
     }
 
-    function buildOrderObject(paymentMethodLabel) {
+        function buildOrderObject(paymentMethodLabel) {
         let tgUser = null;
         if (window.Telegram?.WebApp?.initDataUnsafe?.user) tgUser = window.Telegram.WebApp.initDataUnsafe.user;
         const cartItems = Object.entries(cart);
-        let total = cartItems.reduce((s, [id, qty]) => s + (games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty), 0);
-        if (appliedPromo) total = Math.round(total * (1 - appliedPromo.discountPercent / 100));
-                const orderItems = cartItems.map(([id, qty]) => {
+        const orderItems = cartItems.map(([id, qty]) => {
             const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
-            const discountedPrice = appliedPromo ? prod.price * (1 - appliedPromo.discountPercent / 100) : prod.price;
-            return { id: id, name: prod.name, qty, price: discountedPrice, originalPrice: prod.price };
+            const lineTotal = appliedPromo
+                ? Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100))
+                : prod.price * qty;
+            return { id: id, name: prod.name, qty, price: lineTotal / qty, originalPrice: prod.price };
         });
+        const total = orderItems.reduce((s, i) => s + Math.round(i.price * i.qty), 0);
         const gameNameValue = (() => {
             const ids = Object.keys(cart);
             if (!ids.length) return '';
@@ -3253,8 +3254,9 @@ function showAdditionalSettingsAlert() {
         fixedBlock.style.display = "block";
         const rawTotal = items.reduce((s, [id, qty]) => s + (games.flatMap(g => g.getProducts()).find(p => p.id == id)
             .price * qty), 0);
-        const discountedTotal = appliedPromo ? Math.round(rawTotal * (1 - appliedPromo.discountPercent / 100)) :
-            rawTotal;
+        const discountedTotal = appliedPromo
+            ? items.reduce((s, [id, qty]) => s + Math.round(games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty * (1 - appliedPromo.discountPercent / 100)), 0)
+            : rawTotal;
         if (isPromoMode) {
             fixedBlock.innerHTML =
                 `<div class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="total-row"><span class="promo-label">Введите промокод на скидку</span></div><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;"><input type="text" class="promo-input" id="promoInput" placeholder="Введите промокод" value="${appliedPromo ? appliedPromo.code : ''}" oninput="this.value=this.value.toUpperCase()" style="flex: 1; min-width: 0; box-sizing: border-box;"><button class="promo-action-btn back-btn" id="promoBackBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-back icon--danger"><use href="#icon-cancel"></use></svg></button><button class="promo-action-btn apply-btn" id="promoApplyBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-apply icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
@@ -3383,10 +3385,11 @@ function showAdditionalSettingsAlert() {
             container.innerHTML = '<div class="empty-state">Корзина пуста</div>';
             return;
         }
-        rawTotal = items.reduce((s, [id, qty]) => s + (games.flatMap(g => g.getProducts()).find(p => p.id == id)
+                rawTotal = items.reduce((s, [id, qty]) => s + (games.flatMap(g => g.getProducts()).find(p => p.id == id)
             .price * qty), 0);
-        discountedTotal = appliedPromo ? Math.round(rawTotal * (1 - appliedPromo.discountPercent / 100)) :
-            rawTotal;
+        discountedTotal = appliedPromo
+            ? items.reduce((s, [id, qty]) => s + Math.round(games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty * (1 - appliedPromo.discountPercent / 100)), 0)
+            : rawTotal;
 
                 const itemsListHtml = Object.entries(cart)
     .sort(([idA, qtyA], [idB, qtyB]) => {
@@ -3627,10 +3630,11 @@ function showAdditionalSettingsAlert() {
         let rawTotal = 0;
 
         const items = Object.entries(cart);
-        rawTotal = items.reduce((s, [id, qty]) => s + (games.flatMap(g => g.getProducts()).find(p => p.id == id)
+                rawTotal = items.reduce((s, [id, qty]) => s + (games.flatMap(g => g.getProducts()).find(p => p.id == id)
             .price * qty), 0);
-        discountedTotal = appliedPromo ? Math.round(rawTotal * (1 - appliedPromo.discountPercent / 100)) :
-            rawTotal;
+        discountedTotal = appliedPromo
+            ? items.reduce((s, [id, qty]) => s + Math.round(games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty * (1 - appliedPromo.discountPercent / 100)), 0)
+            : rawTotal;
 
                 const itemsListHtml = Object.entries(cart)
     .sort(([idA, qtyA], [idB, qtyB]) => {
