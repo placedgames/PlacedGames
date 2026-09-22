@@ -3018,12 +3018,12 @@ function showAdditionalSettingsAlert() {
         }
         let html = '';
         for (let [id, qty] of items) {
-            const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
+                        const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
             if (!prod) continue;
-                        html += `<div class="cart-item-wrapper"><div class="cart-item"><img class="cart-img" src="${prod.image}" alt="${escapeHtml(prod.name)}"><div class="cart-info"><div class="cart-product-name">${escapeHtml(prod.name)}</div><div class="cart-product-price">
+            html += `<div class="cart-item-wrapper"><div class="cart-item"><img class="cart-img" src="${prod.image}" alt="${escapeHtml(prod.name)}"><div class="cart-info"><div class="cart-product-name">${escapeHtml(prod.name)}</div><div class="cart-product-price">
                 ${formatPrice(appliedPromo ? Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100)) : prod.price * qty)}
                 ${appliedPromo ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:15px;margin-left:6px;">${formatPrice(prod.price * qty)}</span>` : ''}
-            </div><div class="cart-product-category">${escapeHtml(games.find(g => g.getProducts().some(p => p.id == id))?.name || prod.category)}</div></div>`;
+            </div><div class="cart-product-category">${escapeHtml(games.find(g => g.getProducts().some(p => p.id == id))?.name || prod.category)}</div></div><div class="cart-actions" style="display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:24px;padding-right:0px;padding-top:0px;">
                 <div class="cart-icon-row">
                     ${prod.warn ? `<svg class="icon icon-cart-warn warn-icon icon--warning" data-id="${id}" data-type="warn"><use href="#icon-warning"></use></svg>` : ''}
                     <svg class="icon icon-info-cart icon--accent instruction-icon" data-id="${id}" data-type="instruction"><use href="#icon-info"></use></svg>
