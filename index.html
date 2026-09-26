@@ -570,26 +570,21 @@
             position: relative;
         }
 
-                .card-info-icon-btn {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 42px;
-            height: 42px;
+            .product-title-row {
             display: flex;
-            align-items: flex-start;
-            justify-content: flex-end;
-            padding: 9px;
+            align-items: center;
+            gap: 5px;
+            min-width: 0;
+            margin-bottom: 4px;
             cursor: pointer;
-            z-index: 5;
         }
 
-        .card-info-icon-btn svg {
-            width: 22px;
-            height: 22px;
-            opacity: 1;
-            color: #4cb4e9;
-            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+        .product-info-icon {
+            width: 15px;
+            height: 15px;
+            flex-shrink: 0;
+            color: var(--text-secondary);
+            opacity: 0.85;
         }
         
         .card-img {
@@ -661,17 +656,18 @@
         }
 
         .card-img-carousel+.card-info {
-            padding-top: 5px;
+            padding-top: 6px;
         }
 
-        .product-title {
+                .product-title {
             font-size: 18px;
             font-weight: 500;
             color: var(--text-primary);
-            margin-bottom: 4px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            min-width: 0;
+            flex: 1;
         }
 
         .price-row {
@@ -3222,18 +3218,18 @@ function showAdditionalSettingsAlert() {
                 showPage("game");
             };
         }
-                                grid.innerHTML = filteredGames.map(game => `
+                                                grid.innerHTML = filteredGames.map(game => `
                 <div class="product-card" data-game-id="${game.id}">
                     <div class="card-img-carousel">
                         <div class="card-img-track">
                             <img class="card-img" src="${game.image}" alt="${escapeHtml(game.name)}">
                         </div>
                     </div>
-                    <div class="card-info-icon-btn" data-info-service="${game.id}">
-                        <svg class="icon"><use href="#icon-info"></use></svg>
-                    </div>
                     <div class="card-info">
-                        <div class="product-title">${escapeHtml(game.name)}</div>
+                        <div class="product-title-row" data-info-service="${game.id}">
+                            <span class="product-title">${escapeHtml(game.name)}</span>
+                            <svg class="icon product-info-icon"><use href="#icon-info"></use></svg>
+                        </div>
                         <div class="price-row">
                             <span class="current-price" style="font-size:19px;color:var(--text-primary);font-weight:500;">от ${formatPrice(game.minPrice)}</span>
                             <span class="old-price">${formatPrice(game.oldMinPrice)}</span>
@@ -4811,14 +4807,14 @@ body: JSON.stringify({
                          </div>
                          ${imgs.length > 1 ? `<div class="card-img-dots">${imgs.map((_, i) => `<span class="card-img-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : ''}
                      </div>`;
-                        return `
+                                                return `
                         <div class="product-card" data-id="${p.id}">
                             ${carouselHtml}
-                            <div class="card-info-icon-btn" data-info-product="${p.id}">
-                                <svg class="icon"><use href="#icon-info"></use></svg>
-                            </div>
                             <div class="card-info">
-                                <div class="product-title">${escapeHtml(p.name)}</div>
+                                <div class="product-title-row" data-info-product="${p.id}">
+                                    <span class="product-title">${escapeHtml(p.name)}</span>
+                                    <svg class="icon product-info-icon"><use href="#icon-info"></use></svg>
+                                </div>
                                 <div class="price-row">
                                     <span class="current-price">${formatPrice(p.price)}</span>
                                     <span class="old-price">${formatPrice(p.oldPrice)}</span>
