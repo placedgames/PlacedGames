@@ -579,7 +579,7 @@
             cursor: pointer;
         }
 
-                .product-info-icon {
+        svg.product-info-icon {
             width: 15px;
             height: 15px;
             flex-shrink: 0;
@@ -2382,7 +2382,7 @@
     return { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.04)', icon: 'icon-review-sad' };
 }
 
-    function escapeHtml(str) {
+        function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>]/g, function(m) {
             if (m === '&') return '&amp;';
@@ -2391,8 +2391,13 @@
             return m;
         });
     }
-    
-                                function pluralizeTovar(n) {
+
+    function cleanText(str) {
+        if (!str) return '';
+        return str.replace(/\s+/g, ' ').trim();
+    }
+
+    function pluralizeTovar(n) {
         const n100 = n % 100;
         const n10 = n % 10;
         if (n100 >= 11 && n100 <= 14) return 'товаров';
