@@ -2459,7 +2459,7 @@
                 message: msg,
                 buttons: [
                     { id: 'add', type: 'default', text: 'В корзину' },
-                    { id: 'cancel', type: 'cancel' }
+                    { id: 'close', type: 'close' }
                 ]
             }, (buttonId) => {
                 if (buttonId === 'add') {
@@ -2483,7 +2483,7 @@
                 message: msg,
                 buttons: [
                     { id: 'goto', type: 'default', text: 'К товарам' },
-                    { id: 'cancel', type: 'cancel' }
+                    { id: 'close', type: 'close' }
                 ]
             }, (buttonId) => {
                 if (buttonId === 'goto') {
@@ -2828,12 +2828,13 @@ if (maxAllowedQty && currentQty >= maxAllowedQty) {
         }
     }
 
-    function showConflictSwapConfirm(newProductId, oldProductId, message) {
+        function showConflictSwapConfirm(newProductId, oldProductId, message) {
         if (window.Telegram?.WebApp?.showPopup) {
             window.Telegram.WebApp.showPopup({
                 message: message,
                 buttons: [
-                    { id: 'swap', type: 'default', text: 'Удалить товар' }
+                    { id: 'close', type: 'close' },
+                    { id: 'swap', type: 'destructive', text: 'Удалить' }
                 ]
             }, (buttonId) => {
                 if (buttonId === 'swap') {
@@ -2918,7 +2919,7 @@ function showClearCacheConfirmAlert() {
                 message: 'Вы действительно хотите сбросить кэш приложения? Сброс кэша приложения не удалит ваши данные.',
                 buttons: [
                     { id: 'confirm', type: 'default', text: 'Сбросить' },
-                    { id: 'cancel', type: 'cancel' }
+                    { id: 'close', type: 'close' }
                 ]
             }, (buttonId) => {
                 release();
@@ -2975,12 +2976,13 @@ function showAdditionalSettingsAlert() {
         return arrays.some(a => Array.isArray(a) && a.length > 0);
     }
 
-    function showMixCartConfirm(productId, message) {
+        function showMixCartConfirm(productId, message) {
         if (window.Telegram?.WebApp?.showPopup) {
             window.Telegram.WebApp.showPopup({
                 message: message,
                 buttons: [
-                    { id: 'clear', type: 'default', text: 'Очистить корзину' }
+                    { id: 'close', type: 'close' },
+                    { id: 'clear', type: 'destructive', text: 'Очистить' }
                 ]
             }, (buttonId) => {
                 if (buttonId === 'clear') {
@@ -3188,7 +3190,7 @@ function showAdditionalSettingsAlert() {
                             message: msg,
                             buttons: [
                                 { id: 'delete', type: 'destructive', text: 'Удалить' },
-                                { id: 'cancel', type: 'cancel' }
+                                { id: 'close', type: 'close' }
                             ]
                         }, (buttonId) => {
                             if (buttonId === 'delete') {
@@ -3719,11 +3721,24 @@ function showAdditionalSettingsAlert() {
                 }
                 if (hasError) return;
 
-                if (checkoutData.paymentMethod === "wallet") {
+                                if (checkoutData.paymentMethod === "wallet") {
                     if (discountedTotal > userWalletBalance) {
-                        showAppAlert(
-                            'На вашем кошельке недостаточно средств, пожалуйста выберите другой способ оплаты'
-                        );
+                        if (window.Telegram?.WebApp?.showPopup) {
+                            window.Telegram.WebApp.showPopup({
+                                message: 'На вашем кошельке недостаточно средств, пожалуйста выберите другой способ оплаты',
+                                buttons: [
+                                    { id: 'close', type: 'close' },
+                                    { id: 'topup', type: 'default', text: 'Пополнить' }
+                                ]
+                            }, (buttonId) => {
+                                if (buttonId === 'topup') {
+                                    hapticLight();
+                                    showAppAlert('В данный момент пополнить кошелёк нельзя, попробуйте позже');
+                                }
+                            });
+                        } else {
+                            showAppAlert('На вашем кошельке недостаточно средств, пожалуйста выберите другой способ оплаты');
+                        }
                         return;
                     }
                     const confirmed = await new Promise(resolve => {
@@ -3876,13 +3891,14 @@ function showAdditionalSettingsAlert() {
             document.getElementById("bankInfoBtn")?.addEventListener("click", () => {
                 showFieldInfoAlert("bank");
             });
-            document.getElementById("paidBtn")?.addEventListener("click", async () => {
+                        document.getElementById("paidBtn")?.addEventListener("click", async () => {
                 hapticMedium();
                 const confirmed = await new Promise(resolve => {
                     window.Telegram.WebApp.showPopup({
-                        message: 'Если вы отправили перевод, нажмите «Оформить заказ».',
+                        message: 'Подтверждение оформления:\n\nЕсли вы отправили перевод, нажмите кнопку «Оформить».',
                         buttons: [
-                            { id: 'ok', type: 'default', text: 'Оформить заказ' }
+                            { id: 'close', type: 'close' },
+                            { id: 'ok', type: 'default', text: 'Оформить' }
                         ]
                     }, (buttonId) => {
                         resolve(buttonId === 'ok');
@@ -4033,11 +4049,12 @@ function showAdditionalSettingsAlert() {
         `Статус: ${statusDisplay}\n` +
         `Сумма заказа: ${formatPrice(order.total)}`;
 
-        if (window.Telegram?.WebApp?.showPopup) {
+                if (window.Telegram?.WebApp?.showPopup) {
             window.Telegram.WebApp.showPopup({
                 message: message,
                 buttons: [
-                    { id: 'goto_order', type: 'default', text: 'Перейти к заказу' }
+                    { id: 'close', type: 'close' },
+                    { id: 'goto_order', type: 'default', text: 'К заказу' }
                 ]
             }, (buttonId) => {
                                 if (buttonId === 'goto_order') {
