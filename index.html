@@ -2392,9 +2392,48 @@
         });
     }
 
-    function cleanText(str) {
+        function cleanText(str) {
         if (!str) return '';
         return str.replace(/\s+/g, ' ').trim();
+    }
+
+    function measureTextWidth(text, font) {
+        const canvas = measureTextWidth._canvas || (measureTextWidth._canvas = document.createElement('canvas'));
+        const ctx = canvas.getContext('2d');
+        ctx.font = font;
+        return ctx.measureText(text).width;
+    }
+
+    function truncateTextToWidth(text, maxWidth, font) {
+        if (measureTextWidth(text, font) <= maxWidth) return text;
+        const ellipsis = '…';
+        let lo = 0, hi = text.length;
+        while (lo < hi) {
+            const mid = Math.ceil((lo + hi) / 2);
+            const candidate = text.slice(0, mid).trimEnd() + ellipsis;
+            if (measureTextWidth(candidate, font) <= maxWidth) lo = mid;
+            else hi = mid - 1;
+        }
+        return text.slice(0, lo).trimEnd() + ellipsis;
+    }
+
+    function fitProductTitles(root) {
+        (root || document).querySelectorAll('.product-title-row').forEach(row => {
+            const span = row.querySelector('.product-title');
+            const icon = row.querySelector('.product-info-icon');
+            if (!span || !icon) return;
+            if (!span.dataset.fullText) span.dataset.fullText = span.textContent;
+            const fullText = span.dataset.fullText;
+            const rowWidth = row.clientWidth;
+            if (!rowWidth) return;
+            const iconWidth = icon.getBoundingClientRect().width || 15;
+            const gap = 5;
+            const availableWidth = rowWidth - iconWidth - gap;
+            if (availableWidth <= 0) return;
+            const cs = getComputedStyle(span);
+            const font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+            span.textContent = truncateTextToWidth(fullText, availableWidth, font);
+        });
     }
 
     function pluralizeTovar(n) {
@@ -3240,10 +3279,12 @@ function showAdditionalSettingsAlert() {
                         <div class="card-action-btn cart-add-btn" data-open-game="${game.id}">Смотреть</div>
                     </div>
                 </div>
-            `).join("");
+                        `).join("");
+
+                requestAnimationFrame(() => fitProductTitles(grid));
 
                 document.querySelectorAll("[data-open-game]").forEach(btn => {
-            btn.addEventListener("click", (e) => {
+     btn.addEventListener("click", (e) => {
                 e.stopPropagation();
                 hapticLight();
                 const gameId = btn.dataset.openGame;
@@ -4826,7 +4867,9 @@ body: JSON.stringify({
                             </div>
                         </div>
                     `;
-        }).join("");
+                }).join("");
+
+        requestAnimationFrame(() => fitProductTitles(grid));
 
         attachGameCardEvents();
 
@@ -4906,14 +4949,20 @@ body: JSON.stringify({
         });
     }
 
-    let resizeDebounceTimer = null;
+        let resizeDebounceTimer = null;
     window.addEventListener('resize', () => {
         clearTimeout(resizeDebounceTimer);
-        resizeDebounceTimer = setTimeout(refreshAllCarousels, 150);
+        resizeDebounceTimer = setTimeout(() => {
+            refreshAllCarousels();
+            fitProductTitles(document);
+        }, 150);
     });
 
     window.addEventListener('orientationchange', () => {
-        setTimeout(refreshAllCarousels, 300);
+        setTimeout(() => {
+            refreshAllCarousels();
+            fitProductTitles(document);
+        }, 300);
     });
 
         function getCurrentActiveMenuPage() {
@@ -4946,13 +4995,14 @@ body: JSON.stringify({
         }
     });
 
-    if (typeof ResizeObserver !== 'undefined') {
+        if (typeof ResizeObserver !== 'undefined') {
         let bodyRoDebounce = null;
         const bodyRo = new ResizeObserver(() => {
             clearTimeout(bodyRoDebounce);
             bodyRoDebounce = setTimeout(() => {
                 refreshAllCarousels();
                 refreshMenuSliderOnResize();
+                fitProductTitles(document);
             }, 120);
         });
         bodyRo.observe(document.body);
