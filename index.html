@@ -3229,8 +3229,8 @@ function showAdditionalSettingsAlert() {
                         </div>
                     </div>
                     <div class="card-info">
-                        <div class="product-title-row" data-info-service="${game.id}">
-                            <span class="product-title">${escapeHtml(game.name)}</span>
+                                                <div class="product-title-row" data-info-service="${game.id}">
+                            <span class="product-title">${escapeHtml(cleanText(game.name))}</span>
                             <svg class="icon product-info-icon"><use href="#icon-info"></use></svg>
                         </div>
                         <div class="price-row">
@@ -4814,8 +4814,8 @@ body: JSON.stringify({
                         <div class="product-card" data-id="${p.id}">
                             ${carouselHtml}
                             <div class="card-info">
-                                <div class="product-title-row" data-info-product="${p.id}">
-                                    <span class="product-title">${escapeHtml(p.name)}</span>
+                                                                <div class="product-title-row" data-info-product="${p.id}">
+                                    <span class="product-title">${escapeHtml(cleanText(p.name))}</span>
                                     <svg class="icon product-info-icon"><use href="#icon-info"></use></svg>
                                 </div>
                                 <div class="price-row">
