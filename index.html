@@ -560,15 +560,38 @@
             }
         }
 
-        .product-card {
+                .product-card {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 42px 42px 28px 28px;
             overflow: hidden;
             cursor: pointer;
             transition: 0.1s linear;
+            position: relative;
         }
 
+        .card-info-icon-btn {
+            position: absolute;
+            top: 7px;
+            right: 7px;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end;
+            padding: 9px;
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        .card-info-icon-btn svg {
+            width: 18px;
+            height: 18px;
+            opacity: 0.8;
+            color: #ffffff;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+        }
+        
         .card-img {
             width: 100%;
             aspect-ratio: 1 / 1;
@@ -2375,10 +2398,69 @@
         });
     }
     
-        function pluralizeTovar(n) {
+                function pluralizeTovar(n) {
         if (n === 1) return 'товар';
         if (n >= 2 && n <= 4) return 'товара';
         return 'товаров';
+    }
+
+    function showProductInfoPopup(productId) {
+        const prod = games.flatMap(g => g.getProducts()).find(p => p.id == productId);
+        if (!prod) { showAppAlert('Информация недоступна'); return; }
+        let msg = `Информация о товаре:\n\nТовар: ${prod.name}\n`;
+        if (prod.bundleItems && prod.bundleItems.length > 0) {
+            msg += `Содержимое набора:\n` + prod.bundleItems.map(i => `- ${i}`).join('\n') + `\n`;
+        }
+        msg += `Стоимость: ${formatPrice(prod.price)}\nКатегория: ${prod.label || prod.category}`;
+
+        if (window.Telegram?.WebApp?.showPopup) {
+            window.Telegram.WebApp.showPopup({
+                message: msg,
+                buttons: [
+                    { id: 'add', type: 'default', text: 'В корзину' },
+                    { id: 'cancel', type: 'cancel' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'add') {
+                    hapticLight();
+                    handleCartAction(productId, true);
+                }
+            });
+        } else {
+            showAppAlert(msg);
+        }
+    }
+
+    function showServiceInfoPopup(gameId) {
+        const g = games.find(g => g.id === gameId);
+        if (!g) { showAppAlert('Информация недоступна'); return; }
+        const count = g.getProducts().length;
+        const msg = `Информация о сервисе:\n\nСервис: ${g.name}\nТоваров: ${count} ${pluralizeTovar(count)}`;
+
+        if (window.Telegram?.WebApp?.showPopup) {
+            window.Telegram.WebApp.showPopup({
+                message: msg,
+                buttons: [
+                    { id: 'goto', type: 'default', text: 'К товарам' },
+                    { id: 'cancel', type: 'cancel' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'goto') {
+                    hapticLight();
+                    if (g.enabled === false) {
+                        showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
+                        return;
+                    }
+                    currentGame = g;
+                    savedGameScrollY = 0;
+                    gameCategoryFilter = "Все категории";
+                    gameSearchQuery = "";
+                    showPage("game");
+                }
+            });
+        } else {
+            showAppAlert(msg);
+        }
     }
 
     function buildItemPriceHtml(price, originalPrice, priceClass) {
@@ -3043,7 +3125,7 @@ function showAdditionalSettingsAlert() {
             btn.addEventListener("click", () => changeQty(btn.dataset.inc, 1));
         });
         if (document.getElementById("cart-page").classList.contains("active-page")) { renderCheckoutBlock(); }
-        document.querySelectorAll(".instruction-icon, .warn-icon").forEach(icon => {
+                document.querySelectorAll(".instruction-icon, .warn-icon").forEach(icon => {
             icon.addEventListener("click", () => {
                 hapticLight();
                 const id = icon.dataset.id;
@@ -3059,7 +3141,25 @@ function showAdditionalSettingsAlert() {
                         msg += `Содержимое набора:\n` + prod.bundleItems.map(i => `- ${i}`).join('\n') + `\n`;
                     }
                     msg += `Стоимость: ${formatPrice(prod.price)}\nКатегория: ${prod.label || prod.category}`;
-                    showAppAlert(msg);
+
+                    if (window.Telegram?.WebApp?.showPopup) {
+                        window.Telegram.WebApp.showPopup({
+                            message: msg,
+                            buttons: [
+                                { id: 'delete', type: 'destructive', text: 'Удалить' },
+                                { id: 'cancel', type: 'cancel' }
+                            ]
+                        }, (buttonId) => {
+                            if (buttonId === 'delete') {
+                                hapticMedium();
+                                delete cart[id];
+                                saveCartToLocalStorage();
+                                renderCartPage();
+                            }
+                        });
+                    } else {
+                        showAppAlert(msg);
+                    }
                 }
             });
         });
@@ -3119,9 +3219,12 @@ function showAdditionalSettingsAlert() {
                 showPage("game");
             };
         }
-        grid.innerHTML = filteredGames.map(game => `
+                grid.innerHTML = filteredGames.map(game => `
                 <div class="product-card" data-game-id="${game.id}">
                     <img class="card-img" src="${game.image}" alt="${escapeHtml(game.name)}">
+                    <div class="card-info-icon-btn" data-info-service="${game.id}">
+                        <svg class="icon"><use href="#icon-info"></use></svg>
+                    </div>
                     <div class="card-info">
                         <div class="product-title">${escapeHtml(game.name)}</div>
                         <div class="price-row">
@@ -3143,11 +3246,20 @@ function showAdditionalSettingsAlert() {
                     showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
                     return;
                 }
-                currentGame = g;
+                                currentGame = g;
                 savedGameScrollY = 0;
                 gameCategoryFilter = "Все категории";
                 gameSearchQuery = "";
                 showPage("game");
+            });
+        });
+
+        document.querySelectorAll("[data-info-service]").forEach(btn => {
+            btn.addEventListener("pointerdown", (e) => e.stopPropagation());
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                hapticLight();
+                showServiceInfoPopup(btn.dataset.infoService);
             });
         });
     }
@@ -3449,7 +3561,7 @@ function showAdditionalSettingsAlert() {
                             </div>
                         </div>
                     </div>
-                    <div style="background:var(--col-bg);border:1px solid var(--border-color);border-radius:0 0 28px 28px;padding:12px 18px;margin-top:-30px;padding-top:40px;position:relative;z-index:1;">
+                    <div style="background:var(--col-bg);border:1px solid var(--col-border-color);border-radius:0 0 28px 28px;padding:12px 18px;margin-top:-30px;padding-top:40px;position:relative;z-index:1;">
                         ${itemsListHtml}
                     </div>
                 </div>`;
@@ -3686,7 +3798,7 @@ function showAdditionalSettingsAlert() {
                             </div>
                         </div>
                     </div>
-                    <div style="background:var(--col-bg);border:1px solid var(--border-color);border-radius:0 0 28px 28px;padding:12px 18px;margin-top:-30px;padding-top:40px;position:relative;z-index:1;">
+                    <div style="background:var(--col-bg);border:1px solid var(--col-border-color);border-radius:0 0 28px 28px;padding:12px 18px;margin-top:-30px;padding-top:40px;position:relative;z-index:1;">
                         ${itemsListHtml}
                     </div>
                 </div>`;
@@ -4692,9 +4804,12 @@ body: JSON.stringify({
                          </div>
                          ${imgs.length > 1 ? `<div class="card-img-dots">${imgs.map((_, i) => `<span class="card-img-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : ''}
                      </div>`;
-            return `
+                        return `
                         <div class="product-card" data-id="${p.id}">
                             ${carouselHtml}
+                            <div class="card-info-icon-btn" data-info-product="${p.id}">
+                                <svg class="icon"><use href="#icon-info"></use></svg>
+                            </div>
                             <div class="card-info">
                                 <div class="product-title">${escapeHtml(p.name)}</div>
                                 <div class="price-row">
@@ -4900,7 +5015,7 @@ body: JSON.stringify({
                     if (lastChild) lastChild.outerHTML = renderCartButtonHtml(cardId);
                     attachGameCardEvents();
                 });
-                card.querySelector('.counter-plus')?.addEventListener('click', (e) => {
+                                card.querySelector('.counter-plus')?.addEventListener('click', (e) => {
                     e.stopPropagation();
                     hapticLight();
                     handleCartAction(cardId, true);
@@ -4910,9 +5025,20 @@ body: JSON.stringify({
                 });
             }
         });
+
+        document.querySelectorAll('#game-page [data-info-product]').forEach(btn => {
+            if (btn.dataset.bound === 'true') return;
+            btn.dataset.bound = 'true';
+            btn.addEventListener('pointerdown', (e) => e.stopPropagation());
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                hapticLight();
+                showProductInfoPopup(btn.dataset.infoProduct);
+            });
+        });
     }
 
-        function buildReviewCardHtml(rv) {
+    function buildReviewCardHtml(rv) {
         const avatar = rv.photo_url ?
             `<img style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" src="${rv.photo_url}" alt="avatar">` :
             `<div class="review-avatar">👤</div>`;
