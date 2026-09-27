@@ -2965,8 +2965,8 @@ function showAdditionalSettingsAlert() {
             window.Telegram.WebApp.showPopup({
                 message: 'Настройки приложения:\n\n- Смена темы/языка\n- Смена формата\n- Вкл./выкл. вибрации',
                 buttons: [
-                    { id: 'close', type: 'close' },
-                    { id: 'open', type: 'default', text: 'Открыть' }
+                    { id: 'open', type: 'default', text: 'Открыть' },
+                    { id: 'close', type: 'close' }
                 ]
             }, (buttonId) => {
                 release();
@@ -3992,18 +3992,12 @@ function showAdditionalSettingsAlert() {
             `Всего заказов: ${ordersCount}\n` +
             `Объем покупок: ${formatPrice(totalSpent)}`;
 
-        if (window.Telegram?.WebApp?.showPopup) {
+                if (window.Telegram?.WebApp?.showPopup) {
             window.Telegram.WebApp.showPopup({
                 message: message,
                 buttons: [
-                    { id: 'bot', type: 'default', text: 'В бота' },
                     { id: 'close', type: 'close' }
                 ]
-            }, (buttonId) => {
-                if (buttonId === 'bot') {
-                    hapticLight();
-                    window.open('https://t.me/PlacedGamesBot', '_blank');
-                }
             });
         } else {
             showAppAlert(message);
@@ -5390,8 +5384,7 @@ function countReviewsByRating(list) {
             `<svg style="width:22px;height:22px;opacity:0.4;flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>`;
         const giftIconUrl = "https://cdn.jsdelivr.net/gh/melssed/PG@main/icons/Notification.png";
 
-        const notificationsEnabled = localStorage.getItem('notificationsEnabled') === 'true';
-        const referralLink = tgUser?.id ? `t.me/PlacedGamesBot?startapp=ref${tgUser.id}` :
+       const referralLink = tgUser?.id ? `t.me/PlacedGamesBot?startapp=ref${tgUser.id}` :
             't.me/PlacedGamesBot';
 
         container.innerHTML = `
@@ -5903,8 +5896,8 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
         localStorage.setItem('bottomMenuOffset', String(offset));
     }
 
-    function cycleBottomMenuOffset() {
-        const options = [16, 20, 24];
+        function cycleBottomMenuOffset() {
+        const options = [16, 20, 24, 28, 32];
         const current = getBottomMenuOffset();
         const idx = options.indexOf(current);
         const next = options[(idx + 1) % options.length];
@@ -5937,8 +5930,6 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
 
         const bottomOffset = getBottomMenuOffset();
 
-        const notificationsOn = localStorage.getItem('notificationsEnabled') === 'true';
-
         container.innerHTML = `
             <div class="referral-wrapper">
                 <div class="referral-main-card">
@@ -5953,7 +5944,7 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
                                 <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Тема приложения</div>
                             </div>
                             <button id="settingsThemeBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
-                                <svg class="icon theme-icon-rotatable" style="width:22px;height:22px;color:#4cb4e9;transform:rotate(${themeDeg}deg);"><use href="#icon-theme"></use></svg>
+                                <svg class="icon theme-icon-rotatable" style="width:22px;height:22px;color:#4cb4e9;transform:rotate(${themeDeg}deg);transition:transform 0.3s ease;"><use href="#icon-theme"></use></svg>
                             </button>
                         </div>
                         <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
@@ -5961,23 +5952,16 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
                                 <div style="font-size:19px;font-weight:550;color:var(--text-primary);">Русский</div>
                                 <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Язык приложения</div>
                             </div>
-                            <button id="settingsLangBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:15px;font-weight:600;">RU</button>
+                            <button id="settingsLangBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:15px;font-weight:550;">RU</button>
                         </div>
                         <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
                             <div style="padding-left:2px;min-width:0;">
                                 <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${vibrationOn ? 'Включено' : 'Выключено'}</div>
                                 <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Вибрация элементов</div>
                             </div>
-                            <button id="settingsVibrationBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:600;">${vibrationOn ? 'ON' : 'OFF'}</button>
+                            <button id="settingsVibrationBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${vibrationOn ? 'ON' : 'OFF'}</button>
                         </div>
-                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
-                            <div style="padding-left:2px;min-width:0;">
-                                <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${formatTitle}</div>
-                                <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Формат приложения</div>
-                            </div>
-                            <button id="settingsFormatBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:600;">FS</button>
-                        </div>
-                    </div>
+                                            </div>
                 </div>
             </div>
             <div class="referral-wrapper" style="margin-top:13px;">
@@ -5989,14 +5973,19 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
                     <div style="display:flex;flex-direction:column;gap:10px;">
                         <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
                             <div style="padding-left:2px;min-width:0;">
+                                <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${formatTitle}</div>
+                                <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Формат приложения</div>
+                            </div>
+                            <button id="settingsFormatBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">FS</button>
+                        </div>
+                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                            <div style="padding-left:2px;min-width:0;">
                                 <div style="font-size:19px;font-weight:550;color:var(--text-primary);">Очист. кэш</div>
                                 <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Кэш приложения</div>
                             </div>
                             <button id="settingsClearCacheBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4cb4e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4cb4e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M4 7h16"/>
-                                    <path d="M10 11v6"/>
-                                    <path d="M14 11v6"/>
                                     <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/>
                                     <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>
                                 </svg>
@@ -6007,14 +5996,7 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
                                 <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${bottomOffset} ${pluralizePixels(bottomOffset)}</div>
                                 <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Нижний отступ от меню</div>
                             </div>
-                            <button id="settingsOffsetBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:600;">${bottomOffset}</button>
-                        </div>
-                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
-                            <div style="padding-left:2px;min-width:0;">
-                                <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${notificationsOn ? 'Включено' : 'Выключено'}</div>
-                                <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Уведомления от бота</div>
-                            </div>
-                            <button id="settingsNotifBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:600;">${notificationsOn ? 'ON' : 'OFF'}</button>
+                            <button id="settingsOffsetBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${bottomOffset}</button>
                         </div>
                     </div>
                 </div>
@@ -6061,9 +6043,6 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
             });
             document.getElementById('settingsOffsetBtn')?.addEventListener('click', () => {
                 cycleBottomMenuOffset();
-            });
-            document.getElementById('settingsNotifBtn')?.addEventListener('click', () => {
-                hapticLight();
             });
         }, 0);
     }
@@ -6428,7 +6407,6 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
             if (localStorage.getItem('writeAccessRequested') === 'true') return;
             tg.requestWriteAccess((granted) => {
                 localStorage.setItem('writeAccessRequested', 'true');
-                localStorage.setItem('notificationsEnabled', granted ? 'true' : 'false');
             });
         } catch (e) {}
     }
