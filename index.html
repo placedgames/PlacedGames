@@ -125,6 +125,7 @@
             --icon-color-warning: #eab308;
             --icon-color-danger: #ef4444;
             --col-border-color: rgba(32, 32, 35, 1);
+            --bottom-menu-offset: 16px;
         }
 
         [data-theme="light"] {
@@ -878,9 +879,9 @@
             text-align: center;
         }
 
-        .cart-checkout-fixed {
+                .cart-checkout-fixed {
             position: fixed;
-            bottom: 16px;
+            bottom: var(--bottom-menu-offset, 16px);
             left: 16px;
             right: 16px;
             z-index: 1000;
@@ -2096,6 +2097,10 @@
     <div id="referralsContent"></div>
 </div>
 
+<div id="settings-page" class="page">
+    <div id="settingsContent"></div>
+</div>
+
 <div id="checkout-page" class="page">
     <div id="checkoutFormContent"></div>
 </div>
@@ -2137,7 +2142,7 @@
 
 <div id="cartCheckoutFixed" class="cart-checkout-fixed" style="display: none;"></div>
 
-<div id="bottomMenuWrapper" style="position:fixed;bottom:16px;left:16px;right:16px;z-index:1001;max-width:none;margin:0 auto;width:calc(100% - 32px);display:flex;gap:10px;align-items:center;opacity:0;transition:opacity .15s ease;">
+<div id="bottomMenuWrapper" style="position:fixed;bottom:var(--bottom-menu-offset, 16px);left:16px;right:16px;z-index:1001;max-width:none;margin:0 auto;width:calc(100% - 32px);display:flex;gap:10px;align-items:center;opacity:0;transition:opacity .15s ease;">
     <div class="menu-slider" id="menuSlider" style="z-index:2;"></div>
     <div id="menuPill" style="flex:1;height:67px;background:var(--sticky-bg);border:1px solid var(--bottom-menu-border);border-radius:60px;display:flex;justify-content:space-between;align-items:center;padding:5px 4px 8px 4px;backdrop-filter:blur(10px);position:relative;overflow:hidden;z-index:1;">
         <button class="menu-item" data-page="catalog" style="position:relative;z-index:3;">
@@ -2537,7 +2542,12 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
         </div>`;
 }
 
+        function isVibrationEnabled() {
+        return localStorage.getItem('vibrationEnabled') !== 'false';
+    }
+
     function hapticLight() {
+        if (!isVibrationEnabled()) return;
         if (window.Telegram?.WebApp?.HapticFeedback) {
             window.Telegram.WebApp.HapticFeedback.impactOccurred("light");
             return;
@@ -2546,6 +2556,7 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
     }
 
     function hapticMedium() {
+        if (!isVibrationEnabled()) return;
         if (window.Telegram?.WebApp?.HapticFeedback) {
             window.Telegram.WebApp.HapticFeedback.impactOccurred("medium");
             return;
@@ -2599,7 +2610,7 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
         return cardNumbers[bank] || "";
     }
 
-    function renderPageHeader(title, currentPageId) {
+        function renderPageHeader(title, currentPageId) {
     const navPages = [
     { id: 'catalog', title: 'Каталог' },
     { id: 'cart', title: 'Корзина' },
@@ -2609,6 +2620,7 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
     { id: 'wallet', title: 'Кошелёк' },
     { id: 'help', title: 'Справка' },
     { id: 'referrals', title: 'Рефералы' },
+    { id: 'settings', title: 'Настройки' },
 ];
 
             const isKnownPage = navPages.some(p => p.id === currentPageId);
@@ -2617,6 +2629,8 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
         navPages.map(p =>
             `<option value="${p.id}" ${p.id === currentPageId ? 'selected' : ''}>${p.title}</option>`
         ).join('');
+
+    const headerThemeDeg = themeIconRotationDeg(localStorage.getItem('appTheme') || 'dark');
 
     return `<div class="page-header-sticky">
     <div class="page-header-inner">
@@ -2629,7 +2643,7 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
         </div>
         <button class="page-header-double-btn" id="headerDoubleBtn" style="height: 45px; background: var(--header-btn-bg); border: 1px solid var(--border-color); border-radius: 50px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 14px; cursor: pointer;">
             <svg id="headerRefreshIcon" class="icon icon-header-refresh icon--accent"><use href="#icon-refresh"></use></svg>
-            <svg id="headerThemeIcon" class="icon icon-header-theme icon--accent"><use href="#icon-theme"></use></svg>
+            <svg id="headerThemeIcon" class="icon icon-header-theme icon--accent theme-icon-rotatable" data-rotation="${headerThemeDeg}" style="transform:rotate(${headerThemeDeg}deg);"><use href="#icon-theme"></use></svg>
         </button>
     </div>
 </div>`;
@@ -2942,25 +2956,23 @@ function showClearCacheConfirmAlert() {
 
 let additionalSettingsPopupOpen = false;
 function showAdditionalSettingsAlert() {
+    if (document.getElementById('settings-page')?.classList.contains('active-page')) return;
     if (additionalSettingsPopupOpen) return;
     additionalSettingsPopupOpen = true;
     const release = () => { additionalSettingsPopupOpen = false; };
     if (window.Telegram?.WebApp?.showPopup) {
         try {
             window.Telegram.WebApp.showPopup({
-                message: 'Экспериментальные настройки',
+                message: 'Настройки приложения:\n\n- Смена темы/языка\n- Смена формата\n- Вкл./выкл. вибрации',
                 buttons: [
-                    { id: 'clear_cache', type: 'default', text: 'Сброс кэша приложения' },
-                    { id: 'change_format', type: 'default', text: 'Из. формат приложения' }
+                    { id: 'close', type: 'close' },
+                    { id: 'open', type: 'default', text: 'Открыть' }
                 ]
-                        }, (buttonId) => {
+            }, (buttonId) => {
                 release();
-                if (buttonId === 'clear_cache') {
+                if (buttonId === 'open') {
                     hapticLight();
-                    showClearCacheConfirmAlert();
-                } else if (buttonId === 'change_format') {
-                    hapticLight();
-                    showFormatSelectAlert();
+                    showPage('settings');
                 }
             });
         } catch (e) {
@@ -5846,7 +5858,7 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
             hapticLight();
             showAppAlert('Получайте 2% с покупок рефералов, заработанные средства начисляются на баланс кошелька');
         });
-        document.getElementById("referralsShowMoreBtn")?.addEventListener("click", async function() {
+                document.getElementById("referralsShowMoreBtn")?.addEventListener("click", async function() {
             hapticLight();
             this.textContent = "Загрузка...";
             try {
@@ -5861,6 +5873,200 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
         });
     }, 0);
 }
+
+    function themeIconRotationDeg(theme) {
+        return theme === 'light' ? 180 : 0;
+    }
+
+    function updateThemeIconRotations(theme) {
+        const deg = themeIconRotationDeg(theme);
+        document.querySelectorAll('.theme-icon-rotatable').forEach(icon => {
+            icon.style.transform = `rotate(${deg}deg)`;
+            icon.dataset.rotation = deg;
+        });
+    }
+
+    function toggleAppTheme() {
+        hapticLight();
+        const current = localStorage.getItem('appTheme') || 'dark';
+        const newTheme = current === 'dark' ? 'light' : 'dark';
+        applyTheme(newTheme);
+        updateThemeIconRotations(newTheme);
+    }
+
+    function getBottomMenuOffset() {
+        return parseInt(localStorage.getItem('bottomMenuOffset') || '16', 10);
+    }
+
+    function applyBottomMenuOffset(offset) {
+        document.documentElement.style.setProperty('--bottom-menu-offset', offset + 'px');
+        localStorage.setItem('bottomMenuOffset', String(offset));
+    }
+
+    function cycleBottomMenuOffset() {
+        const options = [16, 20, 24];
+        const current = getBottomMenuOffset();
+        const idx = options.indexOf(current);
+        const next = options[(idx + 1) % options.length];
+        applyBottomMenuOffset(next);
+        hapticLight();
+        renderSettingsPage();
+    }
+
+    function pluralizePixels(n) {
+        const n100 = n % 100;
+        const n10 = n % 10;
+        if (n100 >= 11 && n100 <= 14) return 'пикселей';
+        if (n10 === 1) return 'пиксель';
+        if (n10 >= 2 && n10 <= 4) return 'пикселя';
+        return 'пикселей';
+    }
+
+    function renderSettingsPage() {
+        const container = document.getElementById("settingsContent");
+        if (!container) return;
+
+        const currentTheme = localStorage.getItem('appTheme') || 'dark';
+        const themeTitle = currentTheme === 'dark' ? 'Тёмная' : 'Светлая';
+        const themeDeg = themeIconRotationDeg(currentTheme);
+
+        const vibrationOn = isVibrationEnabled();
+
+        const currentFormat = localStorage.getItem('appFormat') || 'fullscreen';
+        const formatTitle = currentFormat === 'fullscreen' ? 'Fullscreen' : 'Fullsize';
+
+        const bottomOffset = getBottomMenuOffset();
+
+        const notificationsOn = localStorage.getItem('notificationsEnabled') === 'true';
+
+        container.innerHTML = `
+            <div class="referral-wrapper">
+                <div class="referral-main-card">
+                    <div class="referral-title">Настройки приложения</div>
+                    <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">Настройки мини-приложения</div>
+                </div>
+                <div class="referral-bottom-card">
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                            <div style="padding-left:2px;min-width:0;">
+                                <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${themeTitle}</div>
+                                <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Тема приложения</div>
+                            </div>
+                            <button id="settingsThemeBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+                                <svg class="icon theme-icon-rotatable" style="width:22px;height:22px;color:#4cb4e9;transform:rotate(${themeDeg}deg);"><use href="#icon-theme"></use></svg>
+                            </button>
+                        </div>
+                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                            <div style="padding-left:2px;min-width:0;">
+                                <div style="font-size:19px;font-weight:550;color:var(--text-primary);">Русский</div>
+                                <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Язык приложения</div>
+                            </div>
+                            <button id="settingsLangBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:15px;font-weight:600;">RU</button>
+                        </div>
+                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                            <div style="padding-left:2px;min-width:0;">
+                                <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${vibrationOn ? 'Включено' : 'Выключено'}</div>
+                                <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Вибрация элементов</div>
+                            </div>
+                            <button id="settingsVibrationBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:600;">${vibrationOn ? 'ON' : 'OFF'}</button>
+                        </div>
+                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                            <div style="padding-left:2px;min-width:0;">
+                                <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${formatTitle}</div>
+                                <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Формат приложения</div>
+                            </div>
+                            <button id="settingsFormatBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:600;">FS</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="referral-wrapper" style="margin-top:13px;">
+                <div class="referral-main-card">
+                    <div class="referral-title">Эксперимен. настройки</div>
+                    <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">Экспериментальные настройки</div>
+                </div>
+                <div class="referral-bottom-card">
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                            <div style="padding-left:2px;min-width:0;">
+                                <div style="font-size:19px;font-weight:550;color:var(--text-primary);">Очист. кэш</div>
+                                <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Кэш приложения</div>
+                            </div>
+                            <button id="settingsClearCacheBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4cb4e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 7h16"/>
+                                    <path d="M10 11v6"/>
+                                    <path d="M14 11v6"/>
+                                    <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/>
+                                    <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                            <div style="padding-left:2px;min-width:0;">
+                                <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${bottomOffset} ${pluralizePixels(bottomOffset)}</div>
+                                <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Нижний отступ от меню</div>
+                            </div>
+                            <button id="settingsOffsetBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:600;">${bottomOffset}</button>
+                        </div>
+                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                            <div style="padding-left:2px;min-width:0;">
+                                <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${notificationsOn ? 'Включено' : 'Выключено'}</div>
+                                <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Уведомления от бота</div>
+                            </div>
+                            <button id="settingsNotifBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:600;">${notificationsOn ? 'ON' : 'OFF'}</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        setTimeout(() => {
+            document.getElementById('settingsThemeBtn')?.addEventListener('click', () => {
+                toggleAppTheme();
+                renderSettingsPage();
+            });
+            document.getElementById('settingsLangBtn')?.addEventListener('click', () => {
+                hapticLight();
+            });
+            document.getElementById('settingsVibrationBtn')?.addEventListener('click', () => {
+                const next = !isVibrationEnabled();
+                localStorage.setItem('vibrationEnabled', next ? 'true' : 'false');
+                if (next) hapticLight();
+                renderSettingsPage();
+            });
+            document.getElementById('settingsFormatBtn')?.addEventListener('click', () => {
+                const current = localStorage.getItem('appFormat') || 'fullscreen';
+                const next = current === 'fullscreen' ? 'fullsize' : 'fullscreen';
+                applyAppFormat(next);
+                hapticLight();
+                renderSettingsPage();
+            });
+            document.getElementById('settingsClearCacheBtn')?.addEventListener('click', () => {
+                hapticLight();
+                if (window.Telegram?.WebApp?.showPopup) {
+                    window.Telegram.WebApp.showPopup({
+                        message: 'Вы действительно хотите очистить кэш приложения?',
+                        buttons: [
+                            { id: 'close', type: 'close' },
+                            { id: 'clear', type: 'destructive', text: 'Очистить' }
+                        ]
+                    }, (buttonId) => {
+                        if (buttonId === 'clear') {
+                            hapticMedium();
+                            clearAppCache();
+                        }
+                    });
+                }
+            });
+            document.getElementById('settingsOffsetBtn')?.addEventListener('click', () => {
+                cycleBottomMenuOffset();
+            });
+            document.getElementById('settingsNotifBtn')?.addEventListener('click', () => {
+                hapticLight();
+            });
+        }, 0);
+    }
 
         // Текст подзаголовка меняется здесь один раз для всех разделов справки
     const HELP_SUBTITLE_TEXT = "Справочная информация страницы";
@@ -5972,6 +6178,7 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
     'profile': 'Профиль',
     'wallet': 'Кошелёк',
     'referrals': 'Рефералы',
+    'settings': 'Настройки',
     'checkout': 'Оформление',
     'payment': 'Оплата',
     'order-detail': 'Заказ',
@@ -6056,8 +6263,12 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
     runWithLoader(() => renderWalletPage(), 0);
     if (checkoutBlock) checkoutBlock.style.display = "none";
 }
-        if (pageId === "referrals") {
+                if (pageId === "referrals") {
     runWithLoader(() => renderReferralsPage(), 0);
+    if (checkoutBlock) checkoutBlock.style.display = "none";
+}
+        if (pageId === "settings") {
+    renderSettingsPage();
     if (checkoutBlock) checkoutBlock.style.display = "none";
 }
         if (pageId === "checkout") { renderCheckoutForm(); }
@@ -6089,7 +6300,7 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
         if (pageId === "checkout") { afterPaymentBackPage = "cart"; }
 
         const mainPages = ["catalog", "cart", "orders", "profile"];
-        const profileLinkedPages = ["wallet", "reviews", "write-review", "referrals", "help"];
+        const profileLinkedPages = ["wallet", "reviews", "write-review", "referrals", "help", "settings"];
         if (mainPages.includes(pageId)) {
             document.querySelectorAll(".menu-item").forEach(btn => btn.classList.remove("active"));
             const activeBtn = document.querySelector(`.menu-item[data-page="${pageId}"]`);
@@ -6204,18 +6415,20 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
         }
     }
 
-    function initTheme() {
+        function initTheme() {
         const saved = localStorage.getItem('appTheme') || 'dark';
         applyTheme(saved);
+        applyBottomMenuOffset(getBottomMenuOffset());
     }
 
-    function requestTelegramWriteAccess() {
+        function requestTelegramWriteAccess() {
         try {
             const tg = window.Telegram?.WebApp;
             if (!tg || typeof tg.requestWriteAccess !== 'function') return;
             if (localStorage.getItem('writeAccessRequested') === 'true') return;
-            tg.requestWriteAccess(() => {
+            tg.requestWriteAccess((granted) => {
                 localStorage.setItem('writeAccessRequested', 'true');
+                localStorage.setItem('notificationsEnabled', granted ? 'true' : 'false');
             });
         } catch (e) {}
     }
@@ -6442,21 +6655,15 @@ slider.style.borderRadius = "50px";
         const isRefresh = e.target.closest('#headerRefreshIcon');
         const isTheme = e.target.closest('#headerThemeIcon');
 
-        if (isRefresh) {
+                if (isRefresh) {
     hapticLight();
     showTopLoader();
     Promise.resolve(refreshCurrentPage()).finally(hideTopLoader);
 } else if (isTheme) {
-            hapticLight();
-            const icon = doubleBtn.querySelector('#headerThemeIcon') ||
-                doubleBtn.querySelector('img[alt="theme"]');
-            if (icon) {
-                const rotation = (parseInt(icon.dataset.rotation || '0', 10) + 180);
-                icon.style.transform = `rotate(${rotation}deg)`;
-                icon.dataset.rotation = rotation;
+            toggleAppTheme();
+            if (document.getElementById('settings-page')?.classList.contains('active-page')) {
+                renderSettingsPage();
             }
-            const current = localStorage.getItem('appTheme') || 'dark';
-            applyTheme(current === 'dark' ? 'light' : 'dark');
         }
     });
 
