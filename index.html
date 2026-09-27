@@ -3938,20 +3938,23 @@ function showAdditionalSettingsAlert() {
         } catch (e) { console.error('Ошибка загрузки заказов:', e); }
     }
 
-    async function showProfileInfoAlert() {
+        async function showProfileInfoAlert() {
         const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
         if (!tgUser?.id) { showAppAlert('Информация недоступна'); return; }
 
         let firstSeen = '—';
         let ordersCount = 0;
         let totalSpent = 0;
+        let referralsCount = 0;
 
         try {
-            const [infoRes, ordersRes] = await Promise.all([
+            const [infoRes, ordersRes, balanceRes, referralRes] = await Promise.all([
                 fetch(`https://placedgames.up.railway.app/api/user-info?userId=${tgUser.id}`).then(r => r.ok ?
                     r.json() : null),
                 fetch(`https://placedgames.up.railway.app/api/user-orders?userId=${tgUser.id}`).then(r => r
-                    .json())
+                    .json()),
+                fetch(`https://placedgames.up.railway.app/api/user-balance?userId=${tgUser.id}`).then(r => r.json()).catch(() => ({ balance: 0 })),
+                fetch(`https://placedgames.up.railway.app/api/referral-stats?userId=${tgUser.id}`).then(r => r.json()).catch(() => ({ invited: 0 }))
             ]);
 
             if (infoRes?.first_seen) {
@@ -3962,16 +3965,37 @@ function showAdditionalSettingsAlert() {
             totalSpent = ordersRes
                 .filter(o => o.status_code === 'completed' || o.status_code === 'done')
                 .reduce((sum, o) => sum + (o.total || 0), 0);
+            userWalletBalance = balanceRes?.balance || 0;
+            referralsCount = referralRes?.invited || 0;
         } catch (e) {}
 
         const message =
+            `Информация о пользователе:\n\n` +
             `Имя: ${tgUser.first_name || 'Пользователь'}\n` +
             `ID: ${tgUser.id}\n` +
             `Регистрация: ${firstSeen}\n` +
+            `Баланс кошелька: ${formatPrice(userWalletBalance)}\n` +
+            `Процент кэшбэка: 2%\n` +
+            `Рефералов: ${referralsCount}\n` +
             `Всего заказов: ${ordersCount}\n` +
             `Объем покупок: ${formatPrice(totalSpent)}`;
 
-        showAppAlert(message);
+        if (window.Telegram?.WebApp?.showPopup) {
+            window.Telegram.WebApp.showPopup({
+                message: message,
+                buttons: [
+                    { id: 'bot', type: 'default', text: 'В бота' },
+                    { id: 'close', type: 'close' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'bot') {
+                    hapticLight();
+                    window.open('https://t.me/PlacedGamesBot', '_blank');
+                }
+            });
+        } else {
+            showAppAlert(message);
+        }
     }
 
     async function fetchUserWalletBalance() {
@@ -4443,16 +4467,21 @@ function showAdditionalSettingsAlert() {
                                         const code = codeInput?.value.trim();
                                         if (!code) { showAppAlert(
                                                 "Пожалуйста введите код который был отправлен на указанную вами почту."); return; }
-                                        hapticLight();
-                                        const confirmed = await new Promise(resolve => {
+                                                                                hapticLight();
+                                        const action = await new Promise(resolve => {
                                             window.Telegram.WebApp.showPopup({
                                                 message: `Указанный вами код: ${code}\n\nПожалуйста, убедитесь, что код указан правильно, чтобы избежать возможной задержки в выполнении вашего заказа.`,
                                                 buttons: [
-                                                    { id: 'send_code', type: 'default', text: 'Отправить код' }
+                                                    { id: 'edit', type: 'default', text: 'Изменить' },
+                                                    { id: 'send_code', type: 'default', text: 'Отправить' }
                                                 ]
-                                            }, (buttonId) => resolve(buttonId === 'send_code'));
+                                            }, (buttonId) => resolve(buttonId));
                                         });
-                                        if (!confirmed) return;
+                                        if (action === 'edit') {
+                                            setTimeout(() => codeInput?.focus(), 100);
+                                            return;
+                                        }
+                                        if (action !== 'send_code') return;
                                         hapticMedium();
                                         try {
                                             const response = await fetch(
@@ -5531,11 +5560,43 @@ function countReviewsByRating(list) {
             });
             document.getElementById("supportEmailBtn")?.addEventListener("click", () => {
     hapticLight();
-    window.open('mailto:placedsupport@gmail.com', '_blank');
+    const msg = `Связаться с поддержкой:\n\nСпособ связи: Email\nГрафик работы: 9:00 - 0:00\nВремя ответа: до 24 часов`;
+    if (window.Telegram?.WebApp?.showPopup) {
+        window.Telegram.WebApp.showPopup({
+            message: msg,
+            buttons: [
+                { id: 'go', type: 'default', text: 'Перейти' },
+                { id: 'close', type: 'close' }
+            ]
+        }, (buttonId) => {
+            if (buttonId === 'go') {
+                hapticLight();
+                window.open('mailto:placedsupport@gmail.com', '_blank');
+            }
+        });
+    } else {
+        window.open('mailto:placedsupport@gmail.com', '_blank');
+    }
 });
 document.getElementById("supportTgBtn")?.addEventListener("click", () => {
     hapticLight();
-    window.open('https://t.me/PlacedSupport', '_blank');
+    const msg = `Связаться с поддержкой:\n\nСпособ связи: Telegram\nГрафик работы: 9:00 - 0:00\nВремя ответа: до 30 минут`;
+    if (window.Telegram?.WebApp?.showPopup) {
+        window.Telegram.WebApp.showPopup({
+            message: msg,
+            buttons: [
+                { id: 'go', type: 'default', text: 'Перейти' },
+                { id: 'close', type: 'close' }
+            ]
+        }, (buttonId) => {
+            if (buttonId === 'go') {
+                hapticLight();
+                window.open('https://t.me/PlacedSupport', '_blank');
+            }
+        });
+    } else {
+        window.open('https://t.me/PlacedSupport', '_blank');
+    }
 });
             document.getElementById("sectionSubscribeBtn")?.addEventListener("click", () => {
                 hapticLight();
