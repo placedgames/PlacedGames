@@ -2618,8 +2618,7 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
             window.Telegram.WebApp.showPopup({
                 message: 'Реф. ссылка скопирована!\n\nПоделитесь ссылкой с друзьями или другими пользователями.',
                 buttons: [
-                    { id: 'share', type: 'default', text: 'Поделиться' },
-                    { id: 'close', type: 'close' }
+                    { id: 'share', type: 'default', text: 'Поделиться ссылкой' }
                 ]
             }, (buttonId) => {
                 if (buttonId === 'share') {
