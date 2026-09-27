@@ -4472,8 +4472,8 @@ function showAdditionalSettingsAlert() {
                                             window.Telegram.WebApp.showPopup({
                                                 message: `Указанный вами код: ${code}\n\nПожалуйста, убедитесь, что код указан правильно, чтобы избежать возможной задержки в выполнении вашего заказа.`,
                                                 buttons: [
-                                                    { id: 'edit', type: 'default', text: 'Изменить' },
-                                                    { id: 'send_code', type: 'default', text: 'Отправить' }
+                                                    { id: 'send_code', type: 'default', text: 'Отправить' },
+                                                    { id: 'edit', type: 'default', text: 'Изменить' }
                                                 ]
                                             }, (buttonId) => resolve(buttonId));
                                         });
