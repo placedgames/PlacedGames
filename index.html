@@ -2607,10 +2607,29 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
         bank: 'Убедитесь что отправляете перевод именно на указанный в графе банк, в противном случае ваш заказ может быть отменён.'
     };
 
-    function showFieldInfoAlert(type) {
+        function showFieldInfoAlert(type) {
         hapticLight();
         const text = fieldInfoTexts[type];
         if (text) showAppAlert(text);
+    }
+
+    function showReferralCopiedAlert(link) {
+        if (window.Telegram?.WebApp?.showPopup) {
+            window.Telegram.WebApp.showPopup({
+                message: 'Реф. ссылка скопирована!\n\nПоделитесь ссылкой с друзьями или другими пользователями.',
+                buttons: [
+                    { id: 'share', type: 'default', text: 'Поделиться' },
+                    { id: 'close', type: 'close' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'share') {
+                    hapticLight();
+                    const shareText = 'Присоединяйся к Placed Games.';
+                    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent('https://' + link)}&text=${encodeURIComponent(shareText)}`;
+                    window.open(shareUrl, '_blank');
+                }
+            });
+        }
     }
 
     function getPaymentMethodLabel(value) {
@@ -5557,7 +5576,7 @@ function countReviewsByRating(list) {
                     "Ваш процент кэшбэка - 2%\n\nПолучайте кэшбэк за каждую вашу покупку и за каждую покупку приглашенного друга, используйте заработанные средства для оплаты заказов"
                 );
             });
-            document.getElementById("referralCopyBtn")?.addEventListener("click", async (e) => {
+                        document.getElementById("referralCopyBtn")?.addEventListener("click", async (e) => {
                 hapticLight();
                 e.stopPropagation();
                 if (navigator.clipboard) {
@@ -5567,6 +5586,7 @@ function countReviewsByRating(list) {
                     setTimeout(() => {
                         el.style.transform = "scale(1)";
                     }, 150);
+                    showReferralCopiedAlert(referralLink);
                 }
             });
             document.getElementById("referralCardGoBtn")?.addEventListener("click", () => {
@@ -5852,13 +5872,14 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
     `;
 
     setTimeout(() => {
-        document.getElementById("referralsPageCopyBtn")?.addEventListener("click", async (e) => {
+                document.getElementById("referralsPageCopyBtn")?.addEventListener("click", async (e) => {
             hapticLight();
             if (navigator.clipboard) {
                 const el = e.currentTarget;
                 el.style.transform = "scale(0.85)";
                 await navigator.clipboard.writeText(`https://${referralLink}`);
                 setTimeout(() => { el.style.transform = "scale(1)"; }, 150);
+                showReferralCopiedAlert(referralLink);
             }
         });
         document.getElementById("referralsPageInvited24h")?.addEventListener("click", () => {
