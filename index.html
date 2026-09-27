@@ -2833,8 +2833,8 @@ if (maxAllowedQty && currentQty >= maxAllowedQty) {
             window.Telegram.WebApp.showPopup({
                 message: message,
                 buttons: [
-                    { id: 'close', type: 'close' },
-                    { id: 'swap', type: 'destructive', text: 'Удалить' }
+                    { id: 'swap', type: 'destructive', text: 'Удалить' },
+                    { id: 'close', type: 'close' }
                 ]
             }, (buttonId) => {
                 if (buttonId === 'swap') {
@@ -2981,8 +2981,8 @@ function showAdditionalSettingsAlert() {
             window.Telegram.WebApp.showPopup({
                 message: message,
                 buttons: [
-                    { id: 'close', type: 'close' },
-                    { id: 'clear', type: 'destructive', text: 'Очистить' }
+                    { id: 'clear', type: 'destructive', text: 'Очистить' },
+                    { id: 'close', type: 'close' }
                 ]
             }, (buttonId) => {
                 if (buttonId === 'clear') {
@@ -3727,8 +3727,8 @@ function showAdditionalSettingsAlert() {
                             window.Telegram.WebApp.showPopup({
                                 message: 'На вашем кошельке недостаточно средств, пожалуйста выберите другой способ оплаты',
                                 buttons: [
-                                    { id: 'close', type: 'close' },
-                                    { id: 'topup', type: 'default', text: 'Пополнить' }
+                                    { id: 'topup', type: 'default', text: 'Пополнить' },
+                                     { id: 'close', type: 'close' }
                                 ]
                             }, (buttonId) => {
                                 if (buttonId === 'topup') {
@@ -3897,8 +3897,8 @@ function showAdditionalSettingsAlert() {
                     window.Telegram.WebApp.showPopup({
                         message: 'Подтверждение оформления:\n\nЕсли вы отправили перевод, нажмите кнопку «Оформить».',
                         buttons: [
-                            { id: 'close', type: 'close' },
-                            { id: 'ok', type: 'default', text: 'Оформить' }
+                            { id: 'ok', type: 'default', text: 'Оформить' },
+                             { id: 'close', type: 'close' }
                         ]
                     }, (buttonId) => {
                         resolve(buttonId === 'ok');
@@ -4053,8 +4053,8 @@ function showAdditionalSettingsAlert() {
             window.Telegram.WebApp.showPopup({
                 message: message,
                 buttons: [
-                    { id: 'close', type: 'close' },
-                    { id: 'goto_order', type: 'default', text: 'К заказу' }
+                    { id: 'goto_order', type: 'default', text: 'К заказу' },
+                    { id: 'close', type: 'close' }
                 ]
             }, (buttonId) => {
                                 if (buttonId === 'goto_order') {
