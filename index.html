@@ -1886,9 +1886,27 @@
         .help-faq-item.open .help-faq-answer {
             display: block;
         }
-                .help-faq-divider {
+                       .help-faq-divider {
             border-top: 1px solid var(--border-color);
         }
+
+        .settings-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 14px 0;
+        }
+        .settings-row:first-child {
+            padding-top: 0;
+        }
+        .settings-row:last-child {
+            padding-bottom: 0;
+        }
+        .settings-row + .settings-row {
+            border-top: 1px solid var(--border-color);
+        }
+
                 .help-section-subtitle {
             font-size: 17px;
             color: var(--text-secondary);
@@ -5931,14 +5949,14 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
         const bottomOffset = getBottomMenuOffset();
 
         container.innerHTML = `
-            <div class="referral-wrapper">
+                        <div class="referral-wrapper">
                 <div class="referral-main-card">
                     <div class="referral-title">Настройки приложения</div>
                     <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">Настройки мини-приложения</div>
                 </div>
                 <div class="referral-bottom-card">
-                    <div style="display:flex;flex-direction:column;gap:10px;">
-                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;">
+                        <div class="settings-row">
                             <div style="padding-left:2px;min-width:0;">
                                 <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${themeTitle}</div>
                                 <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Тема приложения</div>
@@ -5947,21 +5965,21 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
                                 <svg class="icon theme-icon-rotatable" style="width:22px;height:22px;color:#4cb4e9;transform:rotate(${themeDeg}deg);transition:transform 0.3s ease;"><use href="#icon-theme"></use></svg>
                             </button>
                         </div>
-                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                        <div class="settings-row">
                             <div style="padding-left:2px;min-width:0;">
                                 <div style="font-size:19px;font-weight:550;color:var(--text-primary);">Русский</div>
                                 <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Язык приложения</div>
                             </div>
                             <button id="settingsLangBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:15px;font-weight:550;">RU</button>
                         </div>
-                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                        <div class="settings-row">
                             <div style="padding-left:2px;min-width:0;">
                                 <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${vibrationOn ? 'Включено' : 'Выключено'}</div>
                                 <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Вибрация элементов</div>
                             </div>
                             <button id="settingsVibrationBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${vibrationOn ? 'ON' : 'OFF'}</button>
                         </div>
-                                            </div>
+                    </div>
                 </div>
             </div>
             <div class="referral-wrapper" style="margin-top:13px;">
@@ -5970,28 +5988,28 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
                     <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">Экспериментальные настройки</div>
                 </div>
                 <div class="referral-bottom-card">
-                    <div style="display:flex;flex-direction:column;gap:10px;">
-                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;">
+                        <div class="settings-row">
                             <div style="padding-left:2px;min-width:0;">
                                 <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${formatTitle}</div>
                                 <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Формат приложения</div>
                             </div>
                             <button id="settingsFormatBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">FS</button>
                         </div>
-                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                        <div class="settings-row">
                             <div style="padding-left:2px;min-width:0;">
                                 <div style="font-size:19px;font-weight:550;color:var(--text-primary);">Очист. кэш</div>
                                 <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Кэш приложения</div>
                             </div>
                             <button id="settingsClearCacheBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
-                                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4cb4e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4cb4e9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M4 7h16"/>
                                     <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12"/>
                                     <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>
                                 </svg>
                             </button>
                         </div>
-                        <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                        <div class="settings-row">
                             <div style="padding-left:2px;min-width:0;">
                                 <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${bottomOffset} ${pluralizePixels(bottomOffset)}</div>
                                 <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Нижний отступ от меню</div>
@@ -6030,8 +6048,8 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
                     window.Telegram.WebApp.showPopup({
                         message: 'Вы действительно хотите очистить кэш приложения?',
                         buttons: [
-                            { id: 'close', type: 'close' },
-                            { id: 'clear', type: 'destructive', text: 'Очистить' }
+                            { id: 'clear', type: 'destructive', text: 'Очистить' },
+                            { id: 'close', type: 'close' }
                         ]
                     }, (buttonId) => {
                         if (buttonId === 'clear') {
