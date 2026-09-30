@@ -2486,9 +2486,10 @@
         if (prod.bundleItems && prod.bundleItems.length > 0) {
             msg += `Содержимое набора:\n` + prod.bundleItems.map(i => `- ${i}`).join('\n') + `\n`;
         }
-        msg += `Стоимость: ${formatPrice(prod.price)}\nКатегория: ${prod.label || prod.category}`;
+                msg += `Стоимость: ${formatPrice(prod.price)}\nКатегория: ${prod.label || prod.category}`;
 
-                    const inCart = !!cart[productId];
+        if (window.Telegram?.WebApp?.showPopup) {
+            const inCart = !!cart[productId];
             window.Telegram.WebApp.showPopup({
                 message: msg,
                 buttons: [
@@ -4060,7 +4061,7 @@ function showAdditionalSettingsAlert() {
     showFieldInfoAlert("paymentAmount");
 });
             document.getElementById("bankInfoBtn")?.addEventListener("click", () => {
-                showFieldInfoAlert("payment");
+                showFieldInfoAlert("comment");
             });
                         document.getElementById("paidBtn")?.addEventListener("click", async () => {
                 hapticMedium();
