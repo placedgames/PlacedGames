@@ -2562,13 +2562,6 @@
     </span>`;
 }
 
-function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
-    if (!items || !items.length) return '';
-    const enc = encodeURIComponent(JSON.stringify(items));
-    return buildCollapsedItemsHtmlRaw(items, rowClass, nameClass, priceClass)
-        .replace(/^(\s*)<div /, (m, sp) => `${sp}<div data-items="${enc}" `);
-}
-
 function buildCollapsedItemsHtmlRaw(items, rowClass, nameClass, priceClass) {
     if (!items || !items.length) return '';
     const sorted = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty));
@@ -2792,74 +2785,6 @@ function buildCartItemsListHtml() {
     return buildCollapsedItemsHtml(items, 'order-item-row', 'order-item-name', 'order-item-price');
 }
 
-// Алерт «Информация о товарах»
-let itemsPopupOpen = false;
-function showItemsInfoPopup(items, onGoToOrder) {
-    const sorted = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty));
-    const total = sorted.reduce((s, i) => s + Math.round(i.price * i.qty), 0);
-    const header = 'Информация о товарах:\n\n';
-    const footer = '\nОбщая стоимость: ' + formatPrice(total);
-    let body = '';
-    let shown = 0;
-    for (let n = 0; n < sorted.length; n++) {
-        const i = sorted[n];
-        const now = Math.round(i.price * i.qty);
-        const block = `Товар: ${i.name}${i.qty > 1 ? `, ${i.qty} шт.` : ''}\nСтоимость: ${formatPrice(now)}\n`;
-        const rest = sorted.length - (n + 1);
-        const moreLine = rest > 0 ? `И ещё ${rest} ${pluralizeTovar(rest)}\n` : '';
-        // Telegram ограничивает текст popup 256 символами
-        if (n > 0 && (header + body + block + moreLine + footer).length > 256) break;
-        body += block;
-        shown++;
-    }
-    const hidden = sorted.length - shown;
-    if (hidden > 0) body += `И ещё ${hidden} ${pluralizeTovar(hidden)}\n`;
-    let message = header + body + footer;
-    if (message.length > 256) message = message.slice(0, 255) + '…';
-
-    if (itemsPopupOpen) return;
-    const tgw = window.Telegram?.WebApp;
-    if (!tgw?.showPopup) { showAppAlert(message); return; }
-    itemsPopupOpen = true;
-    const buttons = [];
-    if (onGoToOrder) buttons.push({ id: 'goto', type: 'default', text: 'К заказу' });
-    buttons.push({ id: 'close', type: 'close' });
-    try {
-        tgw.showPopup({ message, buttons }, (buttonId) => {
-            itemsPopupOpen = false;
-            if (buttonId === 'goto' && onGoToOrder) {
-                hapticLight();
-                onGoToOrder();
-            }
-        });
-    } catch (e) { itemsPopupOpen = false; }
-}
-
-// Клик по нижней карточке со списком товаров
-document.addEventListener('click', function(e) {
-    let el = e.target;
-    while (el && el !== document.body) {
-        const holder = (el.dataset && el.dataset.items) ? el : el.querySelector(':scope > [data-items]');
-        if (holder) {
-            try {
-                const items = JSON.parse(decodeURIComponent(holder.dataset.items));
-                const pageId = holder.closest('.page')?.id;
-                let goToOrder = null;
-                if (pageId === 'orders-page') {
-                    const card = holder.closest('.order-wrapper')?.querySelector('.order-main-card');
-                    if (card) goToOrder = () => card.click();
-                } else if (pageId === 'reviews-page') {
-                    const badge = holder.closest('.review-card-wrapper')?.querySelector('.review-order-badge');
-                    if (badge) goToOrder = () => badge.click();
-                }
-                hapticLight();
-                showItemsInfoPopup(items, goToOrder);
-            } catch (err) {}
-            return;
-        }
-        el = el.parentElement;
-    }
-});
     const games = [{
         id: 'brawlstars',
         name: 'Brawl Stars',
@@ -4592,7 +4517,7 @@ function showAdditionalSettingsAlert() {
                         <span class="order-detail-value" style="color:var(--text-primary); font-weight:500;">${formatPrice(order.total)}</span>
                     </div>
                 </div>
-                                <div class="order-items-card" style="margin-top: -32px; padding-top: 40px;"><span hidden data-items="${encodeURIComponent(JSON.stringify(items))}"></span>
+                                <div class="order-items-card" style="margin-top: -32px; padding-top: 40px;">
                     ${itemsHtml}
                 </div>
                 <div id="orderReviewBlock">${orderReviewHtml}</div>
