@@ -2009,6 +2009,17 @@
         .icon-profile-referral-copy:active {
             transform: scale(0.85);
         }
+        .btn-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    vertical-align: middle;
+    border: 2.5px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btnSpin 0.7s linear infinite;
+}
+@keyframes btnSpin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -2477,17 +2488,24 @@
         }
         msg += `Стоимость: ${formatPrice(prod.price)}\nКатегория: ${prod.label || prod.category}`;
 
-        if (window.Telegram?.WebApp?.showPopup) {
+                    const inCart = !!cart[productId];
             window.Telegram.WebApp.showPopup({
                 message: msg,
                 buttons: [
-                    { id: 'add', type: 'default', text: 'В корзину' },
+                    inCart
+                        ? { id: 'remove', type: 'destructive', text: 'Удалить' }
+                        : { id: 'add', type: 'default', text: 'В корзину' },
                     { id: 'close', type: 'close' }
                 ]
             }, (buttonId) => {
                 if (buttonId === 'add') {
                     hapticLight();
                     handleCartAction(productId, true);
+                } else if (buttonId === 'remove') {
+                    hapticMedium();
+                    delete cart[productId];
+                    saveCartToLocalStorage();
+                    updateSingleCard(productId);
                 }
             });
         } else {
@@ -2536,6 +2554,13 @@
 }
 
 function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
+    if (!items || !items.length) return '';
+    const enc = encodeURIComponent(JSON.stringify(items));
+    return buildCollapsedItemsHtmlRaw(items, rowClass, nameClass, priceClass)
+        .replace(/^(\s*)<div /, (m, sp) => `${sp}<div data-items="${enc}" `);
+}
+
+function buildCollapsedItemsHtmlRaw(items, rowClass, nameClass, priceClass) {
     if (!items || !items.length) return '';
     const sorted = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty));
     if (sorted.length <= 2) {
@@ -2603,7 +2628,8 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
         email: 'Пожалуйста укажите почту от вашего аккаунта в игре, если ваш аккаунт не привязан к Supercell ID, то мы не сможем выполнить ваш заказ.',
         recipientTelegram: 'Пожалуйста укажите имя пользователя получателя, если у вас нету имени пользователя мы не сможем выполнить ваш заказ.',
         sender: 'Пожалуйста укажите имя отправителя перевода или если вы оплачиваете кошельком укажите ваше имя.',
-        paymentAmount: 'Пожалуйста, отправьте перевод с указанной в графе суммой.',
+        paymentAmount: 'Пожалуйста, отправьте перевод с указанной в графе суммой и убедитесь, что отправляете перевод с указанного вами банка.',
+        comment: 'Пожалуйста, укажите данный комментарий при переводе, чтобы мы смогли быстрее найти ваш платёж.',
         bank: 'Убедитесь что отправляете перевод именно на указанный в графе банк, в противном случае ваш заказ может быть отменён.'
     };
 
@@ -2699,6 +2725,7 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
     let currentOpenOrder = null;
     let writeReviewEntryPage = 'reviews';
     let appliedPromo = null;
+    let pendingOrderNumber = null;
     let reviewsListCache = null;       // только в памяти, не в localStorage — сбрасывается при каждом новом открытии приложения
     let reviewsFetchPromise = null;    // чтобы не запускать параллельно два одинаковых запроса
     let isPromoMode = false;
@@ -2715,7 +2742,106 @@ function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
     let currentGame = null;
     let savedGameScrollY = 0;
     let savedReviewsScrollY = 0;
-    let savedOrdersScrollY = 0;   
+    let savedOrdersScrollY = 0;  
+     const bankLetters = { mts: 'M', tbank: 'T', vtb: 'W', sber: 'S', ozon: 'O', alfa: 'A' };
+
+// Номер заказа вида Буква-Цифра-Буква-Цифра (G7V5, O1O2)
+function generateOrderNumber() {
+    const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', D = '0123456789';
+    const r = s => s[Math.floor(Math.random() * s.length)];
+    return r(L) + r(D) + r(L) + r(D);
+}
+
+function savePaymentSession() {
+    try {
+        localStorage.setItem('paymentSession', JSON.stringify({ orderNumber: pendingOrderNumber, promo: appliedPromo }));
+    } catch (e) {}
+}
+
+function restorePaymentSession() {
+    if (localStorage.getItem('lastPage') !== 'payment') return;
+    try {
+        const s = JSON.parse(localStorage.getItem('paymentSession') || 'null');
+        if (s && s.orderNumber) {
+            pendingOrderNumber = s.orderNumber;
+            appliedPromo = s.promo || null;
+        }
+    } catch (e) {}
+}
+
+// Список товаров корзины в сокращённом виде (для Оформления и Оплаты)
+function buildCartItemsListHtml() {
+    const allProducts = games.flatMap(g => g.getProducts());
+    const items = Object.entries(cart).map(([id, qty]) => {
+        const prod = allProducts.find(p => p.id == id);
+        if (!prod) return null;
+        const lineTotal = appliedPromo
+            ? Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100))
+            : prod.price * qty;
+        return { id, name: prod.name, qty, price: lineTotal / qty, originalPrice: prod.price };
+    }).filter(Boolean);
+    return buildCollapsedItemsHtml(items, 'order-item-row', 'order-item-name', 'order-item-price');
+}
+
+// Алерт «Информация о товарах»
+let itemsPopupOpen = false;
+function showItemsInfoPopup(items) {
+    const sorted = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty));
+    const strike = s => s.split('').map(c => c + '\u0336').join('');
+    const total = sorted.reduce((s, i) => s + Math.round(i.price * i.qty), 0);
+    const header = 'Информация о товарах:\n\n';
+    const footer = '\nОбщая стоимость: ' + formatPrice(total);
+    let body = '';
+    let shown = 0;
+    for (let n = 0; n < sorted.length; n++) {
+        const i = sorted[n];
+        const now = Math.round(i.price * i.qty);
+        const old = i.originalPrice ? Math.round(i.originalPrice * i.qty) : null;
+        const priceStr = (old && old !== now) ? `${strike(formatPrice(old))} ${formatPrice(now)}` : formatPrice(now);
+        const block = `Товар №${n + 1}: ${i.name}${i.qty > 1 ? `, ${i.qty} шт.` : ''}\nСтоимость: ${priceStr}\n`;
+        const rest = sorted.length - (n + 1);
+        const moreLine = rest > 0 ? `И ещё ${rest} ${pluralizeTovar(rest)}\n` : '';
+        // Telegram ограничивает текст popup 256 символами
+        if (n > 0 && (header + body + block + moreLine + footer).length > 256) break;
+        body += block;
+        shown++;
+    }
+    const hidden = sorted.length - shown;
+    if (hidden > 0) body += `И ещё ${hidden} ${pluralizeTovar(hidden)}\n`;
+    let message = header + body + footer;
+    if (message.length > 256) message = message.slice(0, 255) + '…';
+
+    if (itemsPopupOpen) return;
+    const tgw = window.Telegram?.WebApp;
+    if (!tgw?.showPopup) { showAppAlert(message); return; }
+    itemsPopupOpen = true;
+    try {
+        tgw.showPopup({
+            message,
+            buttons: [
+                { id: 'close', type: 'default', text: 'Закрыть' },
+                { id: 'continue', type: 'default', text: 'Продолжить' }
+            ]
+        }, () => { itemsPopupOpen = false; });
+    } catch (e) { itemsPopupOpen = false; }
+}
+
+// Клик по нижней карточке со списком товаров (везде: заказы, отзывы, оформление, оплата)
+document.addEventListener('click', function(e) {
+    let el = e.target;
+    while (el && el !== document.body) {
+        const holder = (el.dataset && el.dataset.items) ? el : el.querySelector(':scope > [data-items]');
+        if (holder) {
+            try {
+                const items = JSON.parse(decodeURIComponent(holder.dataset.items));
+                hapticLight();
+                showItemsInfoPopup(items);
+            } catch (err) {}
+            return;
+        }
+        el = el.parentElement;
+    }
+});
     const games = [{
         id: 'brawlstars',
         name: 'Brawl Stars',
@@ -3415,7 +3541,7 @@ function showAdditionalSettingsAlert() {
         })();
         const isTelegramOrderForBuild = gameNameValue.trim().toLowerCase() === 'telegram';
         return {
-            orderNumber: 0,
+            orderNumber: (paymentMethodLabel !== "Кошелёк" && pendingOrderNumber) ? pendingOrderNumber : 0,
             date: new Date().toLocaleDateString('ru-RU'),
             time: new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }),
             timestamp: Date.now(),
@@ -3436,6 +3562,8 @@ function showAdditionalSettingsAlert() {
     }
 
     async function finalizeOrderAfterSuccess() {
+        pendingOrderNumber = null;
+        localStorage.removeItem('paymentSession');
         cart = {};
         appliedPromo = null;
         isPromoMode = false;
@@ -3535,8 +3663,11 @@ function showAdditionalSettingsAlert() {
                                 document.getElementById("checkoutBtn")?.addEventListener("click", async (e) => {
     if (isSubmitting) return;
     isSubmitting = true;
-    const btn = e.currentTarget;
-    if (btn) btn.style.pointerEvents = "none";
+        const btn = e.currentTarget;
+    if (btn) {
+        btn.style.pointerEvents = "none";
+        btn.innerHTML = '<span class="btn-spinner"></span>';
+    }
     hapticMedium();
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     if (!tgUser || !tgUser.id) {
@@ -3544,7 +3675,10 @@ function showAdditionalSettingsAlert() {
             'Оформить заказ можно только через Telegram-бота\n\nПожалуйста, откройте приложение через @PlacedGamesBot'
         );
         isSubmitting = false;
-        if (btn) btn.style.pointerEvents = "";
+        if (btn) {
+            btn.style.pointerEvents = "";
+            btn.textContent = 'Перейти к оформлению';
+        }
         return;
     }
     try {
@@ -3571,10 +3705,13 @@ function showAdditionalSettingsAlert() {
             }
         }, 350);
         showPage("checkout");
-    } catch (e) {
+        } catch (e) {
     } finally {
         isSubmitting = false;
-        if (btn) btn.style.pointerEvents = "";
+        if (btn) {
+            btn.style.pointerEvents = "";
+            btn.textContent = 'Перейти к оформлению';
+        }
     }
                 });
                 document.getElementById("openPromoBtn")?.addEventListener("click", () => {
@@ -3604,26 +3741,7 @@ function showAdditionalSettingsAlert() {
             ? items.reduce((s, [id, qty]) => s + Math.round(games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty * (1 - appliedPromo.discountPercent / 100)), 0)
             : rawTotal;
 
-                const itemsListHtml = Object.entries(cart)
-    .sort(([idA, qtyA], [idB, qtyB]) => {
-        const pa = games.flatMap(g => g.getProducts()).find(p => p.id == idA);
-        const pb = games.flatMap(g => g.getProducts()).find(p => p.id == idB);
-        return ((pa?.price || 0) * qtyA) - ((pb?.price || 0) * qtyB);
-    })
-            .map(([id, qty]) => {
-            const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
-            if (!prod) return '';
-            const newPrice = appliedPromo ?
-                Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100)) :
-                prod.price * qty;
-            return `<div class="order-item-row">
-                    <span class="order-item-name">${escapeHtml(prod.name)}${qty > 1 ? `, ${qty} шт.` : ''}</span>
-                    <span class="order-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-                        ${appliedPromo ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(prod.price * qty)}</span>` : ''}
-                        ${formatPrice(newPrice)}
-                    </span>
-                </div>`;
-        }).join('');
+                const itemsListHtml = buildCartItemsListHtml();
 
         const cartGameId = (() => {
             const ids = Object.keys(cart);
@@ -3816,6 +3934,28 @@ function showAdditionalSettingsAlert() {
                     return;
                 }
 
+                                const recipientLine = isTelegramOrder
+                    ? `Получатель: ${checkoutData.telegramUsername}`
+                    : `Почта: ${checkoutData.email}`;
+                const confirmMsg =
+                    `Подтверждение данных:\n\n` +
+                    `${recipientLine}\n` +
+                    `Способ оплаты: ${getPaymentMethodLabel(checkoutData.paymentMethod)}\n` +
+                    `Данные: ${checkoutData.senderName}\n` +
+                    `Общая стоимость: ${formatPrice(discountedTotal)}`;
+                const goToPay = await new Promise(resolve => {
+                    if (!window.Telegram?.WebApp?.showPopup) { resolve(true); return; }
+                    window.Telegram.WebApp.showPopup({
+                        message: confirmMsg.slice(0, 256),
+                        buttons: [
+                            { id: 'close', type: 'default', text: 'Закрыть' },
+                            { id: 'pay', type: 'default', text: 'К оплате' }
+                        ]
+                    }, (buttonId) => resolve(buttonId === 'pay'));
+                });
+                if (!goToPay) return;
+                pendingOrderNumber = generateOrderNumber();
+                savePaymentSession();
                 showPage("payment");
             });
             document.getElementById("senderNameInput")?.addEventListener("input", function() {
@@ -3851,6 +3991,8 @@ function showAdditionalSettingsAlert() {
         const container = document.getElementById("paymentContent");
         const cardNum = getCardNumberFromValue(checkoutData.paymentMethod);
         const bank = getBankFromValue(checkoutData.paymentMethod);
+        if (!pendingOrderNumber) { pendingOrderNumber = generateOrderNumber(); savePaymentSession(); }
+        const paymentComment = `TR${pendingOrderNumber}${bankLetters[checkoutData.paymentMethod] || ''}`;
 
         let discountedTotal = 0;
         let rawTotal = 0;
@@ -3862,26 +4004,7 @@ function showAdditionalSettingsAlert() {
             ? items.reduce((s, [id, qty]) => s + Math.round(games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty * (1 - appliedPromo.discountPercent / 100)), 0)
             : rawTotal;
 
-                const itemsListHtml = Object.entries(cart)
-    .sort(([idA, qtyA], [idB, qtyB]) => {
-        const pa = games.flatMap(g => g.getProducts()).find(p => p.id == idA);
-        const pb = games.flatMap(g => g.getProducts()).find(p => p.id == idB);
-        return ((pa?.price || 0) * qtyA) - ((pb?.price || 0) * qtyB);
-    })
-            .map(([id, qty]) => {
-            const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
-            if (!prod) return '';
-            const newPrice = appliedPromo ?
-                Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100)) :
-                prod.price * qty;
-                        return `<div class="order-item-row">
-                    <span class="order-item-name">${escapeHtml(prod.name)}${qty > 1 ? `, ${qty} шт.` : ''}</span>
-                    <span class="order-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-                        ${appliedPromo ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(prod.price * qty)}</span>` : ''}
-                        ${formatPrice(newPrice)}
-                    </span>
-                </div>`;
-        }).join('');
+                const itemsListHtml = buildCartItemsListHtml();
 
         container.innerHTML = `
                 <div style="position:relative;margin-bottom:14px;">
@@ -3894,16 +4017,16 @@ function showAdditionalSettingsAlert() {
                             </div>
                         </div>
                             <div class="form-section">
-    <div class="form-label">Сумма перевода</div>
+    <div class="form-label">Сумма и банк</div>
     <div class="form-select-readonly card-number-row">
-        <span class="card-number-text" style="font-size:19px;font-weight:500;">${formatPrice(discountedTotal)}</span>
+        <span class="card-number-text" style="font-size:19px;font-weight:500;">${formatPrice(discountedTotal)} / ${bank}</span>
         <svg class="icon icon-info-field" id="paymentAmountInfoBtn"><use href="#icon-info"></use></svg>
     </div>
 </div>
                         <div class="form-section" style="margin-bottom:0;">
-                            <div class="form-label">Банк получателя</div>
+                            <div class="form-label">Комментарий</div>
                             <div class="form-select-readonly card-number-row">
-                                <span class="card-number-text" style="font-size:19px;font-weight:500;">${bank}</span>
+                                <span class="card-number-text" style="font-size:19px;font-weight:500;">${paymentComment}</span>
                                 <svg class="icon icon-info-field" id="bankInfoBtn"><use href="#icon-info"></use></svg>
                             </div>
                         </div>
@@ -3937,7 +4060,7 @@ function showAdditionalSettingsAlert() {
     showFieldInfoAlert("paymentAmount");
 });
             document.getElementById("bankInfoBtn")?.addEventListener("click", () => {
-                showFieldInfoAlert("bank");
+                showFieldInfoAlert("payment");
             });
                         document.getElementById("paidBtn")?.addEventListener("click", async () => {
                 hapticMedium();
@@ -4439,7 +4562,7 @@ function showAdditionalSettingsAlert() {
                         <span class="order-detail-value" style="color:var(--text-primary); font-weight:500;">${formatPrice(order.total)}</span>
                     </div>
                 </div>
-                                <div class="order-items-card" style="margin-top: -32px; padding-top: 40px;">
+                                <div class="order-items-card" style="margin-top: -32px; padding-top: 40px;"><span hidden data-items="${encodeURIComponent(JSON.stringify(items))}"></span>
                     ${itemsHtml}
                 </div>
                 <div id="orderReviewBlock">${orderReviewHtml}</div>
@@ -4474,18 +4597,25 @@ function showAdditionalSettingsAlert() {
                         } else if (!isCompleted) {
                 fixedBlock.style.display = "none";
                         } else {
-                fixedBlock.style.display = "block";
-                fixedBlock.innerHTML =
-                    `<div class="checkout-card"><div class="checkout-buttons-row"><button onclick="hapticMedium();writeReviewEntryPage='order';showPage('write-review')" class="checkout-button">Оставить отзыв</button><button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn"><svg class="icon icon-order-review-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
-                getReviewsData().then(allReviews => {
-                    const alreadyReviewed = allReviews.some(rv =>
-                 String(rv.user_id) === String(tgUserForReview?.id) && String(rv.order_id) ===
-                        String(order.id)
-                    );
-                    if (alreadyReviewed) {
-                        fixedBlock.style.display = "none";
-                    }
-                }).catch(() => {});
+                                const isReviewed = (list) => list.some(rv =>
+                    String(rv.user_id) === String(tgUserForReview?.id) &&
+                    String(rv.order_id) === String(order.id)
+                );
+                const showReviewBtn = () => {
+                    if (currentOpenOrder !== order) return;
+                    if (!document.getElementById('order-detail-page')?.classList.contains('active-page')) return;
+                    fixedBlock.style.display = "block";
+                    fixedBlock.innerHTML =
+                        `<div class="checkout-card"><div class="checkout-buttons-row"><button onclick="hapticMedium();writeReviewEntryPage='order';showPage('write-review')" class="checkout-button">Оставить отзыв</button><button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn"><svg class="icon icon-order-review-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
+                };
+                fixedBlock.style.display = "none";
+                if (reviewsListCache) {
+                    if (!isReviewed(reviewsListCache)) showReviewBtn();
+                } else {
+                    getReviewsData()
+                        .then(list => { if (!isReviewed(list)) showReviewBtn(); })
+                        .catch(() => showReviewBtn());
+                }
             }
 
             setTimeout(() => {
@@ -6182,6 +6312,14 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
 
     function getLastPage() {
         const savedPage = localStorage.getItem("lastPage");
+                if (savedPage === "payment") {
+            const hasCart = Object.keys(cart).length > 0;
+            const canRestore = hasCart && getCardNumberFromValue(checkoutData.paymentMethod) && pendingOrderNumber;
+            if (canRestore) return "payment";
+            appliedPromo = null;
+            pendingOrderNumber = null;
+            return hasCart ? "cart" : "catalog";
+        }
         const validPages = ["catalog", "cart", "orders", "profile"];
         if (savedPage && validPages.includes(savedPage)) {
             return savedPage;
@@ -6247,6 +6385,11 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
             }
         }
         if (pageId === "catalog") { navigationHistory = []; }
+                if (pageId === "payment") {
+            localStorage.setItem("lastPage", "payment");
+        } else if (localStorage.getItem("lastPage") === "payment") {
+            localStorage.setItem("lastPage", "cart");
+        }
         if (isPromoMode) {
             isPromoMode = false;
             if (!['checkout', 'payment'].includes(pageId)) {
@@ -6492,12 +6635,18 @@ document.getElementById("supportTgBtn")?.addEventListener("click", () => {
             } catch (e) {}
         }
 
+        restorePaymentSession();
         const lastPage = getLastPage();
 
         const slider = document.getElementById("menuSlider");
         if (slider) slider.classList.add("no-transition");
 
-        showPage(lastPage);
+                showPage(lastPage);
+        if (lastPage === 'payment') {
+            navigationHistory = ['cart', 'checkout'];
+            document.querySelector('.menu-item[data-page="cart"]')?.classList.add('active');
+            updateMenuSlider('cart');
+        }
 
         if (slider) {
             void slider.offsetWidth;
