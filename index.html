@@ -2010,10 +2010,12 @@
             transform: scale(0.85);
         }
         .btn-dots {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
-    height: 20px;
+    height: 100%;
+    width: 100%;
 }
 .btn-dots span {
     width: 6px;
@@ -3681,9 +3683,12 @@ function showAdditionalSettingsAlert() {
     isSubmitting = true;
         const btn = e.currentTarget;
     if (btn) {
-        btn.style.pointerEvents = "none";
+                btn.style.pointerEvents = "none";
+        btn.style.display = "flex";
+        btn.style.alignItems = "center";
+        btn.style.justifyContent = "center";
         btn.innerHTML = '<span class="btn-dots"><span></span><span></span><span></span></span>';
-    }
+           }
     hapticMedium();
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     if (!tgUser || !tgUser.id) {
@@ -3692,9 +3697,12 @@ function showAdditionalSettingsAlert() {
         );
         isSubmitting = false;
         if (btn) {
-            btn.style.pointerEvents = "";
+                        btn.style.pointerEvents = "";
+            btn.style.display = "";
+            btn.style.alignItems = "";
+            btn.style.justifyContent = "";
             btn.textContent = 'Перейти к оформлению';
-        }
+ }
         return;
     }
     try {
@@ -3725,7 +3733,10 @@ function showAdditionalSettingsAlert() {
     } finally {
         isSubmitting = false;
         if (btn) {
-            btn.style.pointerEvents = "";
+                        btn.style.pointerEvents = "";
+            btn.style.display = "";
+            btn.style.alignItems = "";
+            btn.style.justifyContent = "";
             btn.textContent = 'Перейти к оформлению';
         }
     }
@@ -3963,11 +3974,11 @@ function showAdditionalSettingsAlert() {
                     if (!window.Telegram?.WebApp?.showPopup) { resolve(true); return; }
                     window.Telegram.WebApp.showPopup({
                         message: confirmMsg.slice(0, 256),
-                        buttons: [
+                                                buttons: [
                             { id: 'pay', type: 'default', text: 'К оплате' },
-                             { id: 'close', type: 'close' }
+                            { id: 'close', type: 'close' }
                         ]
-                    },                    }, (buttonId) => {
+                    }, (buttonId) => {
                         if (buttonId === 'pay') hapticMedium();
                         resolve(buttonId === 'pay');
                     });
@@ -6896,7 +6907,13 @@ slider.style.borderRadius = "50px";
                 renderCartPage();
                 renderCheckoutBlock();
                 break;
-            case 'orders':
+                        case 'orders':
+                orderStatusFilter = "Все заказы";
+                const orderSearchEl = document.getElementById('orderSearchInput');
+                if (orderSearchEl) {
+                    orderSearchEl.value = '';
+                    document.getElementById('orderSearchClearBtn')?.classList.remove('visible');
+                }
                 await loadUserOrders().then(() => renderOrdersPage());
                 break;
             case 'profile':
