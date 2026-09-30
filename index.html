@@ -2562,7 +2562,7 @@
     </span>`;
 }
 
-function buildCollapsedItemsHtmlRaw(items, rowClass, nameClass, priceClass) {
+function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
     if (!items || !items.length) return '';
     const sorted = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty));
     if (sorted.length <= 2) {
