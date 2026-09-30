@@ -2794,7 +2794,6 @@ function buildCartItemsListHtml() {
 let itemsPopupOpen = false;
 function showItemsInfoPopup(items, onGoToOrder) {
     const sorted = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty));
-    const strike = s => s.split('').map(c => c + '\u0336').join('');
     const total = sorted.reduce((s, i) => s + Math.round(i.price * i.qty), 0);
     const header = 'Информация о товарах:\n\n';
     const footer = '\nОбщая стоимость: ' + formatPrice(total);
@@ -2803,9 +2802,7 @@ function showItemsInfoPopup(items, onGoToOrder) {
     for (let n = 0; n < sorted.length; n++) {
         const i = sorted[n];
         const now = Math.round(i.price * i.qty);
-        const old = i.originalPrice ? Math.round(i.originalPrice * i.qty) : null;
-        const priceStr = (old && old !== now) ? `${strike(formatPrice(old))} ${formatPrice(now)}` : formatPrice(now);
-        const block = `Товар #${n + 1}: ${i.name}${i.qty > 1 ? `, ${i.qty} шт.` : ''}\nСтоимость: ${priceStr}\n\n`;
+        const block = `Товар: ${i.name}${i.qty > 1 ? `, ${i.qty} шт.` : ''}\nСтоимость: ${formatPrice(now)}\n`;
         const rest = sorted.length - (n + 1);
         const moreLine = rest > 0 ? `И ещё ${rest} ${pluralizeTovar(rest)}\n` : '';
         // Telegram ограничивает текст popup 256 символами
@@ -2822,8 +2819,9 @@ function showItemsInfoPopup(items, onGoToOrder) {
     const tgw = window.Telegram?.WebApp;
     if (!tgw?.showPopup) { showAppAlert(message); return; }
     itemsPopupOpen = true;
-    const buttons = [{ id: 'close', type: 'close' }];
+    const buttons = [];
     if (onGoToOrder) buttons.push({ id: 'goto', type: 'default', text: 'К заказу' });
+    buttons.push({ id: 'close', type: 'close' });
     try {
         tgw.showPopup({ message, buttons }, (buttonId) => {
             itemsPopupOpen = false;
@@ -3969,7 +3967,10 @@ function showAdditionalSettingsAlert() {
                             { id: 'pay', type: 'default', text: 'К оплате' },
                              { id: 'close', type: 'close' }
                         ]
-                    }, (buttonId) => resolve(buttonId === 'pay'));
+                    },                    }, (buttonId) => {
+                        if (buttonId === 'pay') hapticMedium();
+                        resolve(buttonId === 'pay');
+                    });
                 });
                 if (!goToPay) return;
                 pendingOrderNumber = generateOrderNumber();
@@ -4010,7 +4011,7 @@ function showAdditionalSettingsAlert() {
         const cardNum = getCardNumberFromValue(checkoutData.paymentMethod);
         const bank = getBankFromValue(checkoutData.paymentMethod);
         if (!pendingOrderNumber) { pendingOrderNumber = generateOrderNumber(); savePaymentSession(); }
-        const paymentComment = `TR${pendingOrderNumber}${bankLetters[checkoutData.paymentMethod] || ''}`;
+        const paymentComment = `CTN${pendingOrderNumber}PM${bankLetters[checkoutData.paymentMethod] || ''}`;
 
         let discountedTotal = 0;
         let rawTotal = 0;
