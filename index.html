@@ -3060,33 +3060,6 @@ function showClearCacheConfirmAlert() {
 }
 
 let additionalSettingsPopupOpen = false;
-function showAdditionalSettingsAlert() {
-    if (document.getElementById('settings-page')?.classList.contains('active-page')) return;
-    if (additionalSettingsPopupOpen) return;
-    additionalSettingsPopupOpen = true;
-    const release = () => { additionalSettingsPopupOpen = false; };
-    if (window.Telegram?.WebApp?.showPopup) {
-        try {
-            window.Telegram.WebApp.showPopup({
-                message: 'Настройки приложения:\n\n- Смена темы/языка\n- Смена формата\n- Вкл./выкл. вибрации',
-                buttons: [
-                    { id: 'open', type: 'default', text: 'Открыть' },
-                    { id: 'close', type: 'close' }
-                ]
-            }, (buttonId) => {
-                release();
-                if (buttonId === 'open') {
-                    hapticLight();
-                    showPage('settings');
-                }
-            });
-        } catch (e) {
-            release();
-        }
-    } else {
-        release();
-    }
-}
 
     function hasAnyProductsLoaded() {
         const arrays = [window.brawlProducts, window.crProducts, window.robloxProducts, window.tgProducts];
@@ -4107,11 +4080,16 @@ function showAdditionalSettingsAlert() {
             `Объем покупок: ${formatPrice(totalSpent)}`;
 
                 if (window.Telegram?.WebApp?.showPopup) {
-            window.Telegram.WebApp.showPopup({
+                        window.Telegram.WebApp.showPopup({
                 message: message,
                 buttons: [
-                    { id: 'close', type: 'close' }
+                    { id: 'open_settings', type: 'default', text: 'Открыть настройки' }
                 ]
+            }, (buttonId) => {
+                if (buttonId === 'open_settings') {
+                    hapticLight();
+                    showPage('settings');
+                }
             });
         } else {
             showAppAlert(message);
@@ -6801,8 +6779,9 @@ slider.style.borderRadius = "50px";
             profileLongPressFired = false;
             pressTimer = setTimeout(() => {
                 profileLongPressFired = true;
-                hapticMedium();
-                showAdditionalSettingsAlert();
+                                hapticMedium();
+                if (document.getElementById('settings-page')?.classList.contains('active-page')) return;
+                showProfileInfoAlert();
             }, LONG_PRESS_MS);
         }
         function cancelPress() {
