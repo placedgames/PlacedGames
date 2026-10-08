@@ -731,6 +731,23 @@
 <script>
 ['log','warn','error','info','debug','table','trace'].forEach(m => console[m] = () => {});
 
+(function() {
+  const origFetch = window.fetch.bind(window);
+  window.fetch = function(input, init) {
+    try {
+      const url = typeof input === 'string' ? input : input.url;
+      const token = sessionStorage.getItem('adminSessionToken');
+      if (token && url && url.indexOf('placedgames.up.railway.app') !== -1) {
+        init = init || {};
+        const headers = new Headers(init.headers || {});
+        if (!headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`);
+        init.headers = headers;
+      }
+    } catch (e) {}
+    return origFetch(input, init);
+  };
+})();
+
 (async function() {
   if (!window.Telegram?.WebApp?.initData) {
   document.body.innerHTML = ''; // или любая заглушка
@@ -964,9 +981,9 @@
   function formatPrice(p) {
     return Math.round(p).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + "₽";
   }
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+    function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
   }
   function hapticLight() { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred("light"); }
   function hapticMedium() { window.Telegram?.WebApp?.HapticFeedback?.impactOccurred("medium"); }
@@ -1304,10 +1321,10 @@
       </span>
     </div>
     <div class="order-detail-row"><span class="order-detail-label">Дата</span><span class="order-detail-value">${order.date} ${order.time || ''}</span></div>
-    <div class="order-detail-row"><span class="order-detail-label">Способ оплаты</span><span class="order-detail-value">${order.payment_method || '—'}</span></div>
+    <div class="order-detail-row"><span class="order-detail-label">Способ оплаты</span><span class="order-detail-value">${escapeHtml(order.payment_method || '—')}</span></div>
     <div class="order-detail-row"><span class="order-detail-label">Отправитель</span><span class="order-detail-value">${escapeHtml(order.sender_name || '—')}</span></div>
     <div class="order-detail-row"><span class="order-detail-label">Почта</span><span class="order-detail-value">${escapeHtml(order.email || '—')}</span></div>
-    ${order.promo ? `<div class="order-detail-row"><span class="order-detail-label">Промокод</span><span class="order-detail-value">${order.promo} (${order.promo_discount}%)</span></div>` : ''}
+    ${order.promo ? `<div class="order-detail-row"><span class="order-detail-label">Промокод</span><span class="order-detail-value">${escapeHtml(order.promo)} (${escapeHtml(order.promo_discount)}%)</span></div>` : ''}
     ${order.verification_code ? `<div class="order-detail-row"><span class="order-detail-label">Код</span><span class="order-detail-value">${escapeHtml(order.verification_code)}</span></div>` : ''}
     <div class="order-detail-row" style="padding-bottom:4px;"><span class="order-detail-label">Сумма заказа</span><span class="order-detail-value">${formatPrice(order.total)}</span></div>
   </div>
