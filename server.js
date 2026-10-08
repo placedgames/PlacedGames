@@ -2,7 +2,6 @@ const express = require('express');
 const { Telegraf } = require('telegraf');
 const cors = require('cors');
 const { Pool } = require('pg');
-const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
 const { exec } = require('child_process');
@@ -71,8 +70,15 @@ app.use(cors({
     credentials: true
 }));
 
-app.use(express.json());
-app.use(express.static('.'));
+app.set('trust proxy', 1);
+app.use(express.json({ limit: '100kb' }));
+app.use('/api/', rateLimit({ windowMs: 60 * 1000, max: 120 }));
+
+const path = require('path');
+['index.html', 'admin-panel.html', 'products.js'].forEach(f => {
+    app.get('/' + f, (req, res) => res.sendFile(path.join(__dirname, f)));
+});
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 
 // =============================================
 // ЗАЩИТА ОТ БРУТФОРСА (по IP)
@@ -123,7 +129,11 @@ function checkRateLimit(ip) {
 // =============================================
 // АДМИН АВТОРИЗАЦИЯ (токен для API)
 // =============================================
-const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'your-super-secret-token-change-me-in-production';
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN;
+if (!ADMIN_TOKEN || ADMIN_TOKEN.length < 32) {
+    console.error('ADMIN_TOKEN не задан или слишком короткий');
+    process.exit(1);
+}
 
   function adminAuth(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -142,6 +152,82 @@ const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
 });
+
+// =============================================
+// АВТОРИЗАЦИЯ ПОЛЬЗОВАТЕЛЕЙ ЧЕРЕЗ TELEGRAM initData
+// =============================================
+function verifyInitData(initData) {
+    try {
+        if (!initData || !BOT_TOKEN) return null;
+        const params = new URLSearchParams(initData);
+        const hash = params.get('hash');
+        if (!hash) return null;
+        params.delete('hash');
+        const dcs = Array.from(params.entries())
+            .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+            .map(([k, v]) => `${k}=${v}`).join('\n');
+        const secretKey = crypto.createHmac('sha256', 'WebAppData').update(BOT_TOKEN).digest();
+        const expected = crypto.createHmac('sha256', secretKey).update(dcs).digest('hex');
+        const a = Buffer.from(hash, 'hex');
+        const b = Buffer.from(expected, 'hex');
+        if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+        const authDate = parseInt(params.get('auth_date'));
+        if (!authDate || Math.floor(Date.now() / 1000) - authDate > 7 * 86400) return null;
+        const user = JSON.parse(params.get('user') || '{}');
+        return user && user.id ? user : null;
+    } catch (e) { return null; }
+}
+
+function userAuth(req, res, next) {
+    const user = verifyInitData(req.headers['x-tg-init-data']);
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    req.tgUser = user;
+    req.tgUserId = String(user.id);
+    next();
+}
+
+// админ (Bearer) может смотреть любого пользователя через ?userId=, обычный пользователь — только себя
+function userOrAdminAuth(req, res, next) {
+    const token = (req.headers.authorization || '').split(' ')[1];
+    if (verifyAdminSessionToken(token)) {
+        req.isAdmin = true;
+        req.tgUserId = String(req.query.userId || '');
+        return next();
+    }
+    return userAuth(req, res, next);
+}
+
+function safeUrl(u) {
+    return typeof u === 'string' && u.length < 500 && /^https:\/\/[^\s"'<>\\]+$/.test(u) ? u : null;
+}
+
+function escHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function validatePromo(db, code, userId) {
+    const upper = String(code || '').toUpperCase().trim();
+    if (!upper) return { valid: false, reason: 'not_found' };
+    const r = await db.query('SELECT * FROM promo_codes WHERE code = $1 AND active = TRUE', [upper]);
+    if (!r.rows.length) return { valid: false, reason: 'not_found' };
+    const p = r.rows[0];
+    if (p.expires_at && new Date() > new Date(p.expires_at)) return { valid: false, reason: 'expired' };
+    if (p.max_uses !== null && p.used_count >= p.max_uses) return { valid: false, reason: 'limit_reached' };
+    if (p.user_id && String(p.user_id) !== String(userId)) return { valid: false, reason: 'not_for_you' };
+    if (p.type === 'first_order') {
+        const c = await db.query('SELECT COUNT(*) AS count FROM orders WHERE user_id = $1', [String(userId)]);
+        if (parseInt(c.rows[0].count) > 0) return { valid: false, reason: 'first_order_only' };
+    }
+    const u = await db.query(
+        `SELECT o.status_code FROM promo_usage pu
+         LEFT JOIN orders o ON o.id = pu.order_id
+         WHERE pu.user_id = $1 AND pu.promo_code = $2`, [String(userId), upper]);
+    if (u.rows.length && !u.rows.every(x => x.status_code === 'notfound')) {
+        return { valid: false, reason: 'already_used' };
+    }
+    return { valid: true, discount: p.discount, code: upper };
+}
+
 
 // =============================================
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
@@ -183,7 +269,7 @@ async function safeDeleteMessage(bot, chatId, messageId) {
 // =============================================
 
 async function notifyAdmin(bot, order) {
-    const usernameText = order.user_username ? `@${order.user_username}` : (order.user_name || 'Неизвестен');
+        const usernameText = escHtml(order.user_username ? `@${order.user_username}` : (order.user_name || 'Неизвестен'));
 
     const message =
         `${INVISIBLE_LINK}<b>Новый заказ от ${usernameText}</b>\n\n` +
@@ -205,7 +291,8 @@ async function notifyAdmin(bot, order) {
 }
 
 async function notifyAdminCode(bot, order, code, prevAdminMsgId) {
-    const usernameText = order.user_username ? `@${order.user_username}` : (order.user_name || 'Неизвестен');
+        const usernameText = escHtml(order.user_username ? `@${order.user_username}` : (order.user_name || 'Неизвестен'));
+
 
     await safeDeleteMessage(bot, ADMIN_ID, prevAdminMsgId);
 
@@ -228,11 +315,11 @@ async function notifyAdminCode(bot, order, code, prevAdminMsgId) {
 }
 
 async function notifyAdminReview(bot, userName, userUsername, text) {
-    const nick = userUsername ? `@${userUsername}` : (userName || 'Неизвестен');
+        const nick = escHtml(userUsername ? `@${userUsername}` : (userName || 'Неизвестен'));
 
     const message =
         `${INVISIBLE_LINK}<b>Новый отзыв от ${nick}</b>\n\n` +
-        `<b>Текст отзыва:</b>\n${text.substring(0, 300)}`;
+        `<b>Текст отзыва:</b>\n{escHtml(text.substring(0, 300))}`;
 
     await bot.telegram.sendMessage(ADMIN_ID, message, {
         parse_mode: 'HTML',
@@ -592,7 +679,7 @@ const upload = multer({ dest: '/tmp/' });
 
 app.post('/admin/import-db', upload.single('backup'), (req, res) => {
   const secret = req.headers['x-import-secret'];
-  if (secret !== process.env.IMPORT_SECRET) {
+    if (!process.env.IMPORT_SECRET || secret !== process.env.IMPORT_SECRET) {
     return res.status(401).send('Unauthorized');
   }
 
@@ -607,134 +694,131 @@ app.post('/admin/import-db', upload.single('backup'), (req, res) => {
 });
 
 // ЗАЩИЩЁННЫЕ ЭНДПОИНТЫ (требуют токен)
-app.post('/api/order', async (req, res) => {
+app.post('/api/order', userAuth, async (req, res) => {
+    const fail = (code, msg) => { const e = new Error(msg); e.status = code; return e; };
+    const ALLOWED_PAYMENTS = ['Кошелёк', 'Т-Банк', 'МТС Банк', 'ВТБ Банк', 'Сбер Банк', 'Ozon Банк', 'Альфа Банк'];
+    const clip = (v, n) => (v == null ? null : String(v).slice(0, n));
+    let saved;
     const client = await pool.connect();
     try {
-        const o = req.body;
+        const o = req.body || {};
+        const tgUser = req.tgUser;
+        const userId = req.tgUserId;
 
-        if (!Array.isArray(o.items) || !o.items.length) {
-            client.release();
-            return res.status(400).json({ error: 'Пустой заказ' });
+        if (!ALLOWED_PAYMENTS.includes(o.payment_method)) throw fail(400, 'Неверный способ оплаты');
+        if (!Array.isArray(o.items) || !o.items.length || o.items.length > 6) throw fail(400, 'Некорректный заказ');
+
+        const st = await client.query('SELECT status FROM app_users WHERE user_id = $1', [userId]);
+        if (st.rows[0]?.status === 'blocked') throw fail(403, 'blocked');
+
+        const ids = o.items.map(i => String(i.id));
+        if (new Set(ids).size !== ids.length) throw fail(400, 'Дубли товаров');
+
+        const priceRows = await client.query('SELECT id, price, max_qty FROM products WHERE id = ANY($1)', [ids]);
+        const productMap = {};
+        priceRows.rows.forEach(r => { productMap[r.id] = r; });
+
+        let promoCode = null, promoDiscount = 0;
+        if (o.promo) {
+            const pv = await validatePromo(client, o.promo, userId);
+            if (!pv.valid) throw fail(400, 'promo_' + pv.reason);
+            promoCode = pv.code;
+            promoDiscount = pv.discount;
         }
 
-        // Пересчитываем реальную сумму по ценам из БД, игнорируя цену от клиента
-        const ids = o.items.map(i => i.id != null ? String(i.id) : null).filter(Boolean);
-        const priceRows = await client.query(
-            'SELECT id, price FROM products WHERE id = ANY($1)',
-            [ids]
-        );
-        const priceMap = {};
-        priceRows.rows.forEach(r => { priceMap[r.id] = r.price; });
-
-                let realTotal = 0;
+        let realTotal = 0;
         const verifiedItems = [];
         for (const item of o.items) {
-            const idStr = String(item.id);
-            const realPrice = priceMap[idStr];
-            if (realPrice === undefined) {
-                client.release();
-                return res.status(400).json({ error: 'Неизвестный товар: ' + idStr });
-            }
-            const qty = parseInt(item.qty) || 1;
-            const lineTotal = o.promo_discount
-                ? Math.round(realPrice * qty * (1 - o.promo_discount / 100))
-                : realPrice * qty;
+            const row = productMap[String(item.id)];
+            if (!row) throw fail(400, 'Неизвестный товар: ' + item.id);
+            const qty = parseInt(item.qty);
+            if (!Number.isInteger(qty) || qty < 1 || qty > (row.max_qty || 1)) throw fail(400, 'Некорректное количество');
+            const lineTotal = promoDiscount
+                ? Math.round(row.price * qty * (1 - promoDiscount / 100))
+                : row.price * qty;
             realTotal += lineTotal;
-            verifiedItems.push({ id: item.id, name: item.name, qty, price: lineTotal / qty, originalPrice: realPrice });
+            verifiedItems.push({ id: item.id, name: clip(item.name, 100), qty, price: lineTotal / qty, originalPrice: row.price });
         }
+
+        const isWallet = o.payment_method === 'Кошелёк';
+        const now = new Date();
+        const dateStr = now.toLocaleDateString('ru-RU', { timeZone: 'Europe/Moscow' });
+        const timeStr = now.toLocaleTimeString('ru-RU', { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit' });
 
         await client.query('BEGIN');
 
-        if (o.payment_method === 'Кошелёк') {
-            const balResult = await client.query(
-                'SELECT balance FROM app_users WHERE user_id = $1 FOR UPDATE',
-                [String(o.user_id)]
-            );
-            const currentBalance = balResult.rows[0]?.balance || 0;
-            if (currentBalance < realTotal) {
-                await client.query('ROLLBACK');
-                client.release();
-                return res.status(400).json({ error: 'insufficient_balance' });
-            }
-            await client.query(
-                'UPDATE app_users SET balance = balance - $1 WHERE user_id = $2',
-                [realTotal, String(o.user_id)]
-            );
+        if (isWallet) {
+            const bal = await client.query('SELECT balance FROM app_users WHERE user_id = $1 FOR UPDATE', [userId]);
+            if ((bal.rows[0]?.balance || 0) < realTotal) throw fail(400, 'insufficient_balance');
+            await client.query('UPDATE app_users SET balance = balance - $1 WHERE user_id = $2', [realTotal, userId]);
         }
 
-                const nextNumber = await getNextOrderNumber();
+        let orderNumber = null;
+        if (!isWallet && /^[A-Z][0-9][A-Z][0-9]$/.test(String(o.orderNumber || ''))) {
+            const ex = await client.query('SELECT 1 FROM orders WHERE order_number = $1', [o.orderNumber]);
+            if (!ex.rows.length) orderNumber = o.orderNumber;
+        }
+        if (!orderNumber) orderNumber = await getNextOrderNumber();
 
-        if (o.payment_method === 'Кошелёк') {
+        if (isWallet) {
             await client.query(
                 `INSERT INTO wallet_transactions (user_id, type, amount, order_number) VALUES ($1, $2, $3, $4)`,
-                [String(o.user_id), 'purchase', -realTotal, nextNumber]
+                [userId, 'purchase', -realTotal, orderNumber]
             );
         }
 
-                const isWalletPayment = o.payment_method === 'Кошелёк';
-        const initialStatus = isWalletPayment ? 'Ожидает выполнения' : 'Ожидает проверки';
-        const initialStatusCode = isWalletPayment ? 'processing' : 'pending';
+        const result = await client.query(
+            `INSERT INTO orders (
+                order_number, date, time, timestamp, items, total, promo, promo_discount,
+                payment_method, sender_name, email, user_id, user_name, user_username,
+                game_name, comment, status, status_code
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18) RETURNING *`,
+            [
+                orderNumber, dateStr, timeStr, Date.now(), JSON.stringify(verifiedItems), realTotal,
+                promoCode, promoDiscount, o.payment_method,
+                clip(o.sender_name, 100), clip(o.email, 100),
+                userId, clip(tgUser.first_name, 100), clip(tgUser.username, 64),
+                clip(o.game_name, 50), clip(o.comment, 300),
+                isWallet ? 'Ожидает выполнения' : 'Ожидает проверки',
+                isWallet ? 'processing' : 'pending'
+            ]
+        );
+        saved = result.rows[0];
 
-                const result = await client.query(
-    `INSERT INTO orders (
-        order_number, date, time, timestamp, items, total, promo,
-        promo_discount, payment_method, sender_name, email, user_id, user_name, user_username, game_name, comment
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
-    [
-        nextNumber, o.date, o.time, o.timestamp, JSON.stringify(verifiedItems), realTotal,
-        o.promo || null, o.promo_discount || 0, o.payment_method || null,
-        o.sender_name || null, o.email || null, o.user_id || null, o.user_name || null,
-        o.user_username || null, o.game_name || null, o.comment || null
-    ]
-);
+        if (promoCode) {
+            const upd = await client.query(
+                `UPDATE promo_codes SET used_count = used_count + 1
+                 WHERE code = $1 AND (max_uses IS NULL OR used_count < max_uses)`, [promoCode]);
+            if (!upd.rowCount) throw fail(400, 'promo_limit_reached');
+            await client.query(
+                'INSERT INTO promo_usage (user_id, promo_code, order_id) VALUES ($1, $2, $3)',
+                [userId, promoCode, saved.id]
+            );
+        }
 
         await client.query('COMMIT');
-        const saved = result.rows[0];
-        client.release();
-
-        console.log(`Заказ #${saved.order_number} сохранён`);
-
-        let userMsgId = null;
-        let adminMsgId = null;
-
-        const bot = getBot();
-        if (bot) {
-            if (saved.user_id) {
-                userMsgId = await notifyUser(bot, saved);
-            }
-            adminMsgId = await notifyAdmin(bot, saved);
-        }
-
-        if (userMsgId !== null || adminMsgId !== null) {
-            await pool.query(
-                'UPDATE orders SET user_msg_id = $1, admin_msg_id = $2 WHERE id = $3',
-                [userMsgId, adminMsgId, saved.id]
-            );
-        }
-
-        if (o.promo && o.user_id) {
-            try {
-                await pool.query(`
-                    INSERT INTO promo_usage (user_id, promo_code, order_id)
-                    VALUES ($1, $2, $3)
-                    ON CONFLICT DO NOTHING
-                `, [o.user_id, o.promo.toUpperCase(), saved.id]);
-                await pool.query(`
-                    UPDATE promo_codes SET used_count = used_count + 1 
-                    WHERE code = $1
-                `, [o.promo.toUpperCase()]);
-            } catch (e) {
-                console.error('Ошибка записи промокода:', e.message);
-            }
-        }
-
-        res.json({ success: true, orderId: saved.id });
     } catch (err) {
-        try { await client.query('ROLLBACK'); } catch(e) {}
+        try { await client.query('ROLLBACK'); } catch (e) {}
+        if (!err.status) console.error('Ошибка создания заказа:', err.message);
+        return res.status(err.status || 500).json({ error: err.status ? err.message : 'Ошибка создания заказа' });
+    } finally {
         client.release();
-        console.error('Ошибка создания заказа:', err.message);
-        res.status(500).json({ error: err.message });
     }
+
+    console.log(`Заказ #${saved.order_number} сохранён`);
+
+    let userMsgId = null, adminMsgId = null;
+    const bot = getBot();
+    if (bot) {
+        if (saved.user_id) userMsgId = await notifyUser(bot, saved);
+        adminMsgId = await notifyAdmin(bot, saved);
+    }
+    if (userMsgId !== null || adminMsgId !== null) {
+        await pool.query('UPDATE orders SET user_msg_id = $1, admin_msg_id = $2 WHERE id = $3',
+            [userMsgId, adminMsgId, saved.id]);
+    }
+
+    res.json({ success: true, orderId: saved.id });
 });
 
 app.get('/api/total-revenue', adminAuth, async (req, res) => {
@@ -775,9 +859,9 @@ app.get('/api/status', async (req, res) => {
     }
 });
 
-app.get('/api/user-orders', async (req, res) => {
+app.get('/api/user-orders', userOrAdminAuth, async (req, res) => {
     try {
-        const userId = req.query.userId;
+        const userId = req.tgUserId;
         if (!userId) return res.json([]);
         const result = await pool.query('SELECT * FROM orders WHERE user_id = $1 ORDER BY id DESC', [userId]);
         res.json(result.rows);
@@ -884,14 +968,16 @@ app.post('/api/update-status', adminAuth, async (req, res) => {
     }
 });
 
-app.post('/api/submit-code', async (req, res) => {
+app.post('/api/submit-code', userAuth, async (req, res) => {
     try {
-        const { orderId, code } = req.body;
-        console.log(`Получен код для заказа #${orderId}: ${code}`);
+        const orderId = parseInt(req.body.orderId);
+        const code = String(req.body.code || '').replace(/\D/g, '').slice(0, 12);
+        if (!Number.isInteger(orderId) || !code) return res.status(400).json({ error: 'Некорректные данные' });
 
-        const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+        const orderResult = await pool.query('SELECT * FROM orders WHERE id = $1 AND user_id = $2', [orderId, req.tgUserId]);
         if (!orderResult.rows.length) return res.status(404).json({ error: 'Заказ не найден' });
         const prev = orderResult.rows[0];
+        if (prev.status_code !== 'awaiting_code') return res.status(400).json({ error: 'Код сейчас не требуется' });
 
         const result = await pool.query(
             'UPDATE orders SET verification_code = $1, status = $2, status_code = $3 WHERE id = $4 RETURNING *',
@@ -917,33 +1003,45 @@ app.post('/api/submit-code', async (req, res) => {
     }
 });
 
-app.post('/api/refresh-order', async (req, res) => {
+app.post('/api/refresh-order', userOrAdminAuth, async (req, res) => {
     try {
         const { orderId, orderNumber } = req.body;
         let result;
         if (orderId) {
             result = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
         } else if (orderNumber) {
-            result = await pool.query('SELECT * FROM orders WHERE order_number = $1', [orderNumber]);
+            result = await pool.query('SELECT * FROM orders WHERE order_number = $1', [String(orderNumber)]);
         } else {
             return res.status(400).json({ error: 'Нет данных' });
         }
         if (!result.rows.length) return res.status(404).json({ error: 'Заказ не найден' });
-        res.json(result.rows[0]);
+        const order = result.rows[0];
+
+        if (req.isAdmin || String(order.user_id) === req.tgUserId) return res.json(order);
+
+        // чужой заказ: только выполненный и без личных данных
+        if (order.status_code !== 'completed' && order.status_code !== 'done') {
+            return res.status(403).json({ error: 'Недоступно' });
+        }
+        res.json({
+            ...order,
+            user_id: '0', email: null, sender_name: null, payment_method: null,
+            verification_code: null, user_name: null, user_username: null,
+            promo: order.promo ? '***' : null
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-app.post('/api/track-user', async (req, res) => {
+app.post('/api/track-user', userAuth, async (req, res) => {
     try {
-        const { userId, userName, userUsername, photoUrl, referrerId } = req.body;
-        if (!userId) return res.json({ success: false });
+        const u = req.tgUser;
+        const userId = req.tgUserId;
+        const { referrerId } = req.body;
 
-        // Нельзя быть рефералом самого себя
         let validReferrer = null;
-        if (referrerId && String(referrerId) !== String(userId)) {
-            // Проверяем, что такой пользователь реально существует
+        if (referrerId && String(referrerId) !== userId) {
             const refCheck = await pool.query('SELECT 1 FROM app_users WHERE user_id = $1', [String(referrerId)]);
             if (refCheck.rows.length) validReferrer = String(referrerId);
         }
@@ -956,7 +1054,7 @@ app.post('/api/track-user', async (req, res) => {
                 user_username = EXCLUDED.user_username,
                 photo_url = EXCLUDED.photo_url,
                 last_seen = NOW()
-        `, [String(userId), userName || null, userUsername || null, photoUrl || null, validReferrer]);
+        `, [userId, String(u.first_name || '').slice(0, 100) || null, u.username || null, safeUrl(u.photo_url), validReferrer]);
 
         res.json({ success: true });
     } catch (err) {
@@ -964,9 +1062,9 @@ app.post('/api/track-user', async (req, res) => {
     }
 });
 
-app.get('/api/referral-stats', async (req, res) => {
+app.get('/api/referral-stats', userOrAdminAuth, async (req, res) => {
     try {
-        const { userId } = req.query;
+        const userId = req.tgUserId;
         if (!userId) return res.json({ invited: 0, invited24h: 0, earned: 0, earned24h: 0 });
 
         const invited = await pool.query(
@@ -995,9 +1093,10 @@ app.get('/api/referral-stats', async (req, res) => {
     }
 });
 
-app.get('/api/referral-list', async (req, res) => {
+app.get('/api/referral-list', userOrAdminAuth, async (req, res) => {
     try {
-        const { userId, limit } = req.query;
+        const userId = req.tgUserId;
+        const { limit } = req.query;
         if (!userId) return res.json([]);
         const limitNum = Math.min(parseInt(limit) || 5, 1000);
 
@@ -1033,9 +1132,9 @@ app.get('/api/referral-list', async (req, res) => {
 });
 
 // ПУБЛИЧНАЯ ИНФОРМАЦИЯ О ПОЛЬЗОВАТЕЛЕ (для карточки профиля)
-app.get('/api/user-info', async (req, res) => {
+app.get('/api/user-info', userOrAdminAuth, async (req, res) => {
     try {
-        const { userId } = req.query;
+        const userId = req.tgUserId;
         if (!userId) return res.status(400).json({ error: 'Нет userId' });
         const result = await pool.query(
             'SELECT user_id, user_name, user_username, first_seen FROM app_users WHERE user_id = $1',
@@ -1048,9 +1147,9 @@ app.get('/api/user-info', async (req, res) => {
     }
 });
 
-app.get('/api/user-balance', async (req, res) => {
+app.get('/api/user-balance', userOrAdminAuth, async (req, res) => {
     try {
-        const { userId } = req.query;
+        const userId = req.tgUserId;
         if (!userId) return res.json({ balance: 0 });
         const result = await pool.query('SELECT balance FROM app_users WHERE user_id = $1', [String(userId)]);
         res.json({ balance: result.rows[0]?.balance || 0 });
@@ -1059,9 +1158,10 @@ app.get('/api/user-balance', async (req, res) => {
     }
 });
 
-app.get('/api/wallet-transactions', async (req, res) => {
+app.get('/api/wallet-transactions', userOrAdminAuth, async (req, res) => {
     try {
-        const { userId, limit } = req.query;
+        const userId = req.tgUserId;
+        const { limit } = req.query;
         if (!userId) return res.json([]);
         const limitNum = Math.min(parseInt(limit) || 5, 1000);
         const result = await pool.query(
@@ -1069,6 +1169,15 @@ app.get('/api/wallet-transactions', async (req, res) => {
             [String(userId), limitNum]
         );
         res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/wallet-transactions/:id', adminAuth, async (req, res) => {
+    try {
+        await pool.query('DELETE FROM wallet_transactions WHERE id = $1', [req.params.id]);
+        res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -1118,71 +1227,10 @@ app.get('/api/debug-users', adminAuth, async (req, res) => {
     }
 });
 
-app.post('/api/check-promo', async (req, res) => {
+app.post('/api/check-promo', userAuth, async (req, res) => {
     try {
-        const { code, userId } = req.body;
-        if (!code || !userId) return res.status(400).json({ error: 'Нет данных' });
-
-        const upperCode = code.toUpperCase();
-        
-        const codeResult = await pool.query(
-            `SELECT * FROM promo_codes WHERE code = $1 AND active = TRUE`, [upperCode]
-        );
-        if (!codeResult.rows.length) return res.json({ valid: false, reason: 'not_found' });
-        const promoRow = codeResult.rows[0];
-
-        // Проверка срока действия
-        if (promoRow.expires_at && new Date() > new Date(promoRow.expires_at)) {
-            return res.json({ valid: false, reason: 'expired' });
-        }
-
-        // Проверка лимита активаций
-        if (promoRow.max_uses !== null && promoRow.used_count >= promoRow.max_uses) {
-            return res.json({ valid: false, reason: 'limit_reached' });
-        }
-
-        // Проверка для конкретного пользователя
-        if (promoRow.user_id && String(promoRow.user_id) !== String(userId)) {
-            return res.json({ valid: false, reason: 'not_for_you' });
-        }
-
-        // Проверка first_order
-        if (promoRow.type === 'first_order') {
-            const ordersResult = await pool.query(
-                `SELECT COUNT(*) as count FROM orders WHERE user_id = $1`, [userId]
-            );
-            if (parseInt(ordersResult.rows[0].count) > 0) {
-                return res.json({ valid: false, reason: 'first_order_only' });
-            }
-        }
-
-        // Проверка на использование этим пользователем
-        const usageResult = await pool.query(`
-            SELECT pu.id, o.status_code FROM promo_usage pu
-            LEFT JOIN orders o ON o.id = pu.order_id
-            WHERE pu.user_id = $1 AND pu.promo_code = $2
-        `, [userId, upperCode]);
-
-        if (usageResult.rows.length > 0) {
-            const allNotFound = usageResult.rows.every(r => r.status_code === 'notfound');
-            if (!allNotFound) return res.json({ valid: false, reason: 'already_used' });
-        }
-
-        res.json({ valid: true, discount: promoRow.discount });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-app.post('/api/use-promo', async (req, res) => {
-    try {
-        const { userId, code, orderId } = req.body;
-        if (!userId || !code || !orderId) return res.status(400).json({ error: 'Нет данных' });
-        await pool.query(
-            `INSERT INTO promo_usage (user_id, promo_code, order_id) VALUES ($1, $2, $3)`,
-            [userId, code.toUpperCase(), orderId]
-        );
-        res.json({ success: true });
+        const r = await validatePromo(pool, req.body.code, req.tgUserId);
+        res.json(r.valid ? { valid: true, discount: r.discount } : { valid: false, reason: r.reason });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -1417,45 +1465,34 @@ app.get('/api/rating', async (req, res) => {
     }
 });
 
-app.get('/api/reviews', async (req, res) => {
+app.post('/api/reviews', userAuth, async (req, res) => {
     try {
-        const result = await pool.query(`
-            SELECT r.*, o.items as order_items, o.game_name as order_game_name
-            FROM reviews r
-            LEFT JOIN orders o ON o.order_number = r.order_number
-            ORDER BY r.created_at DESC LIMIT 50
-        `);
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
+        const { text, rating, orderId } = req.body;
+        const u = req.tgUser;
+        const clean = String(text || '').trim().slice(0, 70);
+        const oid = parseInt(orderId);
+        if (clean.length < 3 || !Number.isInteger(oid)) return res.status(400).json({ error: 'Некорректные данные' });
 
-app.post('/api/reviews', async (req, res) => {
-    try {
-        const { userId, userName, userUsername, photoUrl, text, rating, orderId, orderNumber } = req.body;
+        const ord = await pool.query('SELECT id, order_number, status_code FROM orders WHERE id = $1 AND user_id = $2', [oid, req.tgUserId]);
+        if (!ord.rows.length) return res.status(404).json({ error: 'Заказ не найден' });
+        if (!['completed', 'done'].includes(ord.rows[0].status_code)) return res.status(400).json({ error: 'Заказ не выполнен' });
+        const dup = await pool.query('SELECT 1 FROM reviews WHERE order_id = $1', [oid]);
+        if (dup.rows.length) return res.status(400).json({ error: 'Отзыв уже оставлен' });
 
-if (!text || !text.trim()) {
-    return res.status(400).json({ error: 'Текст обязателен' });
-}
+        const ratingVal = rating === 'bad' ? 'bad' : 'good';
+        const userName = String(u.first_name || 'Пользователь').slice(0, 100);
 
-const ratingVal = rating === 'bad' ? 'bad' : 'good';
-const satisfiedVal = ratingVal !== 'bad'; // для обратной совместимости со старыми местами, где читается satisfied
-
-await pool.query(
-    'INSERT INTO reviews (user_id, user_name, user_username, photo_url, text, satisfied, rating, order_id, order_number) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',
-    [userId || null, userName || 'Пользователь', userUsername || null, photoUrl || null, text.trim(), satisfiedVal, ratingVal, orderId || null, orderNumber || null]
-);
+        await pool.query(
+            `INSERT INTO reviews (user_id, user_name, user_username, photo_url, text, satisfied, rating, order_id, order_number)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+            [req.tgUserId, userName, u.username || null, safeUrl(u.photo_url), clean, ratingVal !== 'bad', ratingVal, oid, ord.rows[0].order_number]
+        );
 
         const bot = getBot();
         if (bot) {
-            try {
-                await notifyAdminReview(bot, userName, userUsername, text.trim());
-            } catch (e) {
-                console.error('Ошибка уведомления об отзыве:', e.message);
-            }
+            try { await notifyAdminReview(bot, userName, u.username, clean); }
+            catch (e) { console.error('Ошибка уведомления об отзыве:', e.message); }
         }
-
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
