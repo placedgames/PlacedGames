@@ -2215,6 +2215,23 @@
 
 <script src="products.js" data-products-script="true" crossorigin="anonymous" onerror="window.__productsLoadFailed=true;"></script>
 <script>
+    (function() {
+        const origFetch = window.fetch.bind(window);
+        window.fetch = function(input, init) {
+            try {
+                const url = typeof input === 'string' ? input : input.url;
+                if (url && url.indexOf('placedgames.up.railway.app') !== -1) {
+                    const initData = window.Telegram?.WebApp?.initData || '';
+                    init = init || {};
+                    const headers = new Headers(init.headers || {});
+                    if (initData) headers.set('X-Tg-Init-Data', initData);
+                    init.headers = headers;
+                }
+            } catch (e) {}
+            return origFetch(input, init);
+        };
+    })();
+
     ['log', 'warn', 'error', 'info', 'debug', 'table', 'trace'].forEach(m => console[m] = () => {});
 
     window.__lastError = null;
@@ -2424,14 +2441,9 @@
     return { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.04)', icon: 'icon-review-sad' };
 }
 
-        function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
+            function escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     }
 
         function cleanText(str) {
@@ -4017,8 +4029,10 @@ let additionalSettingsPopupOpen = false;
                 const order = buildOrderObject(getPaymentMethodLabel(checkoutData.paymentMethod));
 
                 const success = await sendOrderToServer(order);
-                if (success) {
+                                if (success) {
                     await finalizeOrderAfterSuccess();
+                } else {
+                    showAppAlert('Ошибка оформления заказа, проверьте данные и промокод');
                 }
                 if (btn) { btn.disabled = false;
                     btn.textContent = "Оформить заказ"; }
@@ -4337,7 +4351,7 @@ let additionalSettingsPopupOpen = false;
     
         function buildOrderReviewBlockHtml(order, review) {
         const avatar = review.photo_url ?
-            `<img style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" src="${review.photo_url}" alt="avatar">` :
+            `<img style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" src="${escapeHtml(review.photo_url)}" alt="avatar">` :
             `<div class="review-avatar">👤</div>`;
         const dt = review.created_at ? new Date(review.created_at) : null;
         const dateStr = dt ?
@@ -5247,7 +5261,7 @@ body: JSON.stringify({
 
     function buildReviewCardHtml(rv) {
         const avatar = rv.photo_url ?
-            `<img style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" src="${rv.photo_url}" alt="avatar">` :
+            `<img style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" src="${escapeHtml(rv.photo_url)}" alt="avatar">` :
             `<div class="review-avatar">👤</div>`;
         const dt = rv.created_at ? new Date(rv.created_at) : null;
         const dateStr = dt ?
