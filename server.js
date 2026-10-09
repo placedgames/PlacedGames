@@ -1465,6 +1465,20 @@ app.get('/api/rating', async (req, res) => {
     }
 });
 
+app.get('/api/reviews', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT r.*, o.items as order_items, o.game_name as order_game_name
+            FROM reviews r
+            LEFT JOIN orders o ON o.order_number = r.order_number
+            ORDER BY r.created_at DESC LIMIT 50
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.post('/api/reviews', userAuth, async (req, res) => {
     try {
         const { text, rating, orderId } = req.body;
