@@ -711,6 +711,7 @@ app.post('/api/order', userAuth, async (req, res) => {
 
         const st = await client.query('SELECT status FROM app_users WHERE user_id = $1', [userId]);
         if (st.rows[0]?.status === 'blocked') throw fail(403, 'blocked');
+        if ((await countActiveOrders(client, userId)) > ACTIVE_ORDER_LIMIT) throw fail(429, 'too_many_active_orders');
 
         const ids = o.items.map(i => String(i.id));
         if (new Set(ids).size !== ids.length) throw fail(400, 'Дубли товаров');
@@ -1241,29 +1242,22 @@ app.post('/api/check-promo', userAuth, async (req, res) => {
     }
 });
 
-// ПРОВЕРКА ЛИМИТА ЗАКАЗОВ (rate limit)
-app.get('/api/check-rate-limit', async (req, res) => {
+// ЛИМИТ АКТИВНЫХ ЗАКАЗОВ
+const ACTIVE_ORDER_LIMIT = 2;
+
+async function countActiveOrders(db, userId) {
+    const r = await db.query(
+        `SELECT COUNT(*) AS c FROM orders
+         WHERE user_id = $1 AND status_code NOT IN ('completed', 'done', 'cancelled', 'notfound')`,
+        [String(userId)]
+    );
+    return parseInt(r.rows[0].c);
+}
+
+app.get('/api/check-rate-limit', userAuth, async (req, res) => {
     try {
-        const { userId } = req.query;
-        if (!userId) return res.json({ limited: false });
-        const tenMinutesAgo = Date.now() - 10 * 60 * 1000;
-        const recentResult = await pool.query(`
-            SELECT COUNT(*) as count FROM orders
-            WHERE user_id = $1 AND timestamp >= $2
-        `, [userId, tenMinutesAgo]);
-        const recentCount = parseInt(recentResult.rows[0].count);
-        if (recentCount >= 3) {
-            const firstResult = await pool.query(`
-                SELECT timestamp FROM orders WHERE user_id = $1
-                ORDER BY id DESC LIMIT 3
-            `, [userId]);
-            const oldest = firstResult.rows[firstResult.rows.length - 1];
-            if (oldest) {
-                const limitUntil = Number(oldest.timestamp) + 30 * 60 * 1000;
-                if (Date.now() < limitUntil) return res.json({ limited: true });
-            }
-        }
-        res.json({ limited: false });
+        const n = await countActiveOrders(pool, req.tgUserId);
+        res.json({ limited: n > ACTIVE_ORDER_LIMIT });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -1455,20 +1449,6 @@ app.post('/api/settings', adminAuth, async (req, res) => {
 // =============================================
 // РЕЙТИНГ И ОТЗЫВЫ
 // =============================================
-
-app.get('/api/rating', async (req, res) => {
-    try {
-        const result = await pool.query(
-            `SELECT user_id, user_name, COALESCE(SUM(total), 0) as total_spent
-             FROM orders WHERE status_code = 'completed'
-             GROUP BY user_id, user_name
-             ORDER BY total_spent DESC LIMIT 100`
-        );
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
 
 app.get('/api/reviews', async (req, res) => {
     try {
