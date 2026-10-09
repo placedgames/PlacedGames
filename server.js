@@ -840,7 +840,8 @@ app.get('/api/total-revenue', adminAuth, async (req, res) => {
 app.delete('/api/orders/:id', adminAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        await pool.query('DELETE FROM orders WHERE id = $1', [id]);
+        const del = await pool.query('DELETE FROM orders WHERE id = $1 RETURNING user_id', [id]);
+        if (del.rows[0]) await releaseOrderBlockIfFree(pool, del.rows[0].user_id);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -918,6 +919,7 @@ app.post('/api/update-status', adminAuth, async (req, res) => {
                 const order = result.rows[0];
         const isCompleted = finalStatusCode === 'completed' || finalStatusCode === 'done';
         const wasCompleted = prev.status_code === 'completed' || prev.status_code === 'done';
+        await releaseOrderBlockIfFree(pool, order.user_id);
 
                                 if (isCompleted && !wasCompleted && order.user_id && order.payment_method !== 'Кошелёк') {
     const cashback = Math.round(order.total * 0.02);
@@ -1267,6 +1269,14 @@ async function isOrderBlocked(db, userId) {
         return true;
     }
     return false;
+}
+
+// снимает блокировку, если активных заказов стало меньше лимита
+async function releaseOrderBlockIfFree(db, userId) {
+    if (!userId) return;
+    if ((await countActiveOrders(db, userId)) < ACTIVE_ORDER_LIMIT) {
+        await db.query('UPDATE app_users SET order_block_until = 0 WHERE user_id = $1', [String(userId)]);
+    }
 }
 
 app.get('/api/check-rate-limit', userAuth, async (req, res) => {
