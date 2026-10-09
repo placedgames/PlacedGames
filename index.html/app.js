@@ -433,7 +433,7 @@ if (window.Telegram?.WebApp?.showAlert) {
         if (window.Telegram?.WebApp?.showPopup) {
             window.Telegram.WebApp.showPopup({
                 message: msg,
-                buttons: [{ id: 'close', type: 'default', text: 'Закрыть' }]
+                buttons: [{ id: 'close', type: 'close' }]
             });
         } else {
             showAppAlert(msg);
