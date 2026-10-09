@@ -320,7 +320,7 @@ async function notifyAdminReview(bot, userName, userUsername, text) {
 
     const message =
         `${INVISIBLE_LINK}<b>Новый отзыв от ${nick}</b>\n\n` +
-        `<b>Текст отзыва:</b>\n{escHtml(text.substring(0, 300))}`;
+        `<b>Текст отзыва:</b>\n${escHtml(text.substring(0, 300))}`;
 
     await bot.telegram.sendMessage(ADMIN_ID, message, {
         parse_mode: 'HTML',
@@ -808,18 +808,22 @@ app.post('/api/order', userAuth, async (req, res) => {
 
     console.log(`Заказ #${saved.order_number} сохранён`);
 
-    let userMsgId = null, adminMsgId = null;
-    const bot = getBot();
-    if (bot) {
-        if (saved.user_id) userMsgId = await notifyUser(bot, saved);
-        adminMsgId = await notifyAdmin(bot, saved);
-    }
-    if (userMsgId !== null || adminMsgId !== null) {
-        await pool.query('UPDATE orders SET user_msg_id = $1, admin_msg_id = $2 WHERE id = $3',
-            [userMsgId, adminMsgId, saved.id]);
-    }
+        res.json({ success: true, orderId: saved.id });
 
-    res.json({ success: true, orderId: saved.id });
+    try {
+        let userMsgId = null, adminMsgId = null;
+        const bot = getBot();
+        if (bot) {
+            if (saved.user_id) userMsgId = await notifyUser(bot, saved);
+            adminMsgId = await notifyAdmin(bot, saved);
+        }
+        if (userMsgId !== null || adminMsgId !== null) {
+            await pool.query('UPDATE orders SET user_msg_id = $1, admin_msg_id = $2 WHERE id = $3',
+                [userMsgId, adminMsgId, saved.id]);
+        }
+    } catch (e) {
+        console.error('Ошибка уведомлений:', e.message);
+    }
 });
 
 app.get('/api/total-revenue', adminAuth, async (req, res) => {
@@ -1567,6 +1571,8 @@ app.post('/api/admin/verify-telegram', async (req, res) => {
   }
 });
 
+process.on('unhandledRejection', (e) => console.error('unhandledRejection:', e));
+process.on('uncaughtException', (e) => console.error('uncaughtException:', e));
 // =============================================
 // ЗАПУСК
 // =============================================
