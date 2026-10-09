@@ -622,16 +622,16 @@ const games = [{
     enabled: true,
     getProducts: () => window.crProducts || []
 }, {
-    id: 'roblox',
-    name: 'Roblox',
-    developer: 'Roblox Corporation',
-    image: 'https://cdn.jsdelivr.net/gh/melssed/PG@main/logos/Roblox.JPEG',
+    id: 'pubg',
+    name: 'Pubg Mobile',
+    developer: 'Tencent Mobile International Limited',
+    image: 'https://cdn.jsdelivr.net/gh/melssed/PG@main/logos/Pubg.JPEG',
     minPrice: 42,
     oldMinPrice: 44,
     deliveryText: 'вход в аккаунт',
     warnText: 'Для пополнения робуксов потребуется вход в ваш аккаунт Roblox.',
     instructionText: 'Инструкция для Brawl Stars:\n1. ...\n2. ...',
-    enabled: false,
+    enabled: true,
     getProducts: () => window.robloxProducts || []
 }, {
     id: 'telegram',
@@ -641,6 +641,30 @@ const games = [{
     minPrice: 22,
     oldMinPrice: 24,
     deliveryText: 'подарком',
+    warnText: 'Для отправки подарка укажите ваш юзернейм в Telegram.',
+    instructionText: 'Информация о товаре:\n\nПосле подтверждения оплаты товар будет отправлен на указанный вами «username».\n\nОжидание выполнения заказа занимает от 5 до 20 минут.',
+    enabled: true,
+    getProducts: () => window.tgProducts || []
+}, {
+    id: 'roblox',
+    name: 'Roblox',
+    developer: 'Roblox Corporation',
+    image: 'https://cdn.jsdelivr.net/gh/melssed/PG@main/logos/Roblox.JPEG',
+    minPrice: 42,
+    oldMinPrice: 44,
+    deliveryText: 'вход в аккаунт',
+    warnText: 'Для пополнения робуксов потребуется вход в ваш аккаунт Roblox.',
+    instructionText: 'Инструкция для Roblox:\n1. ...\n2. ...',
+    enabled: false,
+    getProducts: () => window.robloxProducts || []
+}, {
+    id: 'appstore',
+    name: 'App Store',
+    developer: 'Apple',
+    image: 'https://cdn.jsdelivr.net/gh/melssed/PG@main/logos/AppStore.JPEG',
+    minPrice: 22,
+    oldMinPrice: 24,
+    deliveryText: 'подарочная карта',
     warnText: 'Для отправки подарка укажите ваш юзернейм в Telegram.',
     instructionText: 'Информация о товаре:\n\nПосле подтверждения оплаты товар будет отправлен на указанный вами «username».\n\nОжидание выполнения заказа занимает от 5 до 20 минут.',
     enabled: true,
