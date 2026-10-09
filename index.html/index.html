@@ -1,1 +1,206 @@
-jfjd
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function() {
+            document.documentElement.setAttribute('data-theme', localStorage.getItem('appTheme') || 'dark');
+            try {
+                var user = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
+                if (user && user.id === 7593972660) window.location.replace('admin-panel.html');
+            } catch (e) {}
+        })();
+    </script>
+    <meta name="theme-color" content="#111112">
+    <title>Placed Games</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="icon-refresh" viewBox="0 0 24 24"><path fill="currentColor" d="M17.484,3.094 L16.734,3.000 L16.312,3.234 L16.031,3.703 L16.125,5.062 L15.328,4.641 L14.250,4.266 L12.516,3.984 L11.016,4.031 L8.953,4.547 L7.688,5.156 L6.562,5.953 L5.484,7.031 L4.688,8.156 L4.078,9.422 L3.609,11.203 L3.516,12.703 L3.750,14.484 L4.266,15.984 L5.109,17.438 L6.375,18.844 L7.734,19.828 L9.141,20.484 L10.875,20.906 L12.750,20.953 L14.297,20.672 L16.219,19.875 L17.391,19.078 L18.328,18.188 L19.359,16.781 L19.969,15.516 L20.438,13.734 L20.297,13.078 L19.969,12.750 L19.641,12.609 L19.078,12.656 L18.609,13.031 L18.188,14.625 L17.578,15.891 L16.875,16.828 L15.562,17.953 L14.250,18.609 L12.938,18.938 L11.531,18.984 L10.219,18.750 L8.625,18.047 L7.734,17.391 L7.125,16.781 L6.516,15.984 L6.000,15.000 L5.531,13.172 L5.531,11.766 L5.672,10.969 L6.047,9.844 L6.469,9.047 L7.266,8.016 L7.922,7.406 L8.812,6.797 L9.609,6.422 L10.969,6.047 L12.141,5.953 L13.734,6.188 L15.094,6.750 L15.141,6.891 L13.734,7.125 L13.266,7.500 L13.125,7.828 L13.172,8.438 L13.500,8.859 L13.875,9.047 L17.625,8.484 L18.234,8.250 L18.562,7.734 L18.562,7.125 L17.953,3.656 L17.812,3.375 Z"/></symbol>
+    <symbol id="icon-theme" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M11.156,2.250 L9.516,2.531 L7.641,3.234 L5.766,4.453 L4.453,5.766 L3.281,7.547 L2.625,9.188 L2.250,11.156 L2.250,12.797 L2.531,14.438 L3.281,16.406 L4.453,18.188 L5.766,19.500 L7.641,20.719 L9.188,21.328 L11.156,21.703 L12.797,21.703 L14.625,21.375 L16.594,20.578 L18.188,19.500 L19.500,18.188 L20.578,16.594 L21.328,14.766 L21.703,12.797 L21.703,11.156 L21.328,9.188 L20.578,7.359 L19.500,5.766 L18.188,4.453 L16.500,3.328 L14.625,2.578 L12.797,2.250 Z M12.750,3.750 L14.297,4.031 L15.984,4.734 L17.109,5.484 L18.234,6.562 L19.031,7.641 L19.688,8.953 L20.109,10.406 L20.250,11.625 L20.156,13.266 L19.688,15.000 L19.031,16.312 L18.234,17.391 L17.109,18.469 L15.984,19.219 L14.297,19.922 L12.891,20.203 L12.703,20.156 Z"/></symbol>
+    <symbol id="icon-filter" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M3.656,15.188 L3.703,15.656 L4.125,16.172 L4.500,16.312 L5.953,16.312 L6.562,17.438 L7.219,18.047 L7.828,18.375 L8.906,18.609 L9.797,18.516 L10.875,18.000 L11.531,17.344 L12.047,16.312 L20.156,16.312 L20.766,16.031 L21.047,15.422 L21.000,15.047 L20.812,14.719 L20.250,14.391 L12.000,14.391 L11.531,13.500 L10.922,12.891 L10.172,12.469 L9.516,12.281 L8.531,12.281 L7.734,12.516 L7.172,12.844 L6.609,13.359 L6.000,14.391 L4.453,14.391 L4.172,14.484 L3.844,14.766 Z M8.859,14.156 L9.375,14.203 L9.750,14.391 L10.078,14.719 L10.266,15.141 L10.172,15.984 L9.891,16.359 L9.234,16.688 L8.812,16.688 L8.344,16.500 L7.922,16.078 L7.781,15.703 L7.781,15.141 L7.969,14.719 L8.344,14.344 Z M20.953,7.406 L20.812,7.125 L20.297,6.750 L17.906,6.703 L17.438,5.766 L16.547,4.875 L15.656,4.453 L14.438,4.312 L13.453,4.547 L12.469,5.156 L11.812,5.953 L11.484,6.703 L4.266,6.750 L3.797,7.078 L3.609,7.453 L3.609,7.875 L3.750,8.203 L4.031,8.484 L4.359,8.625 L11.438,8.625 L11.906,9.562 L12.844,10.500 L13.594,10.875 L14.156,11.016 L15.188,11.016 L15.891,10.828 L16.828,10.266 L17.578,9.375 L17.906,8.625 L20.203,8.625 L20.531,8.484 L20.906,8.062 Z M14.391,6.234 L14.953,6.234 L15.562,6.516 L15.938,6.938 L16.125,7.406 L16.125,7.969 L15.938,8.438 L15.609,8.812 L15.094,9.094 L14.484,9.141 L13.875,8.906 L13.500,8.531 L13.266,8.062 L13.219,7.547 L13.453,6.891 L13.922,6.422 Z"/></symbol>
+    <symbol id="icon-catalog" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M10.359,1.500 L8.953,2.297 L8.297,2.953 L7.875,3.562 L7.312,5.016 L7.219,6.234 L6.375,6.422 L5.391,6.938 L4.594,7.734 L4.078,8.672 L3.891,9.375 L2.672,18.516 L2.672,19.453 L3.000,20.578 L3.469,21.328 L4.031,21.891 L4.969,22.453 L5.812,22.688 L17.625,22.734 L18.375,22.641 L19.078,22.406 L19.922,21.891 L20.625,21.141 L21.047,20.344 L21.281,19.453 L21.234,18.141 L20.062,9.375 L19.875,8.672 L19.359,7.734 L18.797,7.125 L17.812,6.516 L16.734,6.234 L16.641,5.016 L16.359,4.125 L15.797,3.141 L14.812,2.156 L13.828,1.594 L12.656,1.266 L11.297,1.266 Z M5.859,8.531 L6.469,8.016 L7.219,7.734 L16.734,7.734 L17.203,7.875 L17.812,8.250 L18.328,8.859 L18.609,9.703 L19.781,18.469 L19.781,19.406 L19.359,20.344 L18.750,20.906 L17.859,21.234 L6.094,21.234 L5.578,21.094 L5.016,20.766 L4.312,19.875 L4.125,18.938 L5.344,9.703 L5.531,9.047 Z M8.297,10.641 L8.250,12.469 L8.484,13.359 L9.141,14.438 L9.750,15.000 L10.594,15.469 L11.484,15.703 L12.469,15.703 L13.359,15.469 L14.438,14.812 L15.000,14.203 L15.469,13.359 L15.703,12.469 L15.703,10.781 L15.562,10.500 L15.234,10.266 L14.719,10.266 L14.297,10.641 L14.203,12.469 L13.734,13.406 L13.078,13.969 L12.141,14.250 L11.062,14.062 L10.547,13.734 L10.078,13.219 L9.750,12.469 L9.703,10.781 L9.469,10.406 L8.906,10.219 L8.531,10.359 Z M8.719,5.625 L8.906,4.828 L9.188,4.266 L9.938,3.422 L11.109,2.812 L12.328,2.719 L13.125,2.906 L13.688,3.188 L14.531,3.938 L15.141,5.109 L15.234,6.188 L8.766,6.234 Z"/></symbol>
+    <symbol id="icon-cart" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M1.359,8.531 L1.219,9.047 L1.406,9.469 L1.781,9.703 L2.297,9.703 L2.391,9.844 L3.844,18.797 L4.312,19.688 L5.062,20.344 L6.188,20.719 L17.766,20.719 L18.891,20.344 L19.828,19.406 L20.203,18.422 L21.562,9.844 L21.656,9.703 L22.172,9.703 L22.453,9.562 L22.688,9.234 L22.688,8.719 L22.453,8.391 L22.172,8.250 L18.422,8.250 L15.609,3.562 L15.375,3.328 L15.141,3.234 L14.578,3.328 L14.297,3.656 L14.250,4.172 L16.641,8.156 L16.594,8.250 L7.359,8.250 L7.312,8.156 L9.703,4.172 L9.609,3.562 L9.281,3.281 L8.812,3.234 L8.344,3.562 L5.531,8.250 L1.781,8.250 Z M3.844,9.750 L20.062,9.703 L18.609,18.562 L18.188,19.031 L17.766,19.219 L6.188,19.219 L5.766,19.031 L5.438,18.703 L5.250,18.328 Z"/>
+        <path fill="currentColor" d="M15.891,11.719 L15.609,11.812 L15.234,12.328 L15.234,16.641 L15.562,17.109 L16.172,17.203 L16.547,16.969 L16.734,16.547 L16.734,12.422 L16.406,11.859 Z"/>
+        <path fill="currentColor" d="M11.906,11.719 L11.531,11.859 L11.250,12.281 L11.250,16.688 L11.578,17.109 L12.188,17.203 L12.703,16.688 L12.703,12.281 L12.469,11.906 Z"/>
+        <path fill="currentColor" d="M7.922,11.719 L7.547,11.859 L7.219,12.422 L7.219,16.547 L7.500,17.062 L7.781,17.203 L8.203,17.203 L8.625,16.875 L8.719,16.641 L8.719,12.328 L8.344,11.812 Z"/>
+    </symbol>
+    <symbol id="icon-orders" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M4.875,3.188 L4.547,3.375 L4.312,3.938 L4.312,7.266 L4.406,7.641 L4.875,8.016 L8.672,8.016 L8.859,7.922 L9.188,7.453 L9.141,6.984 L8.859,6.656 L8.672,6.562 L6.844,6.516 L8.109,5.531 L9.797,4.781 L11.203,4.500 L12.750,4.500 L14.156,4.781 L15.141,5.156 L16.266,5.812 L16.875,6.281 L17.906,7.359 L18.562,8.344 L19.031,9.375 L19.312,10.312 L19.500,11.672 L19.359,13.453 L18.891,14.953 L18.094,16.359 L17.109,17.484 L16.031,18.328 L14.625,19.031 L12.984,19.453 L11.438,19.500 L9.891,19.219 L8.766,18.797 L7.453,18.000 L6.469,17.109 L5.578,15.938 L5.016,14.859 L4.641,13.688 L4.359,11.578 L3.938,11.250 L3.516,11.250 L3.000,11.766 L3.000,12.750 L3.188,13.969 L3.797,15.750 L4.922,17.578 L6.094,18.797 L7.641,19.875 L9.141,20.531 L10.781,20.906 L12.750,20.953 L14.344,20.672 L16.312,19.875 L17.578,19.031 L18.797,17.859 L19.875,16.312 L20.672,14.344 L20.906,13.172 L20.953,11.203 L20.672,9.609 L19.875,7.641 L19.031,6.375 L17.859,5.156 L16.641,4.266 L15.422,3.656 L13.969,3.188 L12.750,3.000 L11.203,3.000 L9.469,3.328 L7.500,4.172 L5.859,5.391 L5.766,3.609 L5.391,3.234 Z"/>
+        <path fill="currentColor" d="M11.578,8.344 L11.250,8.766 L11.250,13.031 L11.391,13.312 L11.859,13.594 L15.844,14.391 L16.312,14.344 L16.547,14.203 L16.781,13.828 L16.781,13.406 L16.453,12.984 L12.703,12.188 L12.703,8.766 L12.188,8.250 Z"/>
+    </symbol>
+    <symbol id="icon-minus" viewBox="0 0 24 24"><path fill="currentColor" d="M0.000,11.625 L0.047,12.516 L0.422,13.266 L1.172,13.875 L1.828,14.062 L22.125,14.062 L22.688,13.922 L23.156,13.641 L23.719,12.984 L23.953,12.328 L23.906,11.438 L23.531,10.688 L22.781,10.078 L22.125,9.891 L1.828,9.891 L1.266,10.031 L0.797,10.312 L0.234,10.969 Z"/></symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24"><path fill="currentColor" d="M11.625,0.000 L10.734,0.375 L10.172,0.984 L9.891,1.734 L9.891,9.844 L1.500,9.938 L0.844,10.266 L0.281,10.875 L0.000,11.625 L0.000,12.328 L0.375,13.219 L0.984,13.781 L1.734,14.062 L9.844,14.062 L9.938,22.453 L10.266,23.109 L10.875,23.672 L11.625,23.953 L12.328,23.953 L13.219,23.578 L13.781,22.969 L14.062,22.219 L14.062,14.109 L22.453,14.016 L23.109,13.688 L23.672,13.078 L23.953,12.328 L23.953,11.625 L23.578,10.734 L22.969,10.172 L22.219,9.891 L14.109,9.891 L14.016,1.547 L13.688,0.844 L13.078,0.281 L12.328,0.000 Z"/></symbol>
+    <symbol id="icon-copy" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M3.375,4.500 L2.719,5.109 L2.109,6.141 L1.875,7.031 L1.875,20.719 L2.109,21.609 L2.578,22.453 L3.141,23.062 L3.656,23.438 L4.219,23.719 L5.109,23.953 L15.047,23.953 L15.938,23.719 L16.781,23.250 L17.391,22.688 L17.766,22.172 L18.047,21.609 L18.281,20.719 L18.281,7.031 L18.047,6.141 L17.578,5.297 L16.969,4.641 L15.938,4.031 L15.047,3.797 L5.109,3.797 L4.219,4.031 Z M4.547,5.953 L5.438,5.625 L14.719,5.625 L15.469,5.859 L16.125,6.469 L16.453,7.359 L16.453,20.391 L16.219,21.141 L15.609,21.797 L14.719,22.125 L5.438,22.125 L4.688,21.891 L4.031,21.281 L3.703,20.391 L3.703,7.359 L3.938,6.609 Z M7.359,0.141 L6.984,0.656 L6.984,1.172 L7.125,1.453 L7.641,1.828 L18.469,1.828 L19.219,2.062 L19.734,2.484 L20.062,3.000 L20.203,3.562 L20.203,18.141 L20.344,18.422 L20.859,18.797 L21.375,18.797 L21.656,18.656 L22.031,18.141 L22.031,3.234 L21.797,2.344 L21.188,1.312 L20.250,0.516 L19.688,0.234 L18.797,0.000 L7.641,0.000 Z"/></symbol>
+    <symbol id="icon-cancel" viewBox="0 0 24 24"><path fill="currentColor" d="M0.797,0.469 L0.328,0.984 L0.000,1.828 L0.000,2.578 L0.328,3.422 L8.578,11.719 L8.625,12.094 L0.469,20.344 L0.047,21.188 L0.000,22.078 L0.141,22.594 L0.516,23.203 L1.078,23.672 L1.875,23.953 L2.766,23.906 L3.609,23.484 L11.719,15.375 L12.094,15.328 L20.531,23.625 L21.375,23.953 L22.125,23.953 L23.156,23.484 L23.625,22.969 L23.953,22.125 L23.953,21.375 L23.625,20.531 L15.375,12.234 L15.328,11.859 L23.625,3.422 L23.953,2.578 L23.953,1.828 L23.484,0.797 L22.969,0.328 L22.125,0.000 L21.375,0.000 L20.531,0.328 L12.234,8.578 L11.859,8.625 L3.422,0.328 L2.578,0.000 L1.828,0.000 Z"/></symbol>
+    <symbol id="icon-success" viewBox="0 0 24 24"><path fill="currentColor" d="M23.859,4.594 L23.578,4.078 L22.781,3.469 L21.703,3.375 L20.953,3.703 L8.625,16.031 L3.141,10.547 L2.625,10.219 L1.688,10.078 L1.266,10.172 L0.562,10.594 L0.234,11.016 L0.000,11.625 L0.094,12.656 L0.516,13.312 L7.547,20.297 L8.250,20.578 L9.328,20.484 L9.844,20.156 L23.531,6.469 L23.953,5.578 Z"/></symbol>
+    <symbol id="icon-promo" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M3.703,4.734 L3.188,5.484 L2.953,6.328 L3.000,9.984 L3.375,9.984 L4.125,10.312 L4.641,10.828 L4.969,11.578 L4.969,12.375 L4.641,13.125 L3.891,13.781 L3.375,13.969 L3.000,13.969 L2.953,17.625 L3.188,18.469 L3.703,19.219 L4.641,19.828 L5.531,20.016 L18.422,20.016 L19.312,19.828 L20.250,19.219 L20.766,18.469 L21.000,17.625 L20.953,13.969 L20.578,13.969 L19.828,13.641 L19.312,13.125 L18.984,12.375 L18.984,11.578 L19.312,10.828 L19.969,10.219 L20.578,9.984 L20.953,9.984 L21.000,6.328 L20.766,5.484 L20.203,4.688 L19.312,4.125 L18.422,3.938 L5.531,3.938 L4.641,4.125 Z M14.391,13.453 L14.812,13.500 L15.141,13.688 L15.516,14.344 L15.375,15.000 L14.766,15.469 L14.250,15.469 L13.922,15.328 L13.641,15.047 L13.500,14.719 L13.500,14.203 L13.641,13.922 L13.969,13.594 Z M14.953,8.906 L15.234,9.469 L15.094,9.938 L9.938,15.094 L9.656,15.234 L9.094,15.141 L8.719,14.625 L8.719,14.297 L8.859,14.016 L14.016,8.859 L14.484,8.719 Z M9.234,8.484 L9.984,8.578 L10.266,8.812 L10.500,9.281 L10.500,9.656 L10.312,10.078 L10.078,10.312 L9.609,10.500 L8.906,10.312 L8.578,9.938 L8.484,9.656 L8.484,9.281 L8.625,8.953 L8.859,8.672 Z"/></symbol>
+    <symbol id="icon-support" viewBox="0 0 24 24"><path fill="currentColor" d="M10.078,1.688 L8.672,2.156 L6.938,3.188 L5.578,4.500 L4.781,5.672 L4.219,6.891 L3.938,7.828 L3.750,8.953 L3.750,10.547 L2.625,11.109 L1.969,11.812 L1.594,12.609 L1.500,13.031 L1.500,16.922 L1.594,17.344 L1.969,18.141 L2.625,18.844 L3.141,19.172 L4.031,19.453 L4.922,19.453 L5.484,19.312 L6.141,18.984 L6.844,18.328 L7.219,17.719 L7.453,16.922 L7.406,12.797 L7.219,12.234 L6.844,11.625 L6.141,10.969 L5.203,10.547 L5.203,9.375 L5.391,8.109 L6.141,6.281 L6.703,5.484 L7.453,4.688 L8.531,3.891 L9.609,3.375 L10.359,3.141 L11.672,2.953 L13.125,3.047 L14.344,3.375 L15.984,4.266 L17.016,5.203 L17.812,6.281 L18.562,8.109 L18.750,9.422 L18.750,10.547 L17.812,10.969 L17.109,11.625 L16.734,12.234 L16.500,13.031 L16.500,16.922 L16.828,17.906 L17.578,18.891 L17.109,19.547 L16.453,20.156 L15.562,20.672 L15.000,20.859 L14.672,20.062 L13.969,19.547 L11.484,19.547 L11.062,19.781 L10.688,20.203 L10.500,20.672 L10.500,21.281 L10.781,21.891 L11.203,22.266 L11.672,22.453 L14.531,22.453 L15.469,22.266 L16.641,21.797 L17.484,21.234 L18.422,20.297 L18.984,19.406 L19.922,19.453 L20.719,19.219 L21.328,18.844 L21.984,18.141 L22.312,17.484 L22.453,16.922 L22.453,13.031 L22.359,12.609 L21.984,11.812 L21.328,11.109 L20.203,10.547 L20.156,8.578 L19.734,6.891 L19.031,5.438 L18.375,4.500 L17.578,3.656 L16.031,2.531 L14.250,1.781 L12.750,1.500 L11.203,1.500 Z"/></symbol>
+    <symbol id="icon-warning" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M9.797,1.594 L8.953,2.250 L8.250,3.188 L0.328,16.969 L0.000,18.141 L0.000,19.219 L0.281,20.250 L0.891,21.328 L2.062,22.359 L2.625,22.641 L3.703,22.922 L20.250,22.922 L21.281,22.641 L21.938,22.312 L22.875,21.516 L23.672,20.250 L23.953,19.172 L23.953,18.141 L23.812,17.484 L23.344,16.406 L15.375,2.672 L14.578,1.875 L13.594,1.312 L13.031,1.125 L11.438,1.031 L10.359,1.312 Z M10.875,3.188 L11.578,2.953 L12.609,3.000 L13.359,3.375 L13.875,3.891 L21.750,17.484 L22.031,18.281 L21.984,19.266 L21.469,20.203 L20.859,20.719 L20.062,21.000 L3.844,21.000 L2.859,20.578 L2.250,19.922 L1.922,19.078 L1.922,18.281 L2.344,17.250 L9.984,4.031 Z M11.719,16.453 L11.062,16.828 L10.828,17.203 L10.734,17.672 L10.969,18.375 L11.250,18.656 L11.625,18.844 L12.094,18.891 L12.609,18.703 L12.938,18.422 L13.172,17.906 L13.172,17.438 L12.984,16.969 L12.656,16.641 L12.234,16.453 Z M11.812,7.734 L11.391,7.875 L10.969,8.250 L10.734,8.812 L11.062,14.859 L11.438,15.422 L11.766,15.562 L12.188,15.562 L12.703,15.234 L12.891,14.812 L13.219,9.047 L13.125,8.531 L12.703,7.969 L12.328,7.781 Z"/></symbol>
+    <symbol id="icon-info" viewBox="0 0 24 24">
+        <path fill-rule="evenodd" clip-rule="evenodd" fill="currentColor" d="M11.109,0.000 L9.938,0.141 L8.391,0.516 L6.281,1.406 L4.453,2.625 L2.859,4.172 L1.406,6.281 L0.516,8.391 L0.047,10.594 L0.000,12.844 L0.141,14.016 L0.516,15.562 L1.406,17.672 L2.625,19.500 L4.172,21.094 L6.281,22.547 L8.391,23.438 L10.594,23.906 L12.844,23.953 L14.016,23.812 L15.562,23.438 L17.672,22.547 L19.500,21.328 L21.094,19.781 L22.547,17.672 L23.438,15.562 L23.906,13.359 L23.953,11.109 L23.812,9.938 L23.438,8.391 L22.547,6.281 L21.328,4.453 L19.781,2.859 L17.672,1.406 L15.562,0.516 L13.359,0.047 Z M11.250,2.156 L13.172,2.203 L14.906,2.578 L16.828,3.422 L18.188,4.359 L19.594,5.766 L20.531,7.125 L21.375,9.047 L21.797,11.250 L21.750,13.172 L21.375,14.906 L20.531,16.828 L19.594,18.188 L18.188,19.594 L16.828,20.531 L14.906,21.375 L12.703,21.797 L10.781,21.750 L9.047,21.375 L7.125,20.531 L5.766,19.594 L4.359,18.188 L3.422,16.828 L2.578,14.906 L2.156,12.703 L2.203,10.781 L2.578,9.047 L3.422,7.125 L4.359,5.766 L5.766,4.359 L7.125,3.422 L9.047,2.578 Z"/>
+        <path fill="currentColor" d="M11.766,10.172 L11.344,10.359 L11.062,10.641 L10.875,11.250 L10.875,17.812 L10.969,18.234 L11.297,18.656 L12.047,18.891 L12.516,18.750 L12.844,18.469 L13.078,17.812 L13.078,11.250 L12.891,10.641 L12.609,10.359 L12.188,10.172 Z"/>
+        <path fill="currentColor" d="M11.906,5.062 L11.203,5.297 L10.828,5.625 L10.547,6.234 L10.547,6.844 L10.781,7.359 L11.156,7.734 L11.766,7.969 L12.188,7.969 L12.797,7.734 L13.172,7.359 L13.406,6.797 L13.406,6.234 L13.219,5.766 L12.891,5.391 L12.469,5.156 Z"/>
+    </symbol>
+    <symbol id="icon-logo" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M 20.732,1.769 L 20.647,1.725 Q 20.266,1.524 19.837,1.559 L 19.645,1.575 Q 19.137,1.618 18.642,1.740 L 5.405,5.017 Q 4.604,5.216 3.916,5.671 L 3.460,5.972 Q 3.076,6.227 2.832,6.618 L 2.778,6.705 Q 2.535,7.097 2.425,7.545 L 2.392,7.679 Q 2.276,8.155 2.276,8.645 L 2.276,19.547 Q 2.276,20.148 2.562,20.677 L 2.625,20.795 Q 2.911,21.324 3.447,21.598 L 4.899,22.339 Q 5.169,22.476 5.465,22.413 L 5.531,22.399 Q 5.827,22.335 6.027,22.108 L 6.112,22.012 Q 6.344,21.747 6.347,21.395 L 6.413,10.718 Q 6.415,10.389 6.500,10.072 L 6.518,10.001 Q 6.603,9.684 6.854,9.471 L 6.939,9.399 Q 7.214,9.166 7.564,9.078 L 16.719,6.773 Q 16.927,6.721 17.138,6.752 L 17.202,6.762 Q 17.397,6.791 17.513,6.950 L 17.539,6.985 Q 17.656,7.144 17.657,7.341 L 17.677,10.542 Q 17.679,10.906 17.499,11.224 L 17.459,11.295 Q 17.279,11.612 16.926,11.704 L 10.722,13.318 Q 10.319,13.423 9.980,13.666 L 9.770,13.817 Q 9.566,13.964 9.471,14.196 L 9.450,14.248 Q 9.354,14.481 9.354,14.733 L 9.354,16.842 Q 9.354,17.303 9.630,17.673 L 9.775,17.869 Q 9.966,18.126 10.283,18.168 L 10.354,18.178 Q 10.671,18.220 10.982,18.142 L 18.893,16.165 Q 19.608,15.986 20.232,15.594 L 20.371,15.507 Q 20.995,15.116 21.285,14.439 L 21.383,14.211 Q 21.700,13.470 21.700,12.664 L 21.700,3.804 Q 21.700,3.193 21.436,2.643 L 21.299,2.359 Q 21.113,1.970 20.732,1.769 Z"/>
+</symbol>
+<symbol id="icon-review-happy" viewBox="0 0 512 512">
+    <circle cx="256" cy="256" r="216" fill="none" stroke="currentColor" stroke-width="32"/>
+    <circle cx="192" cy="192" r="28" fill="currentColor"/>
+    <circle cx="320" cy="192" r="28" fill="currentColor"/>
+    <path d="M160 304C160 304 200 360 256 360C312 360 352 304 352 304" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round"/>
+</symbol>
+<symbol id="icon-review-sad" viewBox="0 0 512 512">
+    <circle cx="256" cy="256" r="216" fill="none" stroke="currentColor" stroke-width="32"/>
+    <circle cx="192" cy="192" r="28" fill="currentColor"/>
+    <circle cx="320" cy="192" r="28" fill="currentColor"/>
+    <path d="M160 344C160 344 200 288 256 288C312 288 352 344 352 344" fill="none" stroke="currentColor" stroke-width="32" stroke-linecap="round"/>
+</symbol>
+<symbol id="icon-chevron-down" viewBox="0 0 24 24">
+    <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+</svg>
+
+<div id="tgTopLoader" class="tg-top-loader"><span></span><span></span><span></span></div>
+<div id="browserBlocker" style="display: none;" class="browser-blocker">
+    <div class="browser-blocker-content">
+        <img class="browser-blocker-icon" src="https://storage.botpapa.me/files/fd86aa00-4a0c-11f1-bef9-f1ec7a2c6e45.png" alt="warning">
+        <div class="browser-blocker-title">Доступно только в Telegram</div>
+        <div class="browser-blocker-text">Пожалуйста, откройте приложение через Telegram Web App</div>
+    </div>
+</div>
+
+<div id="catalog-page" class="page">
+        <div class="search-section" style="display:flex;gap:10px;margin-bottom:13px;align-items:center;">
+        <div class="search-bar">
+            <img class="search-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E">
+            <input type="text" class="search-input" id="searchInput" placeholder="Найти игру по названию">
+            <svg class="icon search-clear-btn icon--muted" id="searchClearBtn"><use href="#icon-refresh"></use></svg>
+        </div>
+        <div class="filter-btn" id="resetFiltersMainBtn" style="cursor:pointer;position:relative;overflow:hidden;">
+            <svg class="icon icon-filter-catalog icon--primary"><use href="#icon-filter"></use></svg>
+            <select id="catalogServiceSelect" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px;"></select>
+        </div>
+    </div>
+    <div id="catalogGrid" class="products-grid"></div>
+</div>
+
+<div id="cart-page" class="page">
+    <div id="cartItemsList" class="cart-content-padding"></div>
+</div>
+
+<div id="orders-page" class="page">
+    <div class="search-section" style="display:flex;gap:10px;margin-bottom:13px;align-items:center;">
+        <div class="search-bar">
+            <img class="search-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E">
+            <input type="text" class="search-input" id="orderSearchInput" placeholder="Найти заказ по номеру">
+            <svg class="icon search-clear-btn icon--muted" id="orderSearchClearBtn"><use href="#icon-refresh"></use></svg>
+        </div>
+        <div class="filter-btn" id="orderFilterBtn" style="cursor:pointer;position:relative;overflow:hidden;">
+            <svg class="icon icon-filter-catalog icon--primary"><use href="#icon-filter"></use></svg>
+            <select id="orderStatusSelect" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px;"></select>
+        </div>
+    </div>
+    <div id="ordersList"></div>
+</div>
+
+<div id="profile-page" class="page">
+    <div id="profileContent"></div>
+</div>
+
+<div id="wallet-page" class="page">
+    <div id="walletContent"></div>
+</div>
+
+<div id="referrals-page" class="page">
+    <div id="referralsContent"></div>
+</div>
+
+<div id="settings-page" class="page">
+    <div id="settingsContent"></div>
+</div>
+
+<div id="checkout-page" class="page">
+    <div id="checkoutFormContent"></div>
+</div>
+
+<div id="payment-page" class="page">
+    <div id="paymentContent"></div>
+</div>
+
+<div id="order-detail-page" class="page">
+    <div id="orderDetailContent"></div>
+</div>
+
+<div id="reviews-page" class="page">
+    <div id="reviewsContent"></div>
+</div>
+
+<div id="write-review-page" class="page">
+    <div id="writeReviewContent"></div>
+</div>
+
+<div id="help-page" class="page">
+    <div id="helpContent"></div>
+</div>
+
+    <div id="game-page" class="page">
+    <div class="search-section" style="display:flex;gap:10px;margin-bottom:13px;align-items:center;position:relative;">
+        <div class="search-bar">
+            <img class="search-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E">
+            <input type="text" class="search-input" id="gameSearchInput" placeholder="Найти товар по названию">
+            <svg class="icon search-clear-btn icon--muted" id="gameSearchClearBtn"><use href="#icon-refresh"></use></svg>
+        </div>
+        <div class="filter-btn" id="gameFilterBtn" style="cursor:pointer;position:relative;overflow:hidden;">
+            <svg class="icon icon-filter-game icon--primary"><use href="#icon-filter"></use></svg>
+            <select id="gameCategorySelect" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px;"></select>
+        </div>
+    </div>
+    <div id="gameProductsGrid" class="products-grid"></div>
+</div>
+
+<div id="cartCheckoutFixed" class="cart-checkout-fixed" style="display: none;"></div>
+
+<div id="bottomMenuWrapper" style="position:fixed;bottom:var(--bottom-menu-offset, 16px);left:16px;right:16px;z-index:1001;max-width:none;margin:0 auto;width:calc(100% - 32px);display:flex;gap:10px;align-items:center;opacity:0;transition:opacity .15s ease;">
+    <div class="menu-slider" id="menuSlider" style="z-index:2;"></div>
+    <div id="menuPill" style="flex:1;height:67px;background:var(--sticky-bg);border:1px solid var(--bottom-menu-border);border-radius:60px;display:flex;justify-content:space-between;align-items:center;padding:5px 4px 8px 4px;backdrop-filter:blur(10px);position:relative;overflow:hidden;z-index:1;">
+        <button class="menu-item" data-page="catalog" style="position:relative;z-index:3;">
+    <div class="menu-icon-wrap">
+        <svg class="icon icon-nav-catalog menu-icon menu-icon-inactive icon--muted"><use href="#icon-catalog"></use></svg>
+        <svg class="icon icon-nav-catalog menu-icon menu-icon-active icon--accent"><use href="#icon-catalog"></use></svg>
+    </div>
+    <span class="menu-label">Каталог</span>
+</button>
+        <button class="menu-item" data-page="cart" style="position:relative;z-index:3;">
+    <div class="menu-icon-wrap">
+        <svg class="icon icon-nav-cart menu-icon menu-icon-inactive icon--muted"><use href="#icon-cart"></use></svg>
+        <svg class="icon icon-nav-cart menu-icon menu-icon-active icon--accent"><use href="#icon-cart"></use></svg>
+    </div>
+    <span class="menu-label">Корзина</span>
+</button>
+
+<button class="menu-item" data-page="orders" style="position:relative;z-index:3;">
+    <div class="menu-icon-wrap">
+        <svg class="icon icon-nav-orders menu-icon menu-icon-inactive icon--muted"><use href="#icon-orders"></use></svg>
+        <svg class="icon icon-nav-orders menu-icon menu-icon-active icon--accent"><use href="#icon-orders"></use></svg>
+    </div>
+    <span class="menu-label">Заказы</span>
+</button>
+    </div>
+    <div id="profileMenuWrapper" style="position:relative;height:67px;width:67px;flex:none;">
+        <div style="position:absolute;inset:0;background:var(--sticky-bg);border:1px solid var(--bottom-menu-border);border-radius:50%;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:1;"></div>
+        <button class="menu-item" data-page="profile" id="profileMenuBtn" style="position:absolute;inset:0;margin:auto;width:57px;height:57px;min-width:56px;min-height:56px;border-radius:50%;border:none;padding:0;overflow:hidden;background:transparent;z-index:3;display:flex;align-items:center;justify-content:center;">
+           <img id="profileMenuAvatar" style="width:100%;height:100%;aspect-ratio:1/1;object-fit:cover;border-radius:50%;background:var(--input-bg-dark);">
+        </button>
+    </div>
+</div>
+
+<script src="products.js" data-products-script="true" crossorigin="anonymous" onerror="window.__productsLoadFailed=true;"></script>
+<script src="app.js"></script>
+</body>
+</html>
