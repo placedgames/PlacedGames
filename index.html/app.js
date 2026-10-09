@@ -429,7 +429,7 @@ if (window.Telegram?.WebApp?.showAlert) {
     }
 
     function showOrderLimitAlert() {
-        const msg = 'К сожалению, оформить заказ временно не получится, у вас более 2-х невыполненных заказов. Пожалуйста, попробуйте позже.';
+        const msg = 'К сожалению, оформить заказ временно не получится, у вас более 2-х невыполненных заказов. Попробуйте позже.';
         if (window.Telegram?.WebApp?.showPopup) {
             window.Telegram.WebApp.showPopup({
                 message: msg,
