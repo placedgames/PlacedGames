@@ -75,10 +75,11 @@ app.use(express.json({ limit: '100kb' }));
 app.use('/api/', rateLimit({ windowMs: 60 * 1000, max: 120 }));
 
 const path = require('path');
-['index.html', 'admin-panel.html', 'products.js'].forEach(f => {
+['admin-panel.html', 'products.js'].forEach(f => {
     app.get('/' + f, (req, res) => res.sendFile(path.join(__dirname, f)));
 });
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+// всё содержимое папки index.html/ отдаётся с корня сайта
+app.use(express.static(path.join(__dirname, 'index.html')));
 
 // =============================================
 // ЗАЩИТА ОТ БРУТФОРСА (по IP)
