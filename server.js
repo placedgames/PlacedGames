@@ -551,6 +551,7 @@ await pool.query(`ALTER TABLE promo_codes ADD COLUMN IF NOT EXISTS used_count IN
         await pool.query(`ALTER TABLE app_users ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active'`);
         await pool.query(`ALTER TABLE app_users ADD COLUMN IF NOT EXISTS balance INTEGER DEFAULT 0`);
         await pool.query(`ALTER TABLE app_users ADD COLUMN IF NOT EXISTS referrer_id TEXT DEFAULT NULL`);
+        await pool.query(`ALTER TABLE app_users ADD COLUMN IF NOT EXISTS order_block_until BIGINT DEFAULT 0`);
         
         await pool.query(`
             CREATE TABLE IF NOT EXISTS products (
@@ -711,7 +712,7 @@ app.post('/api/order', userAuth, async (req, res) => {
 
         const st = await client.query('SELECT status FROM app_users WHERE user_id = $1', [userId]);
         if (st.rows[0]?.status === 'blocked') throw fail(403, 'blocked');
-        if ((await countActiveOrders(client, userId)) > ACTIVE_ORDER_LIMIT) throw fail(429, 'too_many_active_orders');
+        if (await isOrderBlocked(client, userId)) throw fail(429, 'too_many_active_orders');
 
         const ids = o.items.map(i => String(i.id));
         if (new Set(ids).size !== ids.length) throw fail(400, 'Дубли товаров');
@@ -1243,7 +1244,8 @@ app.post('/api/check-promo', userAuth, async (req, res) => {
 });
 
 // ЛИМИТ АКТИВНЫХ ЗАКАЗОВ
-const ACTIVE_ORDER_LIMIT = 2;
+const ACTIVE_ORDER_LIMIT = 2;               // при 2 активных заказах третий нельзя
+const ORDER_BLOCK_MS = 60 * 60 * 1000;      // блокировка на 1 час
 
 async function countActiveOrders(db, userId) {
     const r = await db.query(
@@ -1254,10 +1256,22 @@ async function countActiveOrders(db, userId) {
     return parseInt(r.rows[0].c);
 }
 
+// true = оформлять нельзя; при достижении лимита запускает блокировку на час
+async function isOrderBlocked(db, userId) {
+    const uid = String(userId);
+    const b = await db.query('SELECT order_block_until FROM app_users WHERE user_id = $1', [uid]);
+    const until = Number(b.rows[0]?.order_block_until || 0);
+    if (Date.now() < until) return true;
+    if ((await countActiveOrders(db, uid)) >= ACTIVE_ORDER_LIMIT) {
+        await db.query('UPDATE app_users SET order_block_until = $1 WHERE user_id = $2', [Date.now() + ORDER_BLOCK_MS, uid]);
+        return true;
+    }
+    return false;
+}
+
 app.get('/api/check-rate-limit', userAuth, async (req, res) => {
     try {
-        const n = await countActiveOrders(pool, req.tgUserId);
-        res.json({ limited: n > ACTIVE_ORDER_LIMIT });
+        res.json({ limited: await isOrderBlocked(pool, req.tgUserId) });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
