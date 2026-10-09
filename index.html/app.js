@@ -419,6 +419,27 @@ if (window.Telegram?.WebApp?.showAlert) {
 }
 }
 
+    async function isOrderLimitReached() {
+        try {
+            const r = await fetch('https://placedgames.up.railway.app/api/check-rate-limit');
+            if (!r.ok) return false;
+            const data = await r.json();
+            return !!data.limited;
+        } catch (e) { return false; }
+    }
+
+    function showOrderLimitAlert() {
+        const msg = 'К сожалению, оформить заказ временно не получится, у вас более 2-х невыполненных заказов. Пожалуйста, попробуйте позже.';
+        if (window.Telegram?.WebApp?.showPopup) {
+            window.Telegram.WebApp.showPopup({
+                message: msg,
+                buttons: [{ id: 'close', type: 'default', text: 'Закрыть' }]
+            });
+        } else {
+            showAppAlert(msg);
+        }
+    }
+
 const fieldInfoTexts = {
     email: 'Пожалуйста укажите почту от вашего аккаунта в игре, если ваш аккаунт не привязан к Supercell ID, то мы не сможем выполнить ваш заказ.',
     recipientTelegram: 'Пожалуйста укажите имя пользователя получателя, если у вас нету имени пользователя мы не сможем выполнить ваш заказ.',
@@ -1539,6 +1560,7 @@ async function renderCheckoutForm() {
             if (hasError) return;
 
                             if (checkoutData.paymentMethod === "wallet") {
+                    if (await isOrderLimitReached()) { showOrderLimitAlert(); return; }
                 if (discountedTotal > userWalletBalance) {
                     if (window.Telegram?.WebApp?.showPopup) {
                         window.Telegram.WebApp.showPopup({
@@ -1608,6 +1630,7 @@ async function renderCheckoutForm() {
                 });
             });
             if (!goToPay) return;
+                if (await isOrderLimitReached()) { showOrderLimitAlert(); return; }
             pendingOrderNumber = generateOrderNumber();
             savePaymentSession();
             showPage("payment");
@@ -1678,9 +1701,9 @@ function renderPaymentPage() {
 </div>
 </div>
                     <div class="form-section" style="margin-bottom:0;">
-                        <div class="form-label">Комментарий</div>
+                        <div class="form-label">Банк получателя</div>
                         <div class="form-select-readonly card-number-row">
-                            <span class="card-number-text" style="font-size:19px;font-weight:500;">${paymentComment}</span>
+                            <span class="card-number-text" style="font-size:19px;font-weight:500;">${escapeHtml(bank)}</span>
                             <svg class="icon icon-info-field" id="bankInfoBtn"><use href="#icon-info"></use></svg>
                         </div>
                     </div>
@@ -1714,7 +1737,7 @@ function renderPaymentPage() {
 showFieldInfoAlert("paymentAmount");
 });
         document.getElementById("bankInfoBtn")?.addEventListener("click", () => {
-            showFieldInfoAlert("comment");
+            showFieldInfoAlert("bank");
         });
                     document.getElementById("paidBtn")?.addEventListener("click", async () => {
             hapticMedium();
