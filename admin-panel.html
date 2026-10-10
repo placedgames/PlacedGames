@@ -4093,8 +4093,7 @@ body { overflow-x: hidden; }
   function applyStatusCardLook(code) {
     const color = BOT_STATUS_COLORS[code] || BOT_STATUS_COLORS.open;
     const st = BOT_STATUS_MAP[code] || BOT_STATUS_MAP.open;
-    const inner = $('statusCardInner');
-    if (inner) inner.style.backgroundImage = `linear-gradient(${color}24, ${color}24)`;
+    const badge = $('statusBadge'); if (badge) badge.style.background = `${color}24`;
     const dot = $('statusDot'); if (dot) dot.style.background = color;
     const txt = $('statusText'); if (txt) txt.textContent = st.text;
   }
@@ -4152,7 +4151,7 @@ body { overflow-x: hidden; }
                     <div style="padding-left:2px;">
                         <div style="position:relative;display:inline-flex;align-items:center;gap:9px;">
                             <span id="statusText" style="font-size:20px;font-weight:550;color:var(--text-primary);"></span>
-                            <span id="statusDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;"></span>
+                            <span id="statusBadge" style="display:inline-flex;align-items:center;justify-content:center;border-radius:20px;padding:7px 11px;"><span id="statusDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;"></span></span>
                             <select id="adminStatusSelectProfile" style="position:absolute;inset:-6px -10px;width:calc(100% + 20px);height:calc(100% + 12px);opacity:0;cursor:pointer;font-size:16px;">
                                 ${Object.keys(BOT_STATUS_MAP).map(k => `<option value="${k}" ${k === savedStatus ? 'selected' : ''}>${BOT_STATUS_MAP[k].text}</option>`).join('')}
                             </select>
