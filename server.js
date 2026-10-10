@@ -661,10 +661,13 @@ app.get('/api/users', adminAuth, async (req, res) => {
                 au.user_id, au.user_name, au.user_username, au.photo_url,
                 au.first_seen, au.last_seen, au.status, au.balance,
                 COALESCE(o.orders_count, 0) as orders_count,
-                COALESCE(o.total_spent, 0) as total_spent
+                COALESCE(o.total_spent, 0) as total_spent,
+                o.first_order_ts
             FROM app_users au
             LEFT JOIN (
-                SELECT user_id::TEXT, COUNT(*) as orders_count, SUM(total) as total_spent
+                SELECT user_id::TEXT, COUNT(*) as orders_count,
+                    COALESCE(SUM(total) FILTER (WHERE status_code IN ('completed', 'done')), 0) as total_spent,
+                    MIN("timestamp") as first_order_ts
                 FROM orders WHERE user_id IS NOT NULL
                 GROUP BY user_id::TEXT
             ) o ON au.user_id::TEXT = o.user_id
@@ -830,7 +833,7 @@ app.post('/api/order', userAuth, async (req, res) => {
 
 app.get('/api/total-revenue', adminAuth, async (req, res) => {
     try {
-        const result = await pool.query(`SELECT COALESCE(SUM(total), 0) as revenue FROM orders`);
+        const result = await pool.query(`SELECT COALESCE(SUM(total), 0) as revenue FROM orders WHERE status_code IN ('completed', 'done')`);
         res.json({ revenue: parseInt(result.rows[0].revenue) });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1128,10 +1131,18 @@ app.get('/api/referral-list', userOrAdminAuth, async (req, res) => {
             LIMIT $2
         `, [String(userId), limitNum]);
 
-        const list = result.rows.map(r => ({
-            nickname: r.user_name || 'Пользователь',
-            earned: Math.round(r.earned || 0)
-        }));
+        const list = result.rows.map(r => {
+            const item = {
+                nickname: r.user_name || 'Пользователь',
+                earned: Math.round(r.earned || 0)
+            };
+            // id реферала отдаём только админу (для перехода на страницу пользователя)
+            if (req.isAdmin) {
+                item.user_id = r.user_id;
+                item.user_username = r.user_username;
+            }
+            return item;
+        });
 
         res.json(list);
     } catch (err) {
@@ -1297,7 +1308,8 @@ app.get('/api/user/:userId', adminAuth, async (req, res) => {
                 COALESCE(o.total_spent, 0) as total_spent
             FROM app_users au
             LEFT JOIN (
-                SELECT user_id::TEXT, COUNT(*) as orders_count, SUM(total) as total_spent
+                SELECT user_id::TEXT, COUNT(*) as orders_count,
+                    COALESCE(SUM(total) FILTER (WHERE status_code IN ('completed', 'done')), 0) as total_spent
                 FROM orders WHERE user_id IS NOT NULL GROUP BY user_id::TEXT
             ) o ON au.user_id::TEXT = o.user_id
             WHERE au.user_id = $1
@@ -1435,6 +1447,82 @@ app.delete('/api/promo-codes/:id/delete', adminAuth, async (req, res) => {
     try {
         await pool.query('DELETE FROM promo_codes WHERE id = $1', [req.params.id]);
         res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// =============================================
+// АДМИН: СТАТИСТИКА МАГАЗИНА, ВСЕ ОПЕРАЦИИ КОШЕЛЬКОВ, ОТЗЫВЫ
+// =============================================
+
+// Информация о магазине (алерт на странице профиля)
+app.get('/api/admin/store-stats', adminAuth, async (req, res) => {
+    try {
+        const [users, refs, orders, wallets] = await Promise.all([
+            pool.query('SELECT COUNT(*) AS c FROM app_users'),
+            pool.query('SELECT COUNT(*) AS c FROM app_users WHERE referrer_id IS NOT NULL'),
+            pool.query(`
+                SELECT
+                    COUNT(*) AS total,
+                    COUNT(*) FILTER (WHERE status_code IN ('completed', 'done')) AS completed,
+                    COALESCE(SUM(total) FILTER (WHERE status_code IN ('completed', 'done')), 0) AS revenue
+                FROM orders
+            `),
+            pool.query('SELECT COALESCE(SUM(balance), 0) AS s FROM app_users')
+        ]);
+        const total = parseInt(orders.rows[0].total);
+        const completed = parseInt(orders.rows[0].completed);
+        res.json({
+            users: parseInt(users.rows[0].c),
+            referrals: parseInt(refs.rows[0].c),
+            revenue: parseInt(orders.rows[0].revenue),
+            orders: total,
+            completed,
+            uncompleted: total - completed,
+            walletsTotal: parseInt(wallets.rows[0].s)
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Все операции всех кошельков + суммарный баланс (страница «Кошелёк» в админке)
+app.get('/api/admin/wallet-transactions', adminAuth, async (req, res) => {
+    try {
+        const limitNum = Math.min(parseInt(req.query.limit) || 5, 1000);
+        const [tx, total] = await Promise.all([
+            pool.query(`
+                SELECT wt.*, au.user_name, au.user_username
+                FROM wallet_transactions wt
+                LEFT JOIN app_users au ON au.user_id = wt.user_id
+                ORDER BY wt.created_at DESC, wt.id DESC
+                LIMIT $1
+            `, [limitNum]),
+            pool.query('SELECT COALESCE(SUM(balance), 0) AS s FROM app_users')
+        ]);
+        res.json({ total: parseInt(total.rows[0].s), transactions: tx.rows });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Отзывы без лимита в 50 штук; можно фильтровать по пользователю или заказу
+app.get('/api/admin/reviews', adminAuth, async (req, res) => {
+    try {
+        const where = [];
+        const params = [];
+        if (req.query.userId) { params.push(String(req.query.userId)); where.push(`r.user_id = $${params.length}`); }
+        if (req.query.orderId) { params.push(parseInt(req.query.orderId)); where.push(`r.order_id = $${params.length}`); }
+        const result = await pool.query(`
+            SELECT r.*, o.items as order_items, o.game_name as order_game_name
+            FROM reviews r
+            LEFT JOIN orders o ON o.order_number = r.order_number
+            ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+            ORDER BY r.created_at DESC
+            LIMIT 1000
+        `, params);
+        res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
