@@ -2574,14 +2574,14 @@ body { overflow-x: hidden; }
   }
 
   async function apiGet(path) {
-    const r = await fetch(API + path, { headers: { 'Authorization': `Bearer ${getAdminToken()}` } });
+    const r = await fetch(API + path, { cache: 'no-store', headers: { 'Authorization': `Bearer ${getAdminToken()}` } });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     return r.json();
   }
 
   async function apiSend(method, path, body) {
     const r = await fetch(API + path, {
-      method,
+      method, cache: 'no-store',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getAdminToken()}` },
       body: body === undefined ? undefined : JSON.stringify(body)
     });
@@ -2921,12 +2921,12 @@ body { overflow-x: hidden; }
       case 'orders': return runWithLoader(() => renderOrdersPage(), 2000);
       case 'users': return runWithLoader(() => renderUsersPage(), 2000);
       case 'reviews': return runWithLoader(() => renderReviewsPage(), 2000);
-      case 'profile': return runWithLoader(() => renderProfilePage({ sync: !ctx.fromBack }), 2000);
+      case 'profile': return runWithLoader(() => renderProfilePage(), 2000);
       case 'wallet': return runWithLoader(() => renderWalletPage(), 0);
       case 'settings': return Promise.resolve(renderSettingsPage());
       case 'order': return runWithLoader(() => renderOrderDetailPage(cur.params.id), 2000);
       case 'user': return runWithLoader(() => renderUserPage(cur.params.id), 2000);
-      case 'promos': return Promise.resolve(renderPromosPage());
+      case 'promos': return runWithLoader(() => renderPromosPage(), 2000);
       case 'create-promo': return Promise.resolve(renderCreatePromoPage());
     }
   }
@@ -3302,13 +3302,26 @@ body { overflow-x: hidden; }
 
   const ORDER_STATUS_CATEGORIES = [
     { value: 'all', label: 'Все заказы' },
-    { value: 'pending', label: 'Ожидает проверки' },
-    { value: 'awaiting_code', label: 'Ожидание кода' },
-    { value: 'processing', label: 'Ожидает выполнения' },
-    { value: 'in_progress', label: 'Выполняется' },
-    { value: 'done', label: 'Заказ выполнен' },
-    { value: 'notfound', label: 'Заказ отменён' }
+    { value: 'notfound', label: 'Отмененные' },
+    { value: 'done', label: 'Выполненные' },
+    { value: 'uncompleted', label: 'Невыполненные' }
   ];
+  function orderMatchesCategory(o, cat) {
+    const c = String(o.status_code || '').toLowerCase();
+    if (cat === 'all') return true;
+    if (cat === 'done') return isCompletedCode(c);
+    if (cat === 'notfound') return c === 'notfound' || c === 'cancelled';
+    if (cat === 'uncompleted') return !isCompletedCode(c);
+    return c === cat;
+  }
+  function fillOrderCategorySelect() {
+    const sel = $('orderStatusSelect');
+    if (!sel) return;
+    sel.innerHTML = ORDER_STATUS_CATEGORIES.map(c => {
+      const n = ordersLoaded ? ` (${allOrders.filter(o => orderMatchesCategory(o, c.value)).length})` : '';
+      return `<option value="${c.value}" ${ordersStatusFilter === c.value ? 'selected' : ''}>${c.label}${n}</option>`;
+    }).join('');
+  }
   let ordersStatusFilter = 'all';
 
   async function loadOrders() {
@@ -3323,19 +3336,10 @@ body { overflow-x: hidden; }
   }
 
   async function renderOrdersPage() {
-    const sel = $('orderStatusSelect');
-    if (sel) {
-      sel.innerHTML = ORDER_STATUS_CATEGORIES.map(c =>
-        `<option value="${c.value}" ${ordersStatusFilter === c.value ? 'selected' : ''}>${c.label}${c.value === 'all' && ordersLoaded ? ` (${allOrders.length})` : ''}</option>`
-      ).join('');
-    }
+    fillOrderCategorySelect();
     if (ordersLoaded) applyOrdersFilters();
     await loadOrders();
-    if (sel) {
-      sel.innerHTML = ORDER_STATUS_CATEGORIES.map(c =>
-        `<option value="${c.value}" ${ordersStatusFilter === c.value ? 'selected' : ''}>${c.label}${c.value === 'all' ? ` (${allOrders.length})` : ''}</option>`
-      ).join('');
-    }
+    fillOrderCategorySelect();
   }
 
   function applyOrdersFilters() {
@@ -3347,14 +3351,7 @@ body { overflow-x: hidden; }
     }
     const q = ($('orderSearchInput')?.value || '').trim().toLowerCase().replace(/^#/, '');
     let filtered = allOrders;
-    if (ordersStatusFilter !== 'all') {
-      filtered = filtered.filter(o => {
-        const c = String(o.status_code || '').toLowerCase();
-        if (ordersStatusFilter === 'done') return isCompletedCode(c);
-        if (ordersStatusFilter === 'notfound') return c === 'notfound' || c === 'cancelled';
-        return c === ordersStatusFilter;
-      });
-    }
+    filtered = filtered.filter(o => orderMatchesCategory(o, ordersStatusFilter));
     if (q) filtered = filtered.filter(o => String(o.order_number).toLowerCase().includes(q));
 
     if (!allOrders.length) {
@@ -3400,7 +3397,7 @@ body { overflow-x: hidden; }
     showPopup({
       message,
       buttons: [
-        { id: 'delete_order', type: 'destructive', text: 'Удалить заказ' },
+        { id: 'delete_order', type: 'destructive', text: 'Удалить' },
         { id: 'close', type: 'close' }
       ]
     }, (buttonId) => { if (buttonId === 'delete_order') deleteOrderConfirm(order); });
@@ -3653,11 +3650,12 @@ body { overflow-x: hidden; }
     if (filterSelect) {
       const opts = [
         { key: 'all', label: 'Все пользователи', count: total },
+        { key: 'balance', label: 'Сортировка (₽)' },
         { key: 'active', label: 'Активные', count: active.length },
         { key: 'inactive', label: 'Неактивные', count: total - active.length },
         { key: 'blocked', label: 'Заблокированные', count: blocked.length }
       ];
-      filterSelect.innerHTML = opts.map(o => `<option value="${o.key}" ${usersFilter === o.key ? 'selected' : ''}>${o.label} (${o.count})</option>`).join('');
+      filterSelect.innerHTML = opts.map(o => `<option value="${o.key}" ${usersFilter === o.key ? 'selected' : ''}>${o.label}${o.count !== undefined ? ` (${o.count})` : ''}</option>`).join('');
     }
 
     const statsWrap = $('usersStatsWrap');
@@ -3668,6 +3666,7 @@ body { overflow-x: hidden; }
     if (usersFilter === 'active') list = list.filter(u => parseInt(u.orders_count) > 0);
     if (usersFilter === 'inactive') list = list.filter(u => !(parseInt(u.orders_count) > 0));
     if (usersFilter === 'blocked') list = list.filter(u => u.status === 'blocked');
+    if (usersFilter === 'balance') list = list.slice().sort((a, b) => (Number(b.balance) || 0) - (Number(a.balance) || 0));
     const rawQ = usersSearch.trim();
     if (rawQ) {
       if (rawQ.startsWith('@')) {
@@ -3843,6 +3842,10 @@ body { overflow-x: hidden; }
   async function renderUserPage(userId) {
     const container = $('userDetailContent');
     if (!container) return;
+    // сразу очищаем страницу, чтобы не мелькали данные предыдущего пользователя
+    container.innerHTML = '';
+    userPage = null;
+    hideFixedBar();
     const startTab = cur.params.tab || 'wallet';
     const uid = encodeURIComponent(userId);
     const safe = (p, fb) => p.catch(() => fb);
@@ -3940,6 +3943,21 @@ body { overflow-x: hidden; }
   let reviewsFilter = 'all';
   let reviewsSearch = '';
 
+  // Сервисы (как games на фронтенде)
+  const ADMIN_GAMES = [
+    { name: 'Brawl Stars', get: () => window.brawlProducts || [] },
+    { name: 'Clash Royale', get: () => window.crProducts || [] },
+    { name: 'Roblox', get: () => window.robloxProducts || [] },
+    { name: 'Telegram', get: () => window.tgProducts || [] }
+  ];
+
+  function reviewGameName(rv) {
+    if (rv.order_game_name) return rv.order_game_name;
+    const items = parseItems(rv.order_items);
+    const g = ADMIN_GAMES.find(g => items.some(i => g.get().some(p => p.name === i.name)));
+    return g ? g.name : null;
+  }
+
   function renderReviewsView() {
     const container = $('reviewsContent');
     if (!container || !reviewsCache) return;
@@ -3967,14 +3985,16 @@ body { overflow-x: hidden; }
       const opts = [
         { key: 'all', label: 'Все отзывы', count: list.length },
         { key: 'good', label: 'Нравится', count: goodCount },
-        { key: 'bad', label: 'Не нравится', count: badCount }
+        { key: 'bad', label: 'Не нравится', count: badCount },
+        ...ADMIN_GAMES.map(g => ({ key: 'game:' + g.name, label: g.name, count: list.filter(r => reviewGameName(r) === g.name).length }))
       ];
-      sel.innerHTML = opts.map(o => `<option value="${o.key}" ${reviewsFilter === o.key ? 'selected' : ''}>${o.label} (${o.count})</option>`).join('');
+      sel.innerHTML = opts.map(o => `<option value="${escapeHtml(o.key)}" ${reviewsFilter === o.key ? 'selected' : ''}>${escapeHtml(o.label)} (${o.count})</option>`).join('');
     }
 
     let filtered = list;
     if (reviewsFilter === 'good') filtered = filtered.filter(r => reviewRatingOf(r) !== 'bad');
     if (reviewsFilter === 'bad') filtered = filtered.filter(r => reviewRatingOf(r) === 'bad');
+    if (reviewsFilter.startsWith('game:')) { const gn = reviewsFilter.slice(5); filtered = filtered.filter(r => reviewGameName(r) === gn); }
     const q = reviewsSearch.trim().toLowerCase();
     if (q) {
       filtered = filtered.filter(rv =>
@@ -4001,10 +4021,11 @@ body { overflow-x: hidden; }
   // =============================================
   // ПРОФИЛЬ
   // =============================================
+  const BOT_STATUS_COLORS = { open: '#22c55e', closed: '#ef4444', auto: '#4cb4e9', maintenance: '#eab308' };
   const BOT_STATUS_MAP = {
     open: { text: 'Открыт', tc: 'status-completed-text', bc: 'status-completed-bg' },
     closed: { text: 'Закрыт', tc: 'status-cancelled-text', bc: 'status-cancelled-bg' },
-    auto: { text: 'Авто', tc: 'status-pending-text', bc: 'status-pending-bg' },
+    auto: { text: 'Автомат.', tc: 'status-pending-text', bc: 'status-pending-bg' },
     maintenance: { text: 'Тех. работы', tc: 'status-awaiting_text', bc: 'status-awaiting-bg' }
   };
 
@@ -4037,20 +4058,48 @@ body { overflow-x: hidden; }
     });
   }
 
+  let syncInProgress = false;
   async function syncProducts() {
-    const all = [
-      ...(window.brawlProducts || []), ...(window.crProducts || []),
-      ...(window.robloxProducts || []), ...(window.tgProducts || [])
-    ].map(p => ({ id: p.id, price: p.price, maxQty: p.maxQty, conflictGroup: p.conflictGroup }));
+    if (syncInProgress) return;
+    const per = ADMIN_GAMES.map(g => ({ name: g.name, list: g.get() }));
+    const all = per.flatMap(x => x.list).map(p => ({ id: p.id, price: p.price, maxQty: p.maxQty, conflictGroup: p.conflictGroup }));
     if (!all.length) { showAppAlert('Товары не найдены (products.js не загрузился)'); return; }
+    syncInProgress = true;
+    showTopLoader();
     try {
       const r = await apiSend('POST', '/api/sync-products', { products: all });
-      if (r.ok) showAppAlert(`Синхронизировано товаров: ${r.data.count}`);
-      else showAppAlert((r.data && r.data.error) || 'Ошибка синхронизации');
+      if (r.ok) {
+        const total = (r.data && r.data.count) || all.length;
+        showAppAlert(`Синхронизация товаров:\n\nВсего товаров: ${total}\n` + per.map(x => `${x.name}: ${x.list.length}`).join('\n'));
+      } else showAppAlert((r.data && r.data.error) || 'Ошибка синхронизации');
     } catch (e) { showAppAlert('Ошибка соединения'); }
+    finally { syncInProgress = false; hideTopLoader(); }
   }
 
-  async function renderProfilePage(opts) {
+  const ICON_CHECK = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4cb4e9" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 6.5"/></svg>`;
+  const QUICK_ARROW = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9e9e9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>`;
+
+  function quickLinkHtml(id, title, subtitle) {
+    return `<div class="quick-link-card" id="${id}">
+        <div class="quick-link-text">
+            <div class="quick-link-title">${title}</div>
+            <div class="quick-link-subtitle">${subtitle}</div>
+        </div>
+        <div class="quick-link-arrow-btn">${QUICK_ARROW}</div>
+    </div>`;
+  }
+
+  // Карточка статуса: кошелёк-карточка, но с цветом статуса, точкой и одной кнопкой «галочка»
+  function applyStatusCardLook(code) {
+    const color = BOT_STATUS_COLORS[code] || BOT_STATUS_COLORS.open;
+    const st = BOT_STATUS_MAP[code] || BOT_STATUS_MAP.open;
+    const inner = $('statusCardInner');
+    if (inner) inner.style.backgroundImage = `linear-gradient(${color}24, ${color}24)`;
+    const dot = $('statusDot'); if (dot) dot.style.background = color;
+    const txt = $('statusText'); if (txt) txt.textContent = st.text;
+  }
+
+  async function renderProfilePage() {
     const container = $('profileContent');
     if (!container) return;
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
@@ -4066,7 +4115,7 @@ body { overflow-x: hidden; }
     if (stats) walletsTotal = stats.walletsTotal || 0;
     if (settings) botStatus = settings.bot_status || 'open';
     if (cur.page !== 'profile') return;
-    const st = BOT_STATUS_MAP[botStatus] || BOT_STATUS_MAP.open;
+    let savedStatus = BOT_STATUS_MAP[botStatus] ? botStatus : 'open';
 
     container.innerHTML = `
         <div class="profile-wrapper">
@@ -4089,59 +4138,59 @@ body { overflow-x: hidden; }
             </div>
         </div>
         <div class="quick-links-row">
-            <div class="quick-link-card" id="sectionPromosBtn">
-                <div class="quick-link-text">
-                    <div class="quick-link-title">Мастерская промокодов</div>
-                    <div class="quick-link-subtitle">Создать или удалить промокод</div>
-                </div>
-                <div class="quick-link-arrow-btn">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9e9e9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                </div>
-            </div>
+            ${quickLinkHtml('sectionSubscribeBtn', 'Подпишитесь на новости', 'Подпишитесь на новостной канал')}
+            ${quickLinkHtml('sectionSyncBtn', 'Синхронизация товаров', 'Синхронизировать все товары')}
+            ${quickLinkHtml('sectionPromosBtn', 'Мастерская промокодов', 'Создать или удалить промокод')}
         </div>
-        <div class="content-card profile-status-card">
-            <div class="status-badge-row">
-                <span class="referral-title">Статус</span>
-                <span id="currentStatusBadge" class="order-card-status ${st.tc} ${st.bc}">${st.text}</span>
+        <div class="profile-wrapper">
+            <div class="referral-main-card">
+                <div class="referral-title">Статус мини-приложения</div>
+                <div style="font-size:17px;color:var(--text-secondary);font-weight:500;">Настройка статуса приложения</div>
             </div>
-            <select class="form-select-native" id="adminStatusSelectProfile">
-                <option value="open" ${botStatus === 'open' ? 'selected' : ''}>Открыт</option>
-                <option value="closed" ${botStatus === 'closed' ? 'selected' : ''}>Закрыт</option>
-                <option value="auto" ${botStatus === 'auto' ? 'selected' : ''}>Авто (10:00–23:59 МСК)</option>
-                <option value="maintenance" ${botStatus === 'maintenance' ? 'selected' : ''}>Тех. работы</option>
-            </select>
-            <div class="checkout-buttons-row" style="margin-top:12px;">
-                <button class="checkout-button" id="saveStatusBtn">Сохранить статус</button>
-                <button class="promo-btn" id="showMskTimeBtn">
-                    <img src="https://storage.botpapa.me/files/9aa1c690-64ce-11f1-af2e-f7a93121b83b.png" alt="time" style="width:26px;height:26px;">
-                </button>
+            <div class="referral-bottom-card">
+                <div id="statusCardInner" style="background-color:var(--card-bg);border-radius:29px;padding:16px 18px;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="padding-left:2px;">
+                        <div style="position:relative;display:inline-flex;align-items:center;gap:9px;">
+                            <span id="statusText" style="font-size:20px;font-weight:550;color:var(--text-primary);"></span>
+                            <span id="statusDot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;"></span>
+                            <select id="adminStatusSelectProfile" style="position:absolute;inset:-6px -10px;width:calc(100% + 20px);height:calc(100% + 12px);opacity:0;cursor:pointer;font-size:16px;">
+                                ${Object.keys(BOT_STATUS_MAP).map(k => `<option value="${k}" ${k === savedStatus ? 'selected' : ''}>${BOT_STATUS_MAP[k].text}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div style="font-size:15px;color:var(--text-secondary);margin-top:4px;">Статус приложения</div>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-shrink:0;">
+                        <button class="wallet-square-btn" id="statusSaveBtn" style="opacity:.4;pointer-events:none;">${ICON_CHECK}</button>
+                    </div>
+                </div>
             </div>
         </div>`;
+
+    applyStatusCardLook(savedStatus);
 
     $('profileInfoBtn')?.addEventListener('click', () => { hapticLight(); showStoreInfoAlert(); });
     $('walletGoBtn')?.addEventListener('click', () => { hapticLight(); openPage('wallet'); });
     $('sectionPromosBtn')?.addEventListener('click', () => { hapticLight(); openPage('promos'); });
-    $('saveStatusBtn')?.addEventListener('click', async () => {
+    $('sectionSubscribeBtn')?.addEventListener('click', () => { hapticLight(); window.open('https://t.me/placedgames', '_blank'); });
+    $('sectionSyncBtn')?.addEventListener('click', () => { hapticLight(); syncProducts(); });
+
+    const sel = $('adminStatusSelectProfile');
+    const saveBtn = $('statusSaveBtn');
+    const refreshSave = () => {
+      const changed = sel.value !== savedStatus;
+      saveBtn.style.opacity = changed ? '1' : '.4';
+      saveBtn.style.pointerEvents = changed ? 'auto' : 'none';
+    };
+    sel?.addEventListener('change', () => { hapticLight(); applyStatusCardLook(sel.value); refreshSave(); });
+    saveBtn?.addEventListener('click', async () => {
       hapticMedium();
-      const val = $('adminStatusSelectProfile')?.value;
+      const val = sel.value;
       try {
         const r = await apiSend('POST', '/api/settings', { bot_status: val });
-        if (r.ok) {
-          hapticLight();
-          const saved = BOT_STATUS_MAP[val] || BOT_STATUS_MAP.open;
-          const badge = $('currentStatusBadge');
-          if (badge) { badge.className = `order-card-status ${saved.tc} ${saved.bc}`; badge.textContent = saved.text; }
-        } else showAppAlert('Ошибка сохранения');
+        if (r.ok) { hapticLight(); savedStatus = val; refreshSave(); }
+        else showAppAlert('Ошибка сохранения');
       } catch (e) { showAppAlert('Ошибка сохранения'); }
     });
-    $('showMskTimeBtn')?.addEventListener('click', () => {
-      hapticLight();
-      const mskTime = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: 'Europe/Moscow' }).format(new Date());
-      showAppAlert(`Время по МСК: ${mskTime}`);
-    });
-
-    // Синхронизация товаров при каждом заходе на страницу профиля
-    if (opts && opts.sync) syncProducts();
   }
 
   // =============================================
@@ -4308,60 +4357,118 @@ body { overflow-x: hidden; }
   // =============================================
   // ПРОМОКОДЫ
   // =============================================
-  function renderPromosPage() {
-    const container = $('promosContent');
-    if (!container) return;
-    container.innerHTML = `<div id="promosList" style="padding-bottom:110px;"></div>`;
-    loadPromosList();
-    showFixedBar(`<div class="checkout-card"><div class="checkout-buttons-row">
-        <button class="checkout-button" id="goCreatePromoBtn">Создать промокод</button>
-        <button class="promo-btn" id="refreshPromosBtn"><svg class="icon icon--accent" style="width:24px;height:24px;"><use href="#icon-refresh"></use></svg></button>
-    </div></div>`);
-    $('goCreatePromoBtn')?.addEventListener('click', () => { hapticLight(); openPage('create-promo'); });
-    $('refreshPromosBtn')?.addEventListener('click', () => {
-      hapticLight();
-      showTopLoader();
-      Promise.resolve(loadPromosList()).finally(hideTopLoader);
-    });
+  let promosData = [];
+  let promosLoaded = false;
+  let promosFilter = 'all';
+  let promosSearch = '';
+
+  function promoIsActive(p) {
+    const isExpired = p.expires_at && new Date(p.expires_at) < new Date();
+    const isLimitReached = p.max_uses !== null && p.max_uses !== undefined && p.used_count >= p.max_uses;
+    return !!p.active && !isExpired && !isLimitReached;
   }
 
-  async function loadPromosList() {
-    const container = $('promosList');
+  // «ЧЧ:ММ ДД.ММ.ГГ» по МСК — как дата в карточке заказа
+  function fmtMsk(v) {
+    if (!v) return '—';
+    const d = new Date(v);
+    if (isNaN(d)) return '—';
+    const parts = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: '2-digit', hour12: false }).formatToParts(d);
+    const g = (t) => parts.find(x => x.type === t)?.value || '';
+    return `${g('hour')}:${g('minute')} ${g('day')}.${g('month')}.${g('year')}`;
+  }
+
+  function showPromoInfoAlert(p) {
+    if (!p) return;
+    const message =
+      `Информация о промокоде:\n\n` +
+      `Промокод: ${truncate(p.code, 40)}\n` +
+      (p.user_id ? `Для: ${p.user_id}\n` : '') +
+      `Процент скидки: ${p.discount}%\n` +
+      `Создан: ${fmtMsk(p.created_at)}\n` +
+      `Действует: ${p.type === 'first_order' ? 'Первый заказ' : 'Все заказы'}\n` +
+      `Срок действия: ${p.expires_at ? fmtMsk(p.expires_at) : '∞'}\n` +
+      `Использований: ${p.used_count || 0}/${p.max_uses ? p.max_uses : '∞'}`;
+    showPopup({
+      message,
+      buttons: [
+        { id: 'delete_promo', type: 'destructive', text: 'Удалить' },
+        { id: 'close', type: 'close' }
+      ]
+    }, (buttonId) => { if (buttonId === 'delete_promo') deletePromo(p.id); });
+  }
+
+  function renderPromosView() {
+    const container = $('promosContent');
     if (!container) return;
+    if (!$('promoSearchInput')) {
+      container.innerHTML = `
+        <div class="search-section" style="display:flex;gap:10px;margin-bottom:13px;align-items:center;">
+            <div class="search-bar">
+                <img class="search-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E">
+                <input type="text" class="search-input" id="promoSearchInput" placeholder="Найти любой промокод" value="${escapeHtml(promosSearch)}">
+                <svg class="icon search-clear-btn icon--muted ${promosSearch ? 'visible' : ''}" id="promoSearchClearBtn"><use href="#icon-cancel"></use></svg>
+            </div>
+            <div class="filter-btn" style="cursor:pointer;position:relative;overflow:hidden;">
+                <svg class="icon icon-filter-catalog icon--primary"><use href="#icon-filter"></use></svg>
+                <select id="promoFilterSelect" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px;"></select>
+            </div>
+        </div>
+        <div id="promosList"></div>`;
+    }
+    const activeN = promosData.filter(promoIsActive).length;
+    const sel = $('promoFilterSelect');
+    if (sel) {
+      sel.innerHTML = [
+        { key: 'all', label: `Все промокоды (${promosData.length})` },
+        { key: 'active', label: `Активные (${activeN})` },
+        { key: 'inactive', label: `Не активные (${promosData.length - activeN})` },
+        { key: 'create', label: 'Создать промокод' }
+      ].map(o => `<option value="${o.key}" ${promosFilter === o.key ? 'selected' : ''}>${o.label}</option>`).join('');
+    }
+    const list = $('promosList');
+    if (!list) return;
+    let filtered = promosData;
+    if (promosFilter === 'active') filtered = filtered.filter(promoIsActive);
+    if (promosFilter === 'inactive') filtered = filtered.filter(p => !promoIsActive(p));
+    const q = promosSearch.trim().toLowerCase();
+    if (q) filtered = filtered.filter(p => String(p.code || '').toLowerCase().includes(q));
+    if (!promosData.length) { list.innerHTML = `<div class="empty-message"><div class="empty-title">Промокодов нет</div></div>`; return; }
+    if (!filtered.length) { list.innerHTML = `<div class="empty-message"><div class="empty-title">Промокоды не найдены</div></div>`; return; }
+    list.innerHTML = filtered.map(p => {
+      const active = promoIsActive(p);
+      let expiresStr = '∞';
+      if (p.expires_at) expiresStr = fmtMsk(p.expires_at);
+      const uses = p.max_uses ? `${p.used_count || 0}/${p.max_uses}` : `${p.used_count || 0}/∞`;
+      return `<div class="order-wrapper">
+          <div class="order-main-card" style="cursor:default;">
+              <div class="order-header">
+                  <span class="order-id">${escapeHtml(p.code)}</span>
+                  <div class="order-header-right">
+                      <span class="order-card-status ${active ? 'status-completed-text status-completed-bg' : 'status-cancelled-text status-cancelled-bg'}">${active ? 'Активен' : 'Не активен'}</span>
+                  </div>
+              </div>
+              <div class="order-date">${escapeHtml(fmtMsk(p.created_at))}</div>
+              <div class="order-total">−${p.discount}%</div>
+              <svg class="icon icon-info-order-status icon--accent order-status-info-icon" data-promo-info="${p.id}"><use href="#icon-info"></use></svg>
+          </div>
+          <div class="order-items-card">
+              <div class="order-item-row"><span class="order-item-name">Использований</span><span class="order-item-price">${uses}</span></div>
+              <div class="order-item-row"><span class="order-item-name">Срок действия</span><span class="order-item-price">${expiresStr}</span></div>
+          </div>
+      </div>`;
+    }).join('');
+  }
+
+  async function renderPromosPage() {
+    hideFixedBar();
+    if (promosLoaded) renderPromosView();
     try {
-      const list = await apiGet('/api/promo-codes');
-      if (!list.length) { container.innerHTML = `<div class="empty-message"><div class="empty-title">Промокодов нет</div></div>`; return; }
-      container.innerHTML = list.map(p => {
-        const isExpired = p.expires_at && new Date(p.expires_at) < new Date();
-        const isLimitReached = p.max_uses !== null && p.used_count >= p.max_uses;
-        const isActive = p.active && !isExpired && !isLimitReached;
-        let expiresStr = '∞';
-        if (p.expires_at) {
-          const d = new Date(p.expires_at);
-          expiresStr = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')} ${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
-        }
-        const uses = p.max_uses ? `${p.used_count}/${p.max_uses}` : `${p.used_count}/∞`;
-        const forUser = p.user_id ? `Для: ${p.user_id}` : 'Для всех';
-        return `<div class="order-wrapper">
-            <div class="order-main-card" style="cursor:default;">
-                <div class="order-header">
-                    <span class="order-id">${escapeHtml(p.code)}</span>
-                    <span class="order-card-status ${isActive ? 'status-completed-text status-completed-bg' : 'status-cancelled-text status-cancelled-bg'}">${isActive ? 'Активен' : 'Не активен'}</span>
-                </div>
-                <div class="order-date">${escapeHtml(forUser)} · Тип: ${p.type === 'first_order' ? 'первый заказ' : 'все'}</div>
-                <div class="order-total">−${p.discount}%</div>
-                <button class="promo-delete-btn" data-delete-promo="${p.id}">
-                    <img src="https://storage.botpapa.me/files/19b700d0-4a0d-11f1-bef9-f1ec7a2c6e45.png" style="width:18px;height:18px;">
-                </button>
-            </div>
-            <div class="order-items-card">
-                <div class="order-item-row"><span class="order-item-name">Использований</span><span class="order-item-price">${uses}</span></div>
-                <div class="order-item-row"><span class="order-item-name">Срок действия</span><span class="order-item-price">${expiresStr}</span></div>
-            </div>
-        </div>`;
-      }).join('');
+      promosData = await apiGet('/api/promo-codes');
+      promosLoaded = true;
+      if (cur.page === 'promos') renderPromosView();
     } catch (e) {
-      container.innerHTML = `<div class="empty-message"><div class="empty-title">Ошибка загрузки</div></div>`;
+      if (!promosLoaded && $('promosContent')) $('promosContent').innerHTML = `<div class="empty-message"><div class="empty-title">Ошибка загрузки</div></div>`;
     }
   }
 
@@ -4374,7 +4481,7 @@ body { overflow-x: hidden; }
       if (buttonId !== 'ok') return;
       try {
         const r = await apiSend('DELETE', `/api/promo-codes/${id}/delete`);
-        if (r.ok) { hapticLight(); loadPromosList(); } else showAppAlert('Ошибка удаления');
+        if (r.ok) { hapticLight(); renderPromosPage(); } else showAppAlert('Ошибка удаления');
       } catch (e) { showAppAlert('Ошибка соединения'); }
     });
   }
@@ -4428,17 +4535,26 @@ body { overflow-x: hidden; }
   // =============================================
   // ОБНОВЛЕНИЕ ТЕКУЩЕЙ СТРАНИЦЫ
   // =============================================
-  function refreshCurrentPage() {
-    if (cur.page === 'users') { usersLoaded = false; }
-    if (cur.page === 'reviews') { reviewsCache = null; }
-    if (cur.page === 'profile') return renderProfilePage({ sync: false });
-    return renderCurrent({ fromBack: true });
+  async function refreshCurrentPage() {
+    switch (cur.page) {
+      case 'order':
+        await loadOrders();                       // свежие данные заказа (смена статуса и т.п.)
+        return renderOrderDetailPage(cur.params.id);
+      case 'users':
+        return renderUsersPage();
+      case 'reviews':
+        return renderReviewsPage();
+      case 'promos':
+        return renderPromosPage();
+      default:
+        return renderCurrent({ fromBack: true });
+    }
   }
 
   // =============================================
   // ДЕЛЕГИРОВАННЫЕ СОБЫТИЯ
   // =============================================
-  let profileLongPressFired = false;
+  let profileLongPressFiredAt = 0;
 
   document.addEventListener('click', (e) => {
     const t = e.target;
@@ -4516,8 +4632,12 @@ body { overflow-x: hidden; }
     }
 
     // удаление промокода
-    const dp = t.closest('[data-delete-promo]');
-    if (dp) { deletePromo(dp.dataset.deletePromo); return; }
+    const pi = t.closest('[data-promo-info]');
+    if (pi) {
+      const p = promosData.find(x => String(x.id) === String(pi.dataset.promoInfo));
+      if (p) { hapticLight(); showPromoInfoAlert(p); }
+      return;
+    }
 
     // показать всех пользователей
     if (t.closest('#usersShowAllBtn')) { hapticLight(); usersShowAll = true; renderUsersView(); return; }
@@ -4529,6 +4649,9 @@ body { overflow-x: hidden; }
     if (t.closest('#userSearchClearBtn')) {
       usersSearch = ''; $('userSearchInput').value = ''; $('userSearchClearBtn').classList.remove('visible'); renderUsersView(); return;
     }
+    if (t.closest('#promoSearchClearBtn')) {
+      promosSearch = ''; $('promoSearchInput').value = ''; $('promoSearchClearBtn').classList.remove('visible'); renderPromosView(); return;
+    }
     if (t.closest('#reviewSearchClearBtn')) {
       reviewsSearch = ''; $('reviewSearchInput').value = ''; $('reviewSearchClearBtn').classList.remove('visible'); renderReviewsView(); return;
     }
@@ -4536,7 +4659,7 @@ body { overflow-x: hidden; }
     // нижнее меню
     const mi = t.closest('.menu-item[data-page]');
     if (mi) {
-      if (profileLongPressFired) { profileLongPressFired = false; return; }
+      if (Date.now() - profileLongPressFiredAt < 600) { e.preventDefault(); return; }
       hapticLight();
       const p = mi.dataset.page;
       if (menuPageFor(cur.page) === p && cur.page === p) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
@@ -4553,6 +4676,10 @@ body { overflow-x: hidden; }
       usersSearch = e.target.value; usersShowAll = false;
       $('userSearchClearBtn')?.classList.toggle('visible', !!usersSearch);
       renderUsersView();
+    } else if (id === 'promoSearchInput') {
+      promosSearch = e.target.value;
+      $('promoSearchClearBtn')?.classList.toggle('visible', !!promosSearch);
+      renderPromosView();
     } else if (id === 'reviewSearchInput') {
       reviewsSearch = e.target.value;
       $('reviewSearchClearBtn')?.classList.toggle('visible', !!reviewsSearch);
@@ -4566,41 +4693,43 @@ body { overflow-x: hidden; }
     if (id === 'pageHeaderNavSelect') {
       if (!v) return;
       hapticLight();
-      if (cur.page === 'user') { setUserTab(v); return; }
+      if (cur.page === 'user') { setUserTab(v, { scroll: true }); return; }
       if (v === cur.page) return;
       openPage(v, {}, MAIN_PAGES.includes(v) ? { reset: true } : {});
     } else if (id === 'orderStatusSelect') {
       ordersStatusFilter = v; hapticLight(); applyOrdersFilters();
     } else if (id === 'userStatusFilterSelect') {
       usersFilter = v; usersShowAll = false; hapticLight(); renderUsersView();
+    } else if (id === 'promoFilterSelect') {
+      hapticLight();
+      if (v === 'create') { e.target.value = promosFilter; openPage('create-promo'); return; }
+      promosFilter = v; renderPromosView();
     } else if (id === 'reviewGameSelect') {
       reviewsFilter = v; hapticLight(); renderReviewsView();
     }
   });
 
-  // долгое нажатие на круглую кнопку профиля → информация о магазине
+  // долгое нажатие на круглую кнопку профиля → информация о магазине (без перехода на страницу)
   (function bindProfileLongPress() {
     const btn = $('profileMenuBtn');
     if (!btn) return;
-    let timer = null;
-    const start = () => {
-      profileLongPressFired = false;
-      clearTimeout(timer);
+    let timer = null, sx = 0, sy = 0, fired = false;
+    const cancel = () => { clearTimeout(timer); timer = null; };
+    const release = () => { cancel(); if (fired) { fired = false; profileLongPressFiredAt = Date.now(); } };
+    btn.addEventListener('pointerdown', (e) => {
+      sx = e.clientX; sy = e.clientY;
+      cancel();
       timer = setTimeout(() => {
+        timer = null;
         if (cur.page === 'settings') return;
-        profileLongPressFired = true;
+        fired = true;
+        profileLongPressFiredAt = Date.now();
         hapticMedium();
         showStoreInfoAlert();
       }, 350);
-    };
-    const cancel = () => clearTimeout(timer);
-    btn.addEventListener('touchstart', start, { passive: true });
-    btn.addEventListener('touchend', cancel);
-    btn.addEventListener('touchmove', cancel, { passive: true });
-    btn.addEventListener('touchcancel', cancel);
-    btn.addEventListener('mousedown', start);
-    btn.addEventListener('mouseup', cancel);
-    btn.addEventListener('mouseleave', cancel);
+    });
+    btn.addEventListener('pointermove', (e) => { if (timer && Math.hypot(e.clientX - sx, e.clientY - sy) > 10) cancel(); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => btn.addEventListener(ev, release));
     btn.addEventListener('contextmenu', (e) => e.preventDefault());
   })();
 
@@ -4613,7 +4742,7 @@ body { overflow-x: hidden; }
       try { tg.ready(); tg.expand(); } catch (e) {}
       try { if ((localStorage.getItem('appFormat') || 'fullscreen') === 'fullscreen') tg.requestFullscreen(); } catch (e) {}
       try { tg.disableVerticalSwipes && tg.disableVerticalSwipes(); } catch (e) {}
-      try { tg.enableClosingConfirmation && tg.enableClosingConfirmation(); } catch (e) {}
+      try { tg.disableClosingConfirmation && tg.disableClosingConfirmation(); } catch (e) {}
       try { tg.BackButton.onClick(goBack); } catch (e) {}
       const photo = tg.initDataUnsafe?.user?.photo_url;
       if (photo && $('profileMenuAvatar')) $('profileMenuAvatar').src = photo;
