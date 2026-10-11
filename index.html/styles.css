@@ -731,18 +731,26 @@ svg.product-info-icon {
     flex-direction: column;
     align-items: stretch;
     gap: 0;
+    padding: 0;
 }
 
+/* каждая строка — как отдельная карточка: свои отступы 9px и свои кнопки (.cart-actions позиционируются от строки) */
 .cart-item-row {
     display: flex;
     gap: 14px;
     align-items: center;
+    position: relative;
+    padding: 9px;
 }
 
-.cart-item-row + .cart-item-row {
-    border-top: 1px solid var(--border-color);
-    margin-top: 9px;
-    padding-top: 9px;
+.cart-item-row + .cart-item-row::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 9px;
+    right: 9px;
+    height: 1px;
+    background: var(--border-color);
 }
 
 .cart-item-delivery {
