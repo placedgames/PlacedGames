@@ -742,7 +742,7 @@ svg.product-info-icon {
     gap: 14px;
     align-items: center;
     position: relative;
-    padding: 11px;
+    padding: 10px;
 }
 
 .cart-item-row:not(:last-child) {
