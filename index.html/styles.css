@@ -784,7 +784,7 @@ svg.product-info-icon {
 }
 
 .cart-item-delivery-row + .cart-item-delivery-row {
-    margin-top: 12px;
+    margin-top: 8px;
 }
 
 .cart-item-delivery-label {
@@ -796,7 +796,7 @@ svg.product-info-icon {
 
 .cart-item-delivery-value {
     font-size: 16px;
-    color: var(--text-muted);
+    color: var(--text-primary);
     font-weight: 500;
     min-width: 0;
     white-space: nowrap;
