@@ -710,7 +710,7 @@ svg.product-info-icon {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 31px 31px 29px 29px !important;
-    padding: 11px;
+    padding: 9px;
     margin-bottom: 12px;
     display: flex;
     gap: 14px;
@@ -736,30 +736,30 @@ svg.product-info-icon {
     padding: 0;
 }
 
-/* каждая строка — как отдельная карточка: свои отступы 11px и свои кнопки (.cart-actions позиционируются от строки) */
+/* каждая строка — как отдельная карточка: свои отступы 9px (+1px обводка карточки = 10px) и свои кнопки (.cart-actions позиционируются от строки) */
 .cart-item-row {
     display: flex;
     gap: 14px;
     align-items: center;
     position: relative;
-    padding: 10px;
+    padding: 9px;
 }
 
 .cart-item-row:not(:last-child) {
-    padding-bottom: 11px;
+    padding-bottom: 10px;
 }
 
-/* линия разделителя занимает 1px сверху строки, поэтому сверху 12px = 11px видимого отступа */
+/* линия разделителя занимает 1px сверху строки, поэтому сверху 11px = 10px видимого отступа */
 .cart-item-row + .cart-item-row {
-    padding-top: 12px;
+    padding-top: 11px;
 }
 
 .cart-item-row + .cart-item-row::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 12px;
-    right: 12px;
+    left: 10px;
+    right: 10px;
     height: 1px;
     background: var(--divider-color);
 }
@@ -830,8 +830,13 @@ svg.product-info-icon {
 
 .cart-actions {
     position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
+/* у строк над разделителем нижний отступ на 1px больше — кнопки остаются на том же месте относительно картинки */
+.cart-item-row:not(:last-child) .cart-actions {
     bottom: 11px;
-    right: 11px;
 }
 
 .cart-quantity {
@@ -1020,7 +1025,7 @@ svg.product-info-icon {
     display: flex;
     align-items: center;
     gap: 13px;
-    margin-right: 9px;
+    margin-right: 10px;
 }
 
 .instruction-icon {
