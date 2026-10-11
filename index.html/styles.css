@@ -746,12 +746,12 @@ svg.product-info-icon {
 }
 
 .cart-item-row:not(:last-child) {
-    padding-bottom: 11px;
+    padding-bottom: 12px;
 }
 
-/* линия разделителя занимает 1px сверху строки, поэтому сверху 12px = 11px видимого отступа */
+/* линия разделителя занимает 1px сверху строки, поэтому сверху 13px = 12px видимого отступа */
 .cart-item-row + .cart-item-row {
-    padding-top: 12px;
+    padding-top: 13px;
 }
 
 .cart-item-row + .cart-item-row::before {
