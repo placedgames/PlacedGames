@@ -2226,3 +2226,82 @@ svg.product-info-icon {
 .btn-dots span:nth-child(3) {
     animation-delay: 0.36s;
 }
+
+
+/* =============================================
+   Вид карточек товаров: список (cardLayout = list)
+   ============================================= */
+html[data-card-layout="list"] .products-grid {
+    grid-template-columns: 1fr;
+}
+
+@media (min-width: 600px) {
+    html[data-card-layout="list"] .products-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 900px) {
+    html[data-card-layout="list"] .products-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 1200px) {
+    html[data-card-layout="list"] .products-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (min-width: 1600px) {
+    html[data-card-layout="list"] .products-grid { grid-template-columns: repeat(5, 1fr); }
+}
+
+/* карточка как в корзине, но без боттом кард */
+.product-card.list-card {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 9px;
+    border-radius: 31px 31px 29px 29px;
+    overflow: hidden;
+    cursor: default;
+}
+
+.product-card.list-card .card-info,
+.product-card.list-card .card-img-carousel + .card-info {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+}
+
+.list-card-icons {
+    position: absolute;
+    top: 18px;
+    right: 19px;
+    display: flex;
+    align-items: center;
+}
+
+.list-card-icons .icon-info-cart {
+    position: relative;
+    top: -1px;
+    left: 1px;
+    width: 21px;
+    height: 21px;
+    flex-shrink: 0;
+}
+
+/* кнопка «В корз.» и счётчик -1+ одинакового размера, справа снизу */
+.product-card.list-card .card-action-btn {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: 100px;
+    height: 38px;
+    border-radius: 40px;
+    font-size: 16px;
+    padding: 0;
+}
+
+.product-card.list-card .card-action-btn.counter-btn {
+    padding: 0 12px;
+}

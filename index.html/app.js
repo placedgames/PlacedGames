@@ -819,6 +819,16 @@ window.__imgCache = {};
 location.reload();
 }
 
+// ----- Вид карточек товаров: 'grid' (по умолчанию, по 2+ в ряд) или 'list' (1+ в ряд, как карточка в корзине) -----
+function getCardLayout() {
+    return localStorage.getItem('cardLayout') === 'list' ? 'list' : 'grid';
+}
+function applyCardLayout(layout) {
+    localStorage.setItem('cardLayout', layout === 'list' ? 'list' : 'grid');
+    document.documentElement.setAttribute('data-card-layout', getCardLayout());
+}
+document.documentElement.setAttribute('data-card-layout', getCardLayout());
+
 function applyAppFormat(format) {
 localStorage.setItem('appFormat', format);
 const tg = window.Telegram?.WebApp;
@@ -869,7 +879,7 @@ if (qty > 0) {
                 <span class="counter-plus" data-id="${productId}" style="${plusOpacity}"><svg class="icon icon-counter-plus icon--accent"><use href="#icon-plus"></use></svg></span>
             </div>`;
     }
-    return `<div class="card-action-btn cart-add-btn" data-add="${productId}">В корзину</div>`;
+    return `<div class="card-action-btn cart-add-btn" data-add="${productId}">${getCardLayout() === 'list' ? 'В корз.' : 'В корзину'}</div>`;
 }
 
 function handleCartAction(pid, isIncrement) {
@@ -1073,6 +1083,7 @@ function renderCartPage() {
                             hapticMedium();
                             delete cart[id];
                             saveCartToLocalStorage();
+                            updateSingleCard(id);
                             renderCartPage();
                         }
                     });
@@ -1138,7 +1149,24 @@ function updateSingleCard(productId) {
             showPage("game");
         };
     }
-                                            grid.innerHTML = filteredGames.map(game => `
+                                            if (getCardLayout() === 'list') {
+                grid.innerHTML = filteredGames.map(game => {
+                    const listOld = game.oldMinPrice && game.oldMinPrice !== game.minPrice
+                        ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:15px;margin-left:6px;">${formatPrice(game.oldMinPrice)}</span>` : '';
+                    return `
+            <div class="product-card list-card" data-game-id="${game.id}">
+                <img class="cart-img" src="${game.image}" alt="${escapeHtml(game.name)}">
+                <div class="card-info">
+                    <div class="cart-product-name">${escapeHtml(cleanText(game.name))}</div>
+                    <div class="cart-product-price">от ${formatPrice(game.minPrice)}${listOld}</div>
+                    <div class="cart-product-category">${escapeHtml(game.developer || '')}</div>
+                    <div class="list-card-icons"><svg class="icon icon-info-cart icon--accent" data-info-service="${game.id}"><use href="#icon-info"></use></svg></div>
+                    <div class="card-action-btn cart-add-btn" data-open-game="${game.id}">Смотреть</div>
+                </div>
+            </div>`;
+                }).join("");
+            } else
+grid.innerHTML = filteredGames.map(game => `
             <div class="product-card" data-game-id="${game.id}">
                 <div class="card-img-carousel">
                     <div class="card-img-track">
@@ -2790,6 +2818,22 @@ function renderGamePage() {
                      </div>
                      ${imgs.length > 1 ? `<div class="card-img-dots">${imgs.map((_, i) => `<span class="card-img-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : ''}
                  </div>`;
+                                            if (getCardLayout() === 'list') {
+                const listOld = p.oldPrice && p.oldPrice !== p.price
+                    ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:15px;margin-left:6px;">${formatPrice(p.oldPrice)}</span>` : '';
+                return `
+                    <div class="product-card list-card" data-id="${p.id}">
+                        <img class="cart-img" src="${imgs[0]}" alt="${escapeHtml(p.name)}">
+                        <div class="card-info">
+                            <div class="cart-product-name">${escapeHtml(cleanText(p.name))}</div>
+                            <div class="cart-product-price">${formatPrice(p.price)}${listOld}</div>
+                            <div class="cart-product-category">${escapeHtml(p.label || p.category || '')}</div>
+                            <div class="list-card-icons"><svg class="icon icon-info-cart icon--accent" data-info-product="${p.id}"><use href="#icon-info"></use></svg></div>
+                            ${renderCartButtonHtml(p.id)}
+                        </div>
+                    </div>
+                `;
+            }
                                             return `
                     <div class="product-card" data-id="${p.id}">
                         ${carouselHtml}
@@ -3816,6 +3860,11 @@ function renderSettingsPage() {
 
     const bottomOffset = getBottomMenuOffset();
 
+    const cardLayout = getCardLayout();
+    const cardLayoutIcon = cardLayout === 'list'
+        ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="#4cb4e9"><rect x="3.5" y="5.5" width="17" height="5.5" rx="2.75"/><rect x="3.5" y="13" width="17" height="5.5" rx="2.75"/></svg>`
+        : `<svg width="22" height="22" viewBox="0 0 24 24" fill="#4cb4e9"><circle cx="8.6" cy="8.6" r="3"/><circle cx="15.4" cy="8.6" r="3"/><circle cx="8.6" cy="15.4" r="3"/><circle cx="15.4" cy="15.4" r="3"/></svg>`;
+
     container.innerHTML = `
                     <div class="referral-wrapper">
             <div class="referral-main-card">
@@ -3866,6 +3915,13 @@ function renderSettingsPage() {
                     </div>
                     <div class="settings-row">
                         <div style="padding-left:2px;min-width:0;">
+                            <div style="font-size:19px;font-weight:550;color:var(--text-primary);">Карт. товаров</div>
+                            <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Карточки товаров</div>
+                        </div>
+                        <button id="settingsCardLayoutBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">${cardLayoutIcon}</button>
+                    </div>
+                    <div class="settings-row">
+                        <div style="padding-left:2px;min-width:0;">
                             <div style="font-size:19px;font-weight:550;color:var(--text-primary);">Очист. кэш</div>
                             <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Оч. кэш приложения</div>
                         </div>
@@ -3911,6 +3967,13 @@ function renderSettingsPage() {
             applyAppFormat(next);
             hapticLight();
             renderSettingsPage();
+        });
+        document.getElementById('settingsCardLayoutBtn')?.addEventListener('click', () => {
+            applyCardLayout(getCardLayout() === 'list' ? 'grid' : 'list');
+            hapticLight();
+            renderSettingsPage();
+            try { renderCatalog(); } catch (e) {}
+            try { if (currentGame) renderGamePage(); } catch (e) {}
         });
         document.getElementById('settingsClearCacheBtn')?.addEventListener('click', () => {
             hapticLight();
