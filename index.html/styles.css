@@ -710,7 +710,7 @@ svg.product-info-icon {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 31px 31px 29px 29px !important;
-    padding: 9px;
+    padding: 12px;
     margin-bottom: 12px;
     display: flex;
     gap: 14px;
@@ -736,13 +736,13 @@ svg.product-info-icon {
     padding: 0;
 }
 
-/* каждая строка — как отдельная карточка: свои отступы 9px и свои кнопки (.cart-actions позиционируются от строки) */
+/* каждая строка — как отдельная карточка: свои отступы 12px и свои кнопки (.cart-actions позиционируются от строки) */
 .cart-item-row {
     display: flex;
     gap: 14px;
     align-items: center;
     position: relative;
-    padding: 9px;
+    padding: 12px;
 }
 
 .cart-item-row:not(:last-child) {
@@ -758,8 +758,8 @@ svg.product-info-icon {
     content: '';
     position: absolute;
     top: 0;
-    left: 9px;
-    right: 9px;
+    left: 12px;
+    right: 12px;
     height: 1px;
     background: var(--divider-color);
 }
@@ -829,8 +829,8 @@ svg.product-info-icon {
 
 .cart-actions {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
+    bottom: 12px;
+    right: 12px;
 }
 
 .cart-quantity {
@@ -1019,7 +1019,7 @@ svg.product-info-icon {
     display: flex;
     align-items: center;
     gap: 13px;
-    margin-right: 10px;
+    margin-right: 8px;
 }
 
 .instruction-icon {
