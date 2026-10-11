@@ -26,7 +26,7 @@
     --text-muted: #cbcdcd;
     --text-price-old: #9ca3af;
     --border-color: rgba(41, 41, 44, 1);
-    --divider-color: rgba(58, 58, 62, 1);
+    --divider-color: rgba(52, 52, 56, 1);
     --input-bg: #3a3a3d;
     --input2-bg: #323235;
     --input-bg-dark: #303033;
@@ -746,11 +746,12 @@ svg.product-info-icon {
 }
 
 .cart-item-row:not(:last-child) {
-    padding-bottom: 10px;
+    padding-bottom: 11px;
 }
 
+/* линия разделителя занимает 1px сверху строки, поэтому сверху 12px = 11px видимого отступа */
 .cart-item-row + .cart-item-row {
-    padding-top: 10px;
+    padding-top: 12px;
 }
 
 .cart-item-row + .cart-item-row::before {
