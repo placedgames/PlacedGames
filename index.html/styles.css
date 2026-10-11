@@ -727,6 +727,24 @@ svg.product-info-icon {
     z-index: 2;
 }
 
+.cart-item-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+}
+
+.cart-item-row {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.cart-item-row + .cart-item-row {
+    border-top: 1px solid var(--border-color);
+    margin-top: 9px;
+    padding-top: 9px;
+}
+
 .cart-item-delivery {
     background: var(--col-bg);
     border: 1px solid var(--col-border-color);

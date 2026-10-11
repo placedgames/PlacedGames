@@ -601,7 +601,7 @@ const games = [{
     id: 'brawlstars',
     name: 'Brawl Stars',
     developer: 'Supercell',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/BrawlStars.JPEG',
+    image: 'https://cdn.jsdelivr.net/gh/melssed/PG@main/logos/BrawlStars.JPEG',
     minPrice: 85,
     oldMinPrice: 89,
     deliveryText: 'вход в аккаунт',
@@ -613,7 +613,7 @@ const games = [{
     id: 'clashroyale',
     name: 'Clash Royale',
     developer: 'Supercell',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/ClashRoyale.JPEG',
+    image: 'https://cdn.jsdelivr.net/gh/melssed/PG@main/logos/ClashRoyale.JPEG',
     minPrice: 85,
     oldMinPrice: 89,
     deliveryText: 'вход в аккаунт',
@@ -622,49 +622,25 @@ const games = [{
     enabled: true,
     getProducts: () => window.crProducts || []
 }, {
-    id: 'pubg',
-    name: 'Pubg Mobile',
-    developer: 'Tencent Mobile International Limited',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/Pubg.JPEG',
+    id: 'roblox',
+    name: 'Roblox',
+    developer: 'Roblox Corporation',
+    image: 'https://cdn.jsdelivr.net/gh/melssed/PG@main/logos/Roblox.JPEG',
     minPrice: 42,
     oldMinPrice: 44,
     deliveryText: 'вход в аккаунт',
     warnText: 'Для пополнения робуксов потребуется вход в ваш аккаунт Roblox.',
     instructionText: 'Инструкция для Brawl Stars:\n1. ...\n2. ...',
-    enabled: true,
+    enabled: false,
     getProducts: () => window.robloxProducts || []
 }, {
     id: 'telegram',
     name: 'Telegram',
     developer: 'Telegram',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/Telegram.JPEG',
+    image: 'https://cdn.jsdelivr.net/gh/melssed/PG@main/logos/Telegram.JPEG',
     minPrice: 22,
     oldMinPrice: 24,
     deliveryText: 'подарком',
-    warnText: 'Для отправки подарка укажите ваш юзернейм в Telegram.',
-    instructionText: 'Информация о товаре:\n\nПосле подтверждения оплаты товар будет отправлен на указанный вами «username».\n\nОжидание выполнения заказа занимает от 5 до 20 минут.',
-    enabled: true,
-    getProducts: () => window.tgProducts || []
-}, {
-    id: 'roblox',
-    name: 'Roblox',
-    developer: 'Roblox Corporation',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/Roblox.JPEG',
-    minPrice: 42,
-    oldMinPrice: 44,
-    deliveryText: 'вход в аккаунт',
-    warnText: 'Для пополнения робуксов потребуется вход в ваш аккаунт Roblox.',
-    instructionText: 'Инструкция для Roblox:\n1. ...\n2. ...',
-    enabled: false,
-    getProducts: () => window.robloxProducts || []
-}, {
-    id: 'appstore',
-    name: 'App Store',
-    developer: 'Apple',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/AppStore.JPEG',
-    minPrice: 22,
-    oldMinPrice: 24,
-    deliveryText: 'подарочная карта',
     warnText: 'Для отправки подарка укажите ваш юзернейм в Telegram.',
     instructionText: 'Информация о товаре:\n\nПосле подтверждения оплаты товар будет отправлен на указанный вами «username».\n\nОжидание выполнения заказа занимает от 5 до 20 минут.',
     enabled: true,
@@ -1006,11 +982,13 @@ function renderCartPage() {
         }, 0);
         return;
     }
-    let html = '';
+    const cartRows = [];
+    const cartDeliveries = [];
     for (let [id, qty] of items) {
                     const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
         if (!prod) continue;
-        html += `<div class="cart-item-wrapper"><div class="cart-item"><img class="cart-img" src="${prod.image}" alt="${escapeHtml(prod.name)}"><div class="cart-info"><div class="cart-product-name">${escapeHtml(prod.name)}</div><div class="cart-product-price">
+        cartDeliveries.push(games.find(g => g.getProducts().some(p => p.id == id))?.deliveryText || 'вход в аккаунт');
+        cartRows.push(`<img class="cart-img" src="${prod.image}" alt="${escapeHtml(prod.name)}"><div class="cart-info"><div class="cart-product-name">${escapeHtml(prod.name)}</div><div class="cart-product-price">
             ${formatPrice(appliedPromo ? Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100)) : prod.price * qty)}
             ${appliedPromo ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:15px;margin-left:6px;">${formatPrice(prod.price * qty)}</span>` : ''}
         </div><div class="cart-product-category">${escapeHtml(games.find(g => g.getProducts().some(p => p.id == id))?.name || prod.category)}</div></div><div class="cart-actions" style="display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:24px;padding-right:0px;padding-top:0px;">
@@ -1019,7 +997,16 @@ function renderCartPage() {
                 <svg class="icon icon-info-cart icon--accent instruction-icon" data-id="${id}" data-type="instruction"><use href="#icon-info"></use></svg>
             </div>
             <div class="cart-quantity"><button class="cart-qty-btn" data-dec="${id}"><svg class="icon icon-cart-qty-minus icon--accent"><use href="#icon-minus"></use></svg></button><span class="cart-qty-value">${qty}</span><button class="cart-qty-btn" data-inc="${id}" style="${prod?.maxQty && qty >= prod.maxQty ? 'opacity:0.4;pointer-events:none;' : ''}"><svg class="icon icon-cart-qty-plus icon--accent"><use href="#icon-plus"></use></svg></button></div>
-        </div></div><div class="cart-item-delivery"><span class="cart-item-delivery-label">Способ получения</span><span class="cart-item-delivery-value">${games.find(g => g.getProducts().some(p => p.id == id))?.deliveryText || 'вход в аккаунт'}</span></div></div>`;
+        </div>`);
+    }
+    // Одна карточка — как раньше (карточка + боттом кард).
+    // Две и больше — одна общая карточка с разделителями и одна общая боттом кард «Способ получения».
+    let html = '';
+    if (cartRows.length === 1) {
+        html = `<div class="cart-item-wrapper"><div class="cart-item">${cartRows[0]}</div><div class="cart-item-delivery"><span class="cart-item-delivery-label">Способ получения</span><span class="cart-item-delivery-value">${cartDeliveries[0]}</span></div></div>`;
+    } else if (cartRows.length > 1) {
+        const deliveryText = [...new Set(cartDeliveries)].join(', ');
+        html = `<div class="cart-item-wrapper"><div class="cart-item cart-item-group">${cartRows.map(r => `<div class="cart-item-row">${r}</div>`).join('')}</div><div class="cart-item-delivery"><span class="cart-item-delivery-label">Способ получения</span><span class="cart-item-delivery-value">${deliveryText}</span></div></div>`;
     }
     container.innerHTML = html;
     document.querySelectorAll("[data-dec]").forEach(btn => {
