@@ -17,16 +17,16 @@
 
 :root {
     --app-bg: #111112;
-    --card-bg: #242427;
+    --card-bg: #232326;
     --col-bg: #141415;
     --slider-bg: #1c1c1e;
-    --header-btn-bg: #252528;
+    --header-btn-bg: #242427;
     --text-primary: #ffffff;
     --text-secondary: #9e9e9e;
     --text-muted: #cbcdcd;
     --text-price-old: #9ca3af;
     --border-color: rgba(41, 41, 44, 1);
-    --divider-color: rgba(48, 48, 51, 1);
+    --divider-color: rgba(51, 51, 54, 1);
     --input-bg: #3a3a3d;
     --input2-bg: #323235;
     --input-bg-dark: #303033;
