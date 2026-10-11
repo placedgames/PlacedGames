@@ -1008,14 +1008,16 @@ function renderCartPage() {
     }
     const cartRows = [];
     const cartDeliveries = [];
+    const cartServices = [];
     for (let [id, qty] of items) {
                     const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
         if (!prod) continue;
         cartDeliveries.push(games.find(g => g.getProducts().some(p => p.id == id))?.deliveryText || 'вход в аккаунт');
+        cartServices.push(games.find(g => g.getProducts().some(p => p.id == id))?.name || prod.category || '—');
         cartRows.push(`<img class="cart-img" src="${prod.image}" alt="${escapeHtml(prod.name)}"><div class="cart-info"><div class="cart-product-name">${escapeHtml(prod.name)}</div><div class="cart-product-price">
             ${formatPrice(appliedPromo ? Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100)) : prod.price * qty)}
             ${appliedPromo ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:15px;margin-left:6px;">${formatPrice(prod.price * qty)}</span>` : ''}
-        </div><div class="cart-product-category">${escapeHtml(games.find(g => g.getProducts().some(p => p.id == id))?.name || prod.category)}</div></div><div class="cart-actions" style="display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:25px;padding-right:0px;padding-top:0px;">
+        </div><div class="cart-product-category">${escapeHtml(prod.label || prod.category || '')}</div></div><div class="cart-actions" style="display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;gap:25px;padding-right:0px;padding-top:0px;">
             <div class="cart-icon-row">
                 ${prod.warn ? `<svg class="icon icon-cart-warn warn-icon icon--warning" data-id="${id}" data-type="warn"><use href="#icon-warning"></use></svg>` : ''}
                 <svg class="icon icon-info-cart icon--accent instruction-icon" data-id="${id}" data-type="instruction"><use href="#icon-info"></use></svg>
@@ -1025,12 +1027,14 @@ function renderCartPage() {
     }
     // Одна карточка — как раньше (карточка + боттом кард).
     // Две и больше — одна общая карточка с разделителями и одна общая боттом кард «Способ получения».
+    const buildCartDeliveryHtml = (delivery, service) => `<div class="cart-item-delivery"><div class="cart-item-delivery-row"><span class="cart-item-delivery-label">Способ получения</span><span class="cart-item-delivery-value">${escapeHtml(delivery)}</span></div><div class="cart-item-delivery-row"><span class="cart-item-delivery-label">Выбранный сервис</span><span class="cart-item-delivery-value">${escapeHtml(service)}</span></div></div>`;
     let html = '';
     if (cartRows.length === 1) {
-        html = `<div class="cart-item-wrapper"><div class="cart-item">${cartRows[0]}</div><div class="cart-item-delivery"><span class="cart-item-delivery-label">Способ получения</span><span class="cart-item-delivery-value">${cartDeliveries[0]}</span></div></div>`;
+        html = `<div class="cart-item-wrapper"><div class="cart-item">${cartRows[0]}</div>${buildCartDeliveryHtml(cartDeliveries[0], cartServices[0])}</div>`;
     } else if (cartRows.length > 1) {
         const deliveryText = [...new Set(cartDeliveries)].join(', ');
-        html = `<div class="cart-item-wrapper"><div class="cart-item cart-item-group">${cartRows.map(r => `<div class="cart-item-row">${r}</div>`).join('')}</div><div class="cart-item-delivery"><span class="cart-item-delivery-label">Способ получения</span><span class="cart-item-delivery-value">${deliveryText}</span></div></div>`;
+        const serviceText = [...new Set(cartServices)].join(', ');
+        html = `<div class="cart-item-wrapper"><div class="cart-item cart-item-group">${cartRows.map(r => `<div class="cart-item-row">${r}</div>`).join('')}</div>${buildCartDeliveryHtml(deliveryText, serviceText)}</div>`;
     }
     container.innerHTML = html;
     document.querySelectorAll("[data-dec]").forEach(btn => {

@@ -758,8 +758,8 @@ svg.product-info-icon {
     content: '';
     position: absolute;
     top: 0;
-    left: 10px;
-    right: 10px;
+    left: 12px;
+    right: 12px;
     height: 1px;
     background: var(--divider-color);
 }
@@ -773,21 +773,36 @@ svg.product-info-icon {
     padding-top: 42px;
     position: relative;
     z-index: 1;
+    display: block;
+}
+
+.cart-item-delivery-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 14px;
+}
+
+.cart-item-delivery-row + .cart-item-delivery-row {
+    margin-top: 12px;
 }
 
 .cart-item-delivery-label {
     font-size: 16px;
     color: var(--text-muted);
     font-weight: 500;
+    flex-shrink: 0;
 }
 
 .cart-item-delivery-value {
     font-size: 16px;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     font-weight: 500;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: right;
 }
 
 .cart-img {
@@ -826,6 +841,11 @@ svg.product-info-icon {
 .cart-product-category {
     font-size: 18px;
     color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    /* не заезжает на кнопку -1+ (её ширина ~100px + отступ) */
+    max-width: calc(100% - 109px);
 }
 
 .cart-actions {
@@ -1029,6 +1049,9 @@ svg.product-info-icon {
 }
 
 .instruction-icon {
+    position: relative;
+    top: -1px;
+    left: 1px;
     width: 21px;
     height: 21px;
     cursor: pointer;
@@ -2029,6 +2052,8 @@ svg.product-info-icon {
 }
 
 .icon-cart-warn {
+    position: relative;
+    top: -1px;
     width: var(--icon-size-cart-warn);
     height: var(--icon-size-cart-warn);
     cursor: pointer;
