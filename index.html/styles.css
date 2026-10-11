@@ -26,6 +26,7 @@
     --text-muted: #cbcdcd;
     --text-price-old: #9ca3af;
     --border-color: rgba(41, 41, 44, 1);
+    --divider-color: rgba(58, 58, 62, 1);
     --input-bg: #3a3a3d;
     --input2-bg: #323235;
     --input-bg-dark: #303033;
@@ -101,6 +102,7 @@
     --text-muted: #6e6e73;
     --text-price-old: #8e8e93;
     --border-color: #e3e3ea;
+    --divider-color: #e3e3ea;
     --input-bg: #e8e8ed;
     --input2-bg: #e8e8ed;
     --input-bg-dark: #dddde2;
@@ -743,6 +745,14 @@ svg.product-info-icon {
     padding: 9px;
 }
 
+.cart-item-row:not(:last-child) {
+    padding-bottom: 10px;
+}
+
+.cart-item-row + .cart-item-row {
+    padding-top: 10px;
+}
+
 .cart-item-row + .cart-item-row::before {
     content: '';
     position: absolute;
@@ -750,7 +760,7 @@ svg.product-info-icon {
     left: 9px;
     right: 9px;
     height: 1px;
-    background: var(--border-color);
+    background: var(--divider-color);
 }
 
 .cart-item-delivery {
@@ -1761,7 +1771,7 @@ svg.product-info-icon {
 }
 
 .wallet-tx-row + .wallet-tx-row {
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--divider-color);
 }
 
 .wallet-tx-line1,
@@ -1814,7 +1824,7 @@ svg.product-info-icon {
     justify-content: center;
     padding: 14px 0 1px 0;
     margin-top: 6px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--divider-color);
     color: var(--text-secondary);
     font-size: 16px;
     font-weight: 500;
@@ -1873,7 +1883,7 @@ svg.product-info-icon {
 }
 
 .help-faq-divider {
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--divider-color);
 }
 
 .settings-row {
@@ -1893,7 +1903,7 @@ svg.product-info-icon {
 }
 
 .settings-row + .settings-row {
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--divider-color);
 }
 
 .help-section-subtitle {
