@@ -15,6 +15,7 @@
     <script>
         (function() {
             document.documentElement.setAttribute('data-theme', localStorage.getItem('appTheme') || 'dark');
+            if (localStorage.getItem('darkVariant') === 'tinted') document.documentElement.setAttribute('data-dark', 'tinted');
             try {
                 var user = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
                 if (user && user.id === 7593972660) window.location.replace('admin-panel.html');

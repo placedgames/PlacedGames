@@ -4008,6 +4008,7 @@ function renderSettingsPage() {
     const formatTitle = currentFormat === 'fullscreen' ? 'Fullscreen' : 'Fullsize';
 
     const bottomOffset = getBottomMenuOffset();
+    const darkVariant = getDarkVariant();
 
     container.innerHTML = `
                     <div class="referral-wrapper">
@@ -4028,10 +4029,10 @@ function renderSettingsPage() {
                     </div>
                     <div class="settings-row">
                         <div style="padding-left:2px;min-width:0;">
-                            <div style="font-size:19px;font-weight:550;color:var(--text-primary);">Русский</div>
-                            <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Язык приложения</div>
+                            <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${darkVariant === 'tinted' ? 'Tinted' : 'Обычная'}</div>
+                            <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Цвет тёмной темы</div>
                         </div>
-                        <button id="settingsLangBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:15px;font-weight:550;">RU</button>
+                        <button id="settingsDarkVariantBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${darkVariant === 'tinted' ? 'T/N' : 'D/D'}</button>
                     </div>
                     <div class="settings-row">
                         <div style="padding-left:2px;min-width:0;">
@@ -4089,8 +4090,10 @@ function renderSettingsPage() {
             const titleEl = document.getElementById('settingsThemeTitleText');
             if (titleEl) titleEl.textContent = newTheme === 'dark' ? 'Тёмная' : 'Светлая';
         });
-        document.getElementById('settingsLangBtn')?.addEventListener('click', () => {
+        document.getElementById('settingsDarkVariantBtn')?.addEventListener('click', () => {
             hapticLight();
+            applyDarkVariant(getDarkVariant() === 'tinted' ? 'default' : 'tinted');
+            renderSettingsPage();
         });
         document.getElementById('settingsVibrationBtn')?.addEventListener('click', () => {
             const next = !isVibrationEnabled();
@@ -4481,19 +4484,34 @@ if (navigationHistory.length > 0) {
     }
 }
 
+// Цвет тёмной темы: 'default' — обычная, 'tinted' — tinted (меняется только в настройках)
+function getDarkVariant() {
+    return localStorage.getItem('darkVariant') === 'tinted' ? 'tinted' : 'default';
+}
+
+function applyDarkVariant(variant) {
+    localStorage.setItem('darkVariant', variant);
+    if (variant === 'tinted') document.documentElement.setAttribute('data-dark', 'tinted');
+    else document.documentElement.removeAttribute('data-dark');
+    applyTheme(localStorage.getItem('appTheme') || 'dark');
+}
+
+function getThemeBgColor(theme) {
+    if (theme === 'light') return '#EFEFF3';
+    return getDarkVariant() === 'tinted' ? '#18232E' : '#111112';
+}
+
 function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('appTheme', theme);
+    if (getDarkVariant() === 'tinted') document.documentElement.setAttribute('data-dark', 'tinted');
+    else document.documentElement.removeAttribute('data-dark');
 
     const tg = window.Telegram?.WebApp;
     if (tg) {
-        if (theme === 'light') {
-            try { tg.setHeaderColor('#EFEFF3'); } catch (e) {}
-            try { tg.setBackgroundColor('#EFEFF3'); } catch (e) {}
-        } else {
-            try { tg.setHeaderColor('#111112'); } catch (e) {}
-            try { tg.setBackgroundColor('#111112'); } catch (e) {}
-        }
+        const bg = getThemeBgColor(theme);
+        try { tg.setHeaderColor(bg); } catch (e) {}
+        try { tg.setBackgroundColor(bg); } catch (e) {}
     }
 }
 
@@ -4642,7 +4660,7 @@ function applyTheme(theme) {
                 tg.requestFullscreen();
             }
         } catch (e) {}
-        try { tg.setHeaderColor("#111112"); tg.setBackgroundColor("#111112"); } catch (e) {}
+        try { const bg0 = getThemeBgColor(localStorage.getItem('appTheme') || 'dark'); tg.setHeaderColor(bg0); tg.setBackgroundColor(bg0); } catch (e) {}
         try { if (tg.disableClosingConfirmation) tg.disableClosingConfirmation(); } catch (e) {}
         try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) {}
         initBackButtonHandler();

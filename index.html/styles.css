@@ -115,6 +115,26 @@
     --col-border-color: var(--border-color);
 }
 
+/* Tinted тёмная тема (Настройки → Цвет тёмной темы). Только для тёмной темы, цвета текстов не меняются */
+html[data-dark="tinted"]:not([data-theme="light"]) {
+    --app-bg: #18232E;
+    --card-bg: #213040;
+    --col-bg: #1B2733;
+    --slider-bg: #1B2733;
+    --header-btn-bg: #213040;
+    --border-color: #233242;
+    --divider-color: #233242;
+    --col-border-color: #233242;
+    --fixed-border: #233242;
+    --bottom-menu-border: #233242;
+    --input-bg: #2B3E52;
+    --input2-bg: #283A4D;
+    --input-bg-dark: #263749;
+    --sticky-bg: rgba(40, 58, 77, 0.99);
+    --sticky-bg2: rgba(37, 54, 72, 0.99);
+    --menu-slider-bg: rgba(190, 215, 240, 0.1);
+}
+
 body {
     background-color: var(--app-bg);
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
