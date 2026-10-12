@@ -290,24 +290,17 @@ function showProductInfoPopup(productId) {
             msg += `Стоимость: ${formatPrice(prod.price)}\nКатегория: ${prod.label || prod.category}`;
 
     if (window.Telegram?.WebApp?.showPopup) {
-        const inCart = !!cart[productId];
         window.Telegram.WebApp.showPopup({
             message: msg,
             buttons: [
-                inCart
-                    ? { id: 'remove', type: 'destructive', text: 'Удалить' }
-                    : { id: 'add', type: 'default', text: 'В корзину' },
+                { id: 'buy', type: 'default', text: 'Быстрая покупка' },
                 { id: 'close', type: 'close' }
             ]
         }, (buttonId) => {
-            if (buttonId === 'add') {
+            if (buttonId === 'buy') {
                 hapticLight();
-                handleCartAction(productId, true);
-            } else if (buttonId === 'remove') {
-                hapticMedium();
-                delete cart[productId];
-                saveCartToLocalStorage();
-                updateSingleCard(productId);
+                const g = games.find(g => g.getProducts().some(p => p.id == productId));
+                if (g) openBuyPage(g.id, prod.id);
             }
         });
     } else {
@@ -325,21 +318,13 @@ function showServiceInfoPopup(gameId) {
         window.Telegram.WebApp.showPopup({
             message: msg,
             buttons: [
-                { id: 'goto', type: 'default', text: 'К товарам' },
+                { id: 'buy', type: 'default', text: 'Быстрая покупка' },
                 { id: 'close', type: 'close' }
             ]
         }, (buttonId) => {
-            if (buttonId === 'goto') {
+            if (buttonId === 'buy') {
                 hapticLight();
-                if (g.enabled === false) {
-                    showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
-                    return;
-                }
-                currentGame = g;
-                savedGameScrollY = 0;
-                gameCategoryFilter = "Все категории";
-                gameSearchQuery = "";
-                showPage("game");
+                openBuyPage(g.id);
             }
         });
     } else {
@@ -679,6 +664,13 @@ function saveCartToLocalStorage() {
 }
 
 function loadCartFromLocalStorage() {
+    try {
+        const bk = localStorage.getItem('cartBackup');
+        if (bk && localStorage.getItem('lastPage') !== 'payment') {
+            localStorage.setItem('cart', bk);
+            localStorage.removeItem('cartBackup');
+        }
+    } catch (e) {}
     const savedCart = localStorage.getItem('cart');
     if (!savedCart) return;
 
@@ -1139,40 +1131,31 @@ function updateSingleCard(productId) {
             showPage("game");
         };
     }
-    grid.innerHTML = filteredGames.map(game => {
-        const productsCount = game.getProducts().length;
-        return `
-            <div class="cart-item-wrapper service-wrapper" data-game-id="${game.id}">
-                <div class="cart-item service-card">
-                    <img class="cart-img service-img" src="${game.image}" alt="${escapeHtml(game.name)}">
-                    <div class="service-info">
-                        <div class="product-title-row" data-info-service="${game.id}">
-                            <span class="product-title">${escapeHtml(cleanText(game.name))}</span>
-                            <svg class="icon product-info-icon"><use href="#icon-info"></use></svg>
-                        </div>
-                        <div class="service-price-row">
-                            <span class="service-price">от ${formatPrice(game.minPrice)}</span>
-                            <span class="old-price">${formatPrice(game.oldMinPrice)}</span>
-                        </div>
-                        <div class="service-btns">
-                            <div class="service-btn service-btn-buy" data-buy-game="${game.id}">Купить</div>
-                            <div class="service-btn service-btn-go" data-open-game="${game.id}">К товарам</div>
-                        </div>
+                                            grid.innerHTML = filteredGames.map(game => `
+            <div class="product-card" data-game-id="${game.id}">
+                <div class="card-img-carousel">
+                    <div class="card-img-track">
+                        <img class="card-img" src="${game.image}" alt="${escapeHtml(game.name)}">
                     </div>
                 </div>
-                <div class="cart-item-delivery service-count">
-                    <div class="cart-item-delivery-row">
-                        <span class="cart-item-delivery-label">Количество товаров</span>
-                        <span class="cart-item-delivery-value">${productsCount}</span>
+                <div class="card-info">
+                                            <div class="product-title-row" data-info-service="${game.id}">
+                        <span class="product-title">${escapeHtml(cleanText(game.name))}</span>
+                        <svg class="icon product-info-icon"><use href="#icon-info"></use></svg>
                     </div>
+                    <div class="price-row">
+                        <span class="current-price" style="font-size:19px;color:var(--text-primary);font-weight:500;">от ${formatPrice(game.minPrice)}</span>
+                        <span class="old-price">${formatPrice(game.oldMinPrice)}</span>
+                    </div>
+                    <div class="card-action-btn cart-add-btn" data-open-game="${game.id}">Смотреть</div>
                 </div>
-            </div>`;
-    }).join("");
+            </div>
+                    `).join("");
 
-    requestAnimationFrame(() => fitProductTitles(grid));
+            requestAnimationFrame(() => fitProductTitles(grid));
 
-    grid.querySelectorAll("[data-open-game]").forEach(btn => {
-        btn.addEventListener("click", (e) => {
+            document.querySelectorAll("[data-open-game]").forEach(btn => {
+ btn.addEventListener("click", (e) => {
             e.stopPropagation();
             hapticLight();
             const gameId = btn.dataset.openGame;
@@ -1181,7 +1164,7 @@ function updateSingleCard(productId) {
                 showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
                 return;
             }
-            currentGame = g;
+                            currentGame = g;
             savedGameScrollY = 0;
             gameCategoryFilter = "Все категории";
             gameSearchQuery = "";
@@ -1189,15 +1172,7 @@ function updateSingleCard(productId) {
         });
     });
 
-    grid.querySelectorAll("[data-buy-game]").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            hapticLight();
-            openBuyPage(btn.dataset.buyGame);
-        });
-    });
-
-    grid.querySelectorAll("[data-info-service]").forEach(btn => {
+    document.querySelectorAll("[data-info-service]").forEach(btn => {
         btn.addEventListener("pointerdown", (e) => e.stopPropagation());
         btn.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -1287,6 +1262,7 @@ async function finalizeOrderAfterSuccess() {
     cart = {};
     appliedPromo = null;
     isPromoMode = false;
+    endBuyCheckout();
     updateAllCards();
     renderCartPage();
     navigationHistory = [afterPaymentBackPage];
@@ -1345,7 +1321,7 @@ function getBuyProduct() {
     return g?.getProducts().find(p => p.id === buySel.productId) || null;
 }
 
-function openBuyPage(gameId) {
+function openBuyPage(gameId, productId) {
     const g = games.find(x => x.id === gameId);
     if (!g) return;
     if (g.enabled === false) {
@@ -1357,8 +1333,14 @@ function openBuyPage(gameId) {
         return;
     }
     buySel = { gameId: g.id, category: null, productId: null };
+    const chosen = productId != null ? g.getProducts().find(p => p.id == productId) : null;
+    if (chosen) { buySel.category = chosen.category; buySel.productId = chosen.id; }
     normalizeBuySel();
     ensureBuyPage();
+    // с экрана товаров «назад» возвращает на этот же экран
+    if (document.getElementById("game-page")?.classList.contains("active-page") && currentGame) {
+        navigationHistory.push("game");
+    }
     showPage("buy");
 }
 
@@ -1373,42 +1355,43 @@ function renderBuyPage() {
     const inCat = prods.filter(p => p.category === buySel.category);
     const prod = getBuyProduct();
 
-    const priceHtml = prod
-        ? (appliedPromo
-            ? `<span class="buy-item-price">${formatPrice(Math.round(prod.price * (1 - appliedPromo.discountPercent / 100)))}<span class="buy-item-old">${formatPrice(prod.price)}</span></span>`
-            : `<span class="buy-item-price">${formatPrice(prod.price)}</span>`)
-        : '';
+    const itemsHtml = prod ? buildCollapsedItemsHtml([{
+        name: prod.name,
+        qty: 1,
+        price: appliedPromo ? Math.round(prod.price * (1 - appliedPromo.discountPercent / 100)) : prod.price,
+        originalPrice: prod.price
+    }], 'order-item-row', 'order-item-name', 'order-item-price') : '';
 
+    // разметка карточки и боттом кард — как на странице «Оформление»
     container.innerHTML = `
-        <div class="cart-item-wrapper">
-            <div class="content-card buy-main-card">
-                <div class="form-section">
-                    <div class="form-label">Выберите сервис</div>
-                    <select class="form-select-native" id="buyServiceSelect">
-                        ${games.map(x => `<option value="${escapeHtml(x.id)}" ${x.id === g.id ? 'selected' : ''}>${escapeHtml(x.name)}</option>`).join('')}
-                    </select>
+            <div style="position:relative;margin-bottom:14px;">
+                <div class="content-card" style="position:relative;z-index:2;margin-bottom:0;border-radius:34px;">
+                    <div class="form-section">
+                        <div class="form-label">Выберите сервис</div>
+                        <select class="form-select-native" id="buyServiceSelect">
+                            ${games.map(x => `<option value="${escapeHtml(x.id)}" ${x.id === g.id ? 'selected' : ''}>${escapeHtml(x.name)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-label">Выберите категорию</div>
+                        <select class="form-select-native" id="buyCategorySelect">
+                            ${cats.map(c => `<option value="${escapeHtml(c)}" ${c === buySel.category ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-section" style="margin-bottom:0;">
+                        <div class="form-label">Выберите товар</div>
+                        <select class="form-select-native" id="buyProductSelect">
+                            ${inCat.map(p => `<option value="${escapeHtml(p.id)}" ${p.id === buySel.productId ? 'selected' : ''}>${escapeHtml(cleanText(p.name))}</option>`).join('')}
+                        </select>
+                    </div>
                 </div>
-                <div class="form-section">
-                    <div class="form-label">Выберите категорию</div>
-                    <select class="form-select-native" id="buyCategorySelect">
-                        ${cats.map(c => `<option value="${escapeHtml(c)}" ${c === buySel.category ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
-                    </select>
+                <div style="background:var(--col-bg);border:1px solid var(--col-border-color);border-radius:0 0 28px 28px;padding:12px 18px;margin-top:-30px;padding-top:40px;position:relative;z-index:1;">
+                    ${itemsHtml}
                 </div>
-                <div class="form-section">
-                    <div class="form-label">Выберите товар</div>
-                    <select class="form-select-native" id="buyProductSelect">
-                        ${inCat.map(p => `<option value="${escapeHtml(p.id)}" ${p.id === buySel.productId ? 'selected' : ''}>${escapeHtml(cleanText(p.name))}</option>`).join('')}
-                    </select>
-                </div>
-            </div>
-            <div class="cart-item-delivery buy-items">
-                <div class="cart-item-delivery-row">
-                    ${prod
-                        ? `<span class="buy-item-name">${escapeHtml(cleanText(prod.name))}</span>${priceHtml}`
-                        : `<span class="buy-item-name buy-item-empty">Товар не выбран</span>`}
-                </div>
-            </div>
-        </div>`;
+            </div>`;
+
+    const titleSpan = document.querySelector('#buy-page .page-header-title-btn span');
+    if (titleSpan) titleSpan.textContent = g.name;
 
     document.getElementById("buyServiceSelect").onchange = function() {
         hapticLight();
@@ -1442,32 +1425,30 @@ function renderBuyPage() {
     renderCheckoutBlock();
 }
 
-// Перед оформлением выбранный товар становится содержимым корзины (корзина целиком заменяется)
-function confirmReplaceCartForBuy(pid) {
-    return new Promise(resolve => {
-        const keys = Object.keys(cart);
-        if (!keys.length || (keys.length === 1 && keys[0] === String(pid))) return resolve(true);
-        const msg = 'В корзине уже есть товары. Они будут заменены выбранным товаром.';
-        if (window.Telegram?.WebApp?.showPopup) {
-            window.Telegram.WebApp.showPopup({
-                message: msg,
-                buttons: [
-                    { id: 'replace', type: 'destructive', text: 'Заменить' },
-                    { id: 'close', type: 'close' }
-                ]
-            }, (id) => resolve(id === 'replace'));
-        } else {
-            resolve(window.confirm(msg));
-        }
-    });
+// «Быстрая покупка»: товар оформляется напрямую, корзина пользователя не затрагивается.
+// На время оформления/оплаты корзина подменяется выбранным товаром, настоящая хранится в резерве
+// и возвращается при выходе с Оформления/Оплаты (или после заказа).
+let buyCartBackup = null;
+
+function startBuyCheckout(pid) {
+    if (!pid) return;
+    if (buyCartBackup === null) {
+        buyCartBackup = { ...cart };
+        try { localStorage.setItem('cartBackup', JSON.stringify(buyCartBackup)); } catch (e) {}
+    }
+    cart = { [pid]: 1 };
+    saveCartToLocalStorage();
 }
 
-function applyBuySelectionToCart() {
-    const pid = buySel.productId;
-    if (!pid) return;
-    const keys = Object.keys(cart);
-    if (keys.length === 1 && keys[0] === String(pid)) return;
-    cart = { [pid]: 1 };
+function endBuyCheckout() {
+    let bk = buyCartBackup;
+    if (bk === null) {
+        try { const raw = localStorage.getItem('cartBackup'); if (raw) bk = JSON.parse(raw); } catch (e) {}
+    }
+    if (bk === null) return;
+    buyCartBackup = null;
+    try { localStorage.removeItem('cartBackup'); } catch (e) {}
+    cart = bk;
     saveCartToLocalStorage();
     updateAllCards();
 }
@@ -1553,13 +1534,7 @@ function renderCheckoutBlock() {
                             document.getElementById("checkoutBtn")?.addEventListener("click", async (e) => {
 if (isSubmitting) return;
 const fromBuyPage = isBuyPageActive();
-if (fromBuyPage) {
-    if (!buySel.productId) return;
-    isSubmitting = true;
-    const okReplace = await confirmReplaceCartForBuy(buySel.productId);
-    isSubmitting = false;
-    if (!okReplace) return;
-}
+if (fromBuyPage && !buySel.productId) return;
 isSubmitting = true;
     const btn = e.currentTarget;
 if (btn) {
@@ -1608,7 +1583,7 @@ try {
             }
         }
     }, 350);
-    if (fromBuyPage) applyBuySelectionToCart();
+    if (fromBuyPage) startBuyCheckout(buySel.productId);
     showPage("checkout");
     } catch (e) {
 } finally {
@@ -4258,7 +4233,7 @@ function injectPageHeader() {
     'write-review': 'Оставить отзыв',
 'help': 'Справка',
 'game': currentGame?.name || 'Игра',
-'buy': 'Покупка',
+'buy': games.find(g => g.id === buySel.gameId)?.name || 'Покупка',
 };
 
     const activePage = document.querySelector('.page.active-page');
@@ -4316,6 +4291,7 @@ function showPage(pageId, skipHistoryAdd = false) {
         const rf = document.getElementById("reviewsFixedAction");
         if (rf) rf.remove();
     }
+    if (pageId !== "checkout" && pageId !== "payment") endBuyCheckout();
     if (pageId === "buy") ensureBuyPage();
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
     const targetPage = document.getElementById(pageId + "-page");
@@ -4330,7 +4306,7 @@ function showPage(pageId, skipHistoryAdd = false) {
         if (checkoutBlock) checkoutBlock.style.display = "none";
     }
     if (pageId === "cart") { renderCartPage(); }
-    if (pageId === "buy") { currentGame = null; renderBuyPage(); }
+    if (pageId === "buy") { renderBuyPage(); }
             if (pageId === "orders") {
         runWithLoader(() => renderOrdersPage(), 2000);
         if (checkoutBlock) checkoutBlock.style.display = "none";
@@ -4675,7 +4651,7 @@ setupSearchClear('searchInput', 'searchClearBtn');
             return;
         }
         hapticLight();
-        if (btn.dataset.page === "catalog" && currentGame) {
+        if (btn.dataset.page === "catalog" && currentGame && !isBuyPageActive()) {
             if (document.getElementById("game-page").classList.contains("active-page")) {
                 currentGame = null;
                 savedGameScrollY = 0;
