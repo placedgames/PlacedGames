@@ -388,12 +388,12 @@ body {
 
 .menu-item:nth-child(1) .menu-icon-wrap,
 .menu-item:nth-child(1) .menu-label {
-    transform: translateX(-1px);
+    transform: translateX(-2px);
 }
 
 .menu-item:nth-child(3) .menu-icon-wrap,
 .menu-item:nth-child(3) .menu-label {
-    transform: translateX(1px);
+    transform: translateX(2px);
 }
 
 .search-section {

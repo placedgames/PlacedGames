@@ -293,8 +293,7 @@ function showProductInfoPopup(productId) {
         window.Telegram.WebApp.showPopup({
             message: msg,
             buttons: [
-                { id: 'buy', type: 'default', text: 'Быстрая покупка' },
-                { id: 'close', type: 'close' }
+                { id: 'buy', type: 'default', text: 'Быстрое оформление' }
             ]
         }, (buttonId) => {
             if (buttonId === 'buy') {
@@ -318,8 +317,7 @@ function showServiceInfoPopup(gameId) {
         window.Telegram.WebApp.showPopup({
             message: msg,
             buttons: [
-                { id: 'buy', type: 'default', text: 'Быстрая покупка' },
-                { id: 'close', type: 'close' }
+                { id: 'buy', type: 'default', text: 'Быстрое оформление' }
             ]
         }, (buttonId) => {
             if (buttonId === 'buy') {
@@ -4368,7 +4366,12 @@ if (checkoutBlock) checkoutBlock.style.display = "none";
         }
         saveCurrentPage(pageId);
         updateMenuSlider(pageId);
-            } else if (profileLinkedPages.includes(pageId)) {
+            } else if (pageId === "buy") {
+        document.querySelectorAll(".menu-item").forEach(btn => btn.classList.remove("active"));
+        document.querySelector('.menu-item[data-page="catalog"]')?.classList.add("active");
+        document.getElementById("profileMenuWrapper")?.classList.remove("active");
+        updateMenuSlider("catalog");
+    } else if (profileLinkedPages.includes(pageId)) {
         document.querySelectorAll(".menu-item").forEach(btn => btn.classList.remove("active"));
         if (pageId === 'write-review' && writeReviewEntryPage === 'order') {
             document.querySelector('.menu-item[data-page="orders"]')?.classList.add("active");
