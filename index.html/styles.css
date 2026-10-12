@@ -2226,3 +2226,129 @@ svg.product-info-icon {
 .btn-dots span:nth-child(3) {
     animation-delay: 0.36s;
 }
+
+/* ===== Карточки сервисов в каталоге (картинка слева, справа название, цена и две кнопки) ===== */
+#catalogGrid.products-grid {
+    grid-template-columns: 1fr;
+    gap: 0 12px;
+}
+
+@media (min-width: 700px) {
+    #catalogGrid.products-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (min-width: 1100px) {
+    #catalogGrid.products-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.service-card {
+    gap: 12px;
+    align-items: center;
+    cursor: default;
+}
+
+.service-img {
+    width: 136px;
+    height: 136px;
+}
+
+.service-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.service-info .product-title-row {
+    margin-bottom: 0;
+}
+
+.service-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 5px 0 9px 0;
+    white-space: nowrap;
+}
+
+.service-price {
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.service-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.service-btn {
+    height: 35px;
+    border-radius: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 550;
+    cursor: pointer;
+    transition: 0.1s;
+    user-select: none;
+}
+
+.service-btn:active {
+    transform: scale(0.97);
+}
+
+.service-btn-buy {
+    background: var(--accent-blue-bg);
+    color: #4cb4e9;
+}
+
+.service-btn-go {
+    background: #4cb4e9;
+    color: #ffffff;
+}
+
+/* ===== Страница «Купить» ===== */
+.buy-main-card {
+    margin-bottom: 0;
+    position: relative;
+    z-index: 2;
+    border-radius: 31px 31px 29px 29px;
+}
+
+.buy-items .cart-item-delivery-row {
+    gap: 12px;
+}
+
+.buy-item-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.buy-item-price {
+    flex-shrink: 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+}
+
+.buy-item-old {
+    margin-left: 6px;
+    font-size: 15px;
+    color: var(--text-price-old);
+    text-decoration: line-through;
+}
+
+.buy-item-empty {
+    color: var(--text-secondary);
+}

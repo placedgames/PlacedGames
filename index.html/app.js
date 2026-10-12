@@ -1139,31 +1139,40 @@ function updateSingleCard(productId) {
             showPage("game");
         };
     }
-                                            grid.innerHTML = filteredGames.map(game => `
-            <div class="product-card" data-game-id="${game.id}">
-                <div class="card-img-carousel">
-                    <div class="card-img-track">
-                        <img class="card-img" src="${game.image}" alt="${escapeHtml(game.name)}">
+    grid.innerHTML = filteredGames.map(game => {
+        const productsCount = game.getProducts().length;
+        return `
+            <div class="cart-item-wrapper service-wrapper" data-game-id="${game.id}">
+                <div class="cart-item service-card">
+                    <img class="cart-img service-img" src="${game.image}" alt="${escapeHtml(game.name)}">
+                    <div class="service-info">
+                        <div class="product-title-row" data-info-service="${game.id}">
+                            <span class="product-title">${escapeHtml(cleanText(game.name))}</span>
+                            <svg class="icon product-info-icon"><use href="#icon-info"></use></svg>
+                        </div>
+                        <div class="service-price-row">
+                            <span class="service-price">от ${formatPrice(game.minPrice)}</span>
+                            <span class="old-price">${formatPrice(game.oldMinPrice)}</span>
+                        </div>
+                        <div class="service-btns">
+                            <div class="service-btn service-btn-buy" data-buy-game="${game.id}">Купить</div>
+                            <div class="service-btn service-btn-go" data-open-game="${game.id}">К товарам</div>
+                        </div>
                     </div>
                 </div>
-                <div class="card-info">
-                                            <div class="product-title-row" data-info-service="${game.id}">
-                        <span class="product-title">${escapeHtml(cleanText(game.name))}</span>
-                        <svg class="icon product-info-icon"><use href="#icon-info"></use></svg>
+                <div class="cart-item-delivery service-count">
+                    <div class="cart-item-delivery-row">
+                        <span class="cart-item-delivery-label">Количество товаров</span>
+                        <span class="cart-item-delivery-value">${productsCount}</span>
                     </div>
-                    <div class="price-row">
-                        <span class="current-price" style="font-size:19px;color:var(--text-primary);font-weight:500;">от ${formatPrice(game.minPrice)}</span>
-                        <span class="old-price">${formatPrice(game.oldMinPrice)}</span>
-                    </div>
-                    <div class="card-action-btn cart-add-btn" data-open-game="${game.id}">Смотреть</div>
                 </div>
-            </div>
-                    `).join("");
+            </div>`;
+    }).join("");
 
-            requestAnimationFrame(() => fitProductTitles(grid));
+    requestAnimationFrame(() => fitProductTitles(grid));
 
-            document.querySelectorAll("[data-open-game]").forEach(btn => {
- btn.addEventListener("click", (e) => {
+    grid.querySelectorAll("[data-open-game]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
             e.stopPropagation();
             hapticLight();
             const gameId = btn.dataset.openGame;
@@ -1172,7 +1181,7 @@ function updateSingleCard(productId) {
                 showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
                 return;
             }
-                            currentGame = g;
+            currentGame = g;
             savedGameScrollY = 0;
             gameCategoryFilter = "Все категории";
             gameSearchQuery = "";
@@ -1180,7 +1189,15 @@ function updateSingleCard(productId) {
         });
     });
 
-    document.querySelectorAll("[data-info-service]").forEach(btn => {
+    grid.querySelectorAll("[data-buy-game]").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            hapticLight();
+            openBuyPage(btn.dataset.buyGame);
+        });
+    });
+
+    grid.querySelectorAll("[data-info-service]").forEach(btn => {
         btn.addEventListener("pointerdown", (e) => e.stopPropagation());
         btn.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -1287,10 +1304,180 @@ async function sendOrderToServer(order) {
     } catch (error) { return false; }
 }
 
+// ===== Страница «Купить» (быстрый выбор сервис → категория → товар) =====
+let buySel = { gameId: null, category: null, productId: null };
+
+function ensureBuyPage() {
+    let page = document.getElementById("buy-page");
+    if (page) return page;
+    page = document.createElement("div");
+    page.id = "buy-page";
+    page.className = "page";
+    page.innerHTML = '<div id="buyContent" class="cart-content-padding"></div>';
+    const anchor = document.getElementById("cartCheckoutFixed");
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(page, anchor);
+    else document.body.appendChild(page);
+    return page;
+}
+
+function isBuyPageActive() {
+    return !!document.getElementById("buy-page")?.classList.contains("active-page");
+}
+
+function getBuyCategories(g) {
+    return [...new Set(g.getProducts().map(p => p.category))];
+}
+
+// приводит выбор к допустимому: категория по умолчанию — первая, товар — первый в категории
+function normalizeBuySel() {
+    const g = games.find(x => x.id === buySel.gameId);
+    if (!g) return null;
+    const prods = g.getProducts();
+    const cats = getBuyCategories(g);
+    if (!cats.includes(buySel.category)) buySel.category = cats[0] ?? null;
+    const inCat = prods.filter(p => p.category === buySel.category);
+    if (!inCat.some(p => p.id === buySel.productId)) buySel.productId = inCat[0]?.id ?? null;
+    return g;
+}
+
+function getBuyProduct() {
+    const g = games.find(x => x.id === buySel.gameId);
+    return g?.getProducts().find(p => p.id === buySel.productId) || null;
+}
+
+function openBuyPage(gameId) {
+    const g = games.find(x => x.id === gameId);
+    if (!g) return;
+    if (g.enabled === false) {
+        showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
+        return;
+    }
+    if (!g.getProducts().length) {
+        showAppAlert("Товары в данном сервисе пока недоступны, попробуйте позже");
+        return;
+    }
+    buySel = { gameId: g.id, category: null, productId: null };
+    normalizeBuySel();
+    ensureBuyPage();
+    showPage("buy");
+}
+
+function renderBuyPage() {
+    ensureBuyPage();
+    const container = document.getElementById("buyContent");
+    if (!container) return;
+    const g = normalizeBuySel();
+    if (!g) { showPage("catalog"); return; }
+    const prods = g.getProducts();
+    const cats = getBuyCategories(g);
+    const inCat = prods.filter(p => p.category === buySel.category);
+    const prod = getBuyProduct();
+
+    const priceHtml = prod
+        ? (appliedPromo
+            ? `<span class="buy-item-price">${formatPrice(Math.round(prod.price * (1 - appliedPromo.discountPercent / 100)))}<span class="buy-item-old">${formatPrice(prod.price)}</span></span>`
+            : `<span class="buy-item-price">${formatPrice(prod.price)}</span>`)
+        : '';
+
+    container.innerHTML = `
+        <div class="cart-item-wrapper">
+            <div class="content-card buy-main-card">
+                <div class="form-section">
+                    <div class="form-label">Выберите сервис</div>
+                    <select class="form-select-native" id="buyServiceSelect">
+                        ${games.map(x => `<option value="${escapeHtml(x.id)}" ${x.id === g.id ? 'selected' : ''}>${escapeHtml(x.name)}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-section">
+                    <div class="form-label">Выберите категорию</div>
+                    <select class="form-select-native" id="buyCategorySelect">
+                        ${cats.map(c => `<option value="${escapeHtml(c)}" ${c === buySel.category ? 'selected' : ''}>${escapeHtml(c)}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-section">
+                    <div class="form-label">Выберите товар</div>
+                    <select class="form-select-native" id="buyProductSelect">
+                        ${inCat.map(p => `<option value="${escapeHtml(p.id)}" ${p.id === buySel.productId ? 'selected' : ''}>${escapeHtml(cleanText(p.name))}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
+            <div class="cart-item-delivery buy-items">
+                <div class="cart-item-delivery-row">
+                    ${prod
+                        ? `<span class="buy-item-name">${escapeHtml(cleanText(prod.name))}</span>${priceHtml}`
+                        : `<span class="buy-item-name buy-item-empty">Товар не выбран</span>`}
+                </div>
+            </div>
+        </div>`;
+
+    document.getElementById("buyServiceSelect").onchange = function() {
+        hapticLight();
+        const target = games.find(x => x.id === this.value);
+        if (!target) return;
+        if (target.enabled === false) {
+            showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
+            this.value = buySel.gameId;
+            return;
+        }
+        if (!target.getProducts().length) {
+            showAppAlert("Товары в данном сервисе пока недоступны, попробуйте позже");
+            this.value = buySel.gameId;
+            return;
+        }
+        buySel = { gameId: target.id, category: null, productId: null };
+        renderBuyPage();
+    };
+    document.getElementById("buyCategorySelect").onchange = function() {
+        hapticLight();
+        buySel.category = this.value;
+        buySel.productId = null;
+        renderBuyPage();
+    };
+    document.getElementById("buyProductSelect").onchange = function() {
+        hapticLight();
+        buySel.productId = this.value;
+        renderBuyPage();
+    };
+
+    renderCheckoutBlock();
+}
+
+// Перед оформлением выбранный товар становится содержимым корзины (корзина целиком заменяется)
+function confirmReplaceCartForBuy(pid) {
+    return new Promise(resolve => {
+        const keys = Object.keys(cart);
+        if (!keys.length || (keys.length === 1 && keys[0] === String(pid))) return resolve(true);
+        const msg = 'В корзине уже есть товары. Они будут заменены выбранным товаром.';
+        if (window.Telegram?.WebApp?.showPopup) {
+            window.Telegram.WebApp.showPopup({
+                message: msg,
+                buttons: [
+                    { id: 'replace', type: 'destructive', text: 'Заменить' },
+                    { id: 'close', type: 'close' }
+                ]
+            }, (id) => resolve(id === 'replace'));
+        } else {
+            resolve(window.confirm(msg));
+        }
+    });
+}
+
+function applyBuySelectionToCart() {
+    const pid = buySel.productId;
+    if (!pid) return;
+    const keys = Object.keys(cart);
+    if (keys.length === 1 && keys[0] === String(pid)) return;
+    cart = { [pid]: 1 };
+    saveCartToLocalStorage();
+    updateAllCards();
+}
+
 function renderCheckoutBlock() {
     const fixedBlock = document.getElementById("cartCheckoutFixed");
-    const items = Object.entries(cart);
-    const isCartPageActive = document.getElementById("cart-page").classList.contains("active-page");
+    const buyMode = isBuyPageActive();
+    const items = buyMode ? (buySel.productId ? [[buySel.productId, 1]] : []) : Object.entries(cart);
+    const isCartPageActive = buyMode || document.getElementById("cart-page").classList.contains("active-page");
+    const refreshAfterPromo = () => { if (isBuyPageActive()) renderBuyPage(); else renderCartPage(); };
     if (!items.length || !isCartPageActive) {
         if (fixedBlock) fixedBlock.style.display = "none";
         return;
@@ -1314,7 +1501,7 @@ function renderCheckoutBlock() {
                 if (appliedPromo) appliedPromo = null;
                 isPromoMode = false;
                 renderCheckoutBlock();
-                renderCartPage();
+                refreshAfterPromo();
             }));
             if (applyBtn) applyBtn.addEventListener("click", async () => {
                 hapticLight();
@@ -1332,7 +1519,7 @@ function renderCheckoutBlock() {
                         appliedPromo = { code, discountPercent: data.discount };
                         isPromoMode = false;
                         renderCheckoutBlock();
-                        renderCartPage();
+                        refreshAfterPromo();
                     } else {
                         if (data.reason === 'not_found') {
                             showAppAlert('Промокод не найден');
@@ -1365,6 +1552,14 @@ function renderCheckoutBlock() {
         setTimeout(() => {
                             document.getElementById("checkoutBtn")?.addEventListener("click", async (e) => {
 if (isSubmitting) return;
+const fromBuyPage = isBuyPageActive();
+if (fromBuyPage) {
+    if (!buySel.productId) return;
+    isSubmitting = true;
+    const okReplace = await confirmReplaceCartForBuy(buySel.productId);
+    isSubmitting = false;
+    if (!okReplace) return;
+}
 isSubmitting = true;
     const btn = e.currentTarget;
 if (btn) {
@@ -1413,6 +1608,7 @@ try {
             }
         }
     }, 350);
+    if (fromBuyPage) applyBuySelectionToCart();
     showPage("checkout");
     } catch (e) {
 } finally {
@@ -4062,6 +4258,7 @@ function injectPageHeader() {
     'write-review': 'Оставить отзыв',
 'help': 'Справка',
 'game': currentGame?.name || 'Игра',
+'buy': 'Покупка',
 };
 
     const activePage = document.querySelector('.page.active-page');
@@ -4119,6 +4316,7 @@ function showPage(pageId, skipHistoryAdd = false) {
         const rf = document.getElementById("reviewsFixedAction");
         if (rf) rf.remove();
     }
+    if (pageId === "buy") ensureBuyPage();
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
     const targetPage = document.getElementById(pageId + "-page");
     if (targetPage) targetPage.classList.add("active-page");
@@ -4132,6 +4330,7 @@ function showPage(pageId, skipHistoryAdd = false) {
         if (checkoutBlock) checkoutBlock.style.display = "none";
     }
     if (pageId === "cart") { renderCartPage(); }
+    if (pageId === "buy") { currentGame = null; renderBuyPage(); }
             if (pageId === "orders") {
         runWithLoader(() => renderOrdersPage(), 2000);
         if (checkoutBlock) checkoutBlock.style.display = "none";
