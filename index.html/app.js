@@ -293,10 +293,10 @@ function showProductInfoPopup(productId) {
         window.Telegram.WebApp.showPopup({
             message: msg,
             buttons: [
-                { id: 'buy', type: 'default', text: 'Покупка' },
                 cart[productId]
                     ? { id: 'remove', type: 'destructive', text: 'Удалить' }
-                    : { id: 'add', type: 'default', text: 'В корзину' }
+                    : { id: 'add', type: 'default', text: 'В корзину' },
+                { id: 'buy', type: 'default', text: 'Покупка' }
             ]
         }, (buttonId) => {
             if (buttonId === 'buy') {
@@ -328,8 +328,8 @@ function showServiceInfoPopup(gameId) {
         window.Telegram.WebApp.showPopup({
             message: msg,
             buttons: [
-                { id: 'buy', type: 'default', text: 'Покупка' },
-                { id: 'goto', type: 'default', text: 'К товарам' }
+                { id: 'goto', type: 'default', text: 'К товарам' },
+                { id: 'buy', type: 'default', text: 'Покупка' }
             ]
         }, (buttonId) => {
             if (buttonId === 'buy') {
