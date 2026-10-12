@@ -293,13 +293,24 @@ function showProductInfoPopup(productId) {
         window.Telegram.WebApp.showPopup({
             message: msg,
             buttons: [
-                { id: 'buy', type: 'default', text: 'Быстрое оформление' }
+                { id: 'buy', type: 'default', text: 'Покупка' },
+                cart[productId]
+                    ? { id: 'remove', type: 'destructive', text: 'Удалить' }
+                    : { id: 'add', type: 'default', text: 'В корзину' }
             ]
         }, (buttonId) => {
             if (buttonId === 'buy') {
                 hapticLight();
                 const g = games.find(g => g.getProducts().some(p => p.id == productId));
                 if (g) openBuyPage(g.id, prod.id);
+            } else if (buttonId === 'add') {
+                hapticLight();
+                handleCartAction(productId, true);
+            } else if (buttonId === 'remove') {
+                hapticMedium();
+                delete cart[productId];
+                saveCartToLocalStorage();
+                updateSingleCard(productId);
             }
         });
     } else {
@@ -317,12 +328,24 @@ function showServiceInfoPopup(gameId) {
         window.Telegram.WebApp.showPopup({
             message: msg,
             buttons: [
-                { id: 'buy', type: 'default', text: 'Быстрое оформление' }
+                { id: 'buy', type: 'default', text: 'Покупка' },
+                { id: 'goto', type: 'default', text: 'К товарам' }
             ]
         }, (buttonId) => {
             if (buttonId === 'buy') {
                 hapticLight();
                 openBuyPage(g.id);
+            } else if (buttonId === 'goto') {
+                hapticLight();
+                if (g.enabled === false) {
+                    showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
+                    return;
+                }
+                currentGame = g;
+                savedGameScrollY = 0;
+                gameCategoryFilter = "Все категории";
+                gameSearchQuery = "";
+                showPage("game");
             }
         });
     } else {
@@ -1145,7 +1168,7 @@ function updateSingleCard(productId) {
                         <span class="current-price" style="font-size:19px;color:var(--text-primary);font-weight:500;">от ${formatPrice(game.minPrice)}</span>
                         <span class="old-price">${formatPrice(game.oldMinPrice)}</span>
                     </div>
-                    <div class="card-action-btn cart-add-btn" data-open-game="${game.id}">Смотреть</div>
+                    <div class="card-action-btn cart-add-btn" data-open-game="${game.id}">К товарам</div>
                 </div>
             </div>
                     `).join("");
