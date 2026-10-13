@@ -4663,8 +4663,8 @@ function applyTheme(theme) {
                 tg[name] = function(...args) {
                     const cb = args[cbIndex];
                     if (tgPopupOpen) {
-                        // у showAlert колбэк снимает внутреннюю блокировку showAppAlert — вызываем его
-                        if (name === 'showAlert' && typeof cb === 'function') { try { cb(); } catch (e) {} }
+                        // колбэк (например, у showAlert он снимает блокировку showAppAlert) вызываем без кнопки
+                        if (typeof cb === 'function') { try { cb(); } catch (e) {} }
                         return;
                     }
                     tgPopupOpen = true;
@@ -4683,9 +4683,8 @@ function applyTheme(theme) {
                     }
                 };
             };
+            // showAlert и showConfirm внутри Telegram вызывают showPopup, поэтому защищаем только его
             guardPopup('showPopup', 1);
-            guardPopup('showAlert', 1);
-            guardPopup('showConfirm', 1);
         } catch (e) {}
         try {
             const savedFormat = localStorage.getItem('appFormat') || 'fullscreen';
