@@ -117,10 +117,10 @@
 
 /* Tinted тёмная тема (Настройки → Цвет тёмной темы). Только для тёмной темы, цвета текстов не меняются */
 html[data-dark="tinted"]:not([data-theme="light"]) {
-    --app-bg: #1B2027;
+    --app-bg: #181D23;
     --card-bg: #242D38;
-    --col-bg: #1E242C;
-    --slider-bg: #1E242C;
+    --col-bg: #1B2027;
+    --slider-bg: #1B2027;
     --header-btn-bg: #242D38;
     --border-color: #29333F;
     --divider-color: #2F3A47;

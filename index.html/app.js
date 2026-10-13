@@ -4498,7 +4498,7 @@ function applyDarkVariant(variant) {
 
 function getThemeBgColor(theme) {
     if (theme === 'light') return '#EFEFF3';
-    return getDarkVariant() === 'tinted' ? '#1B2027' : '#111112';
+    return getDarkVariant() === 'tinted' ? '#181D23' : '#111112';
 }
 
 function applyTheme(theme) {
