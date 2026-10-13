@@ -4498,7 +4498,7 @@ function applyDarkVariant(variant) {
 
 function getThemeBgColor(theme) {
     if (theme === 'light') return '#EFEFF3';
-    return getDarkVariant() === 'tinted' ? '#18232E' : '#111112';
+    return getDarkVariant() === 'tinted' ? '#1B2027' : '#111112';
 }
 
 function applyTheme(theme) {
@@ -4652,6 +4652,41 @@ function applyTheme(theme) {
         const tg = window.Telegram.WebApp;
                     tg.ready();
         tg.expand();
+        // Telegram бросает WebAppPopupOpened, если открыть алерт/попап при уже открытом —
+        // повторные нажатия (например, на инфо в профиле) просто игнорируются, пока окно не закрыто
+        try {
+            let tgPopupOpen = false;
+            let tgPopupTimer = null;
+            const guardPopup = (name, cbIndex) => {
+                const orig = tg[name];
+                if (typeof orig !== 'function') return;
+                tg[name] = function(...args) {
+                    const cb = args[cbIndex];
+                    if (tgPopupOpen) {
+                        // у showAlert колбэк снимает внутреннюю блокировку showAppAlert — вызываем его
+                        if (name === 'showAlert' && typeof cb === 'function') { try { cb(); } catch (e) {} }
+                        return;
+                    }
+                    tgPopupOpen = true;
+                    clearTimeout(tgPopupTimer);
+                    tgPopupTimer = setTimeout(() => { tgPopupOpen = false; }, 60000);
+                    args[cbIndex] = function(...r) {
+                        tgPopupOpen = false;
+                        clearTimeout(tgPopupTimer);
+                        if (typeof cb === 'function') return cb.apply(this, r);
+                    };
+                    try {
+                        return orig.apply(tg, args);
+                    } catch (e) {
+                        tgPopupOpen = false;
+                        clearTimeout(tgPopupTimer);
+                    }
+                };
+            };
+            guardPopup('showPopup', 1);
+            guardPopup('showAlert', 1);
+            guardPopup('showConfirm', 1);
+        } catch (e) {}
         try {
             const savedFormat = localStorage.getItem('appFormat') || 'fullscreen';
             if (savedFormat === 'fullsize') {

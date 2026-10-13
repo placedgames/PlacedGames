@@ -117,21 +117,21 @@
 
 /* Tinted тёмная тема (Настройки → Цвет тёмной темы). Только для тёмной темы, цвета текстов не меняются */
 html[data-dark="tinted"]:not([data-theme="light"]) {
-    --app-bg: #18232E;
-    --card-bg: #213040;
-    --col-bg: #1B2733;
-    --slider-bg: #1B2733;
-    --header-btn-bg: #213040;
-    --border-color: #233242;
-    --divider-color: #233242;
-    --col-border-color: #233242;
-    --fixed-border: #233242;
-    --bottom-menu-border: #233242;
-    --input-bg: #2B3E52;
-    --input2-bg: #283A4D;
-    --input-bg-dark: #263749;
-    --sticky-bg: rgba(40, 58, 77, 0.99);
-    --sticky-bg2: rgba(37, 54, 72, 0.99);
+    --app-bg: #1B2027;
+    --card-bg: #242D38;
+    --col-bg: #1E242C;
+    --slider-bg: #1E242C;
+    --header-btn-bg: #242D38;
+    --border-color: #2F3A47;
+    --divider-color: #2F3A47;
+    --col-border-color: #2F3A47;
+    --fixed-border: #2F3A47;
+    --bottom-menu-border: #35414F;
+    --input-bg: #333F4D;
+    --input2-bg: #303B48;
+    --input-bg-dark: #2D3844;
+    --sticky-bg: rgba(43, 54, 66, 0.99);
+    --sticky-bg2: rgba(39, 49, 60, 0.99);
     --menu-slider-bg: rgba(190, 215, 240, 0.1);
 }
 
