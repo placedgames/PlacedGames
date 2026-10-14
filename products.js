@@ -30,11 +30,8 @@ function makeProducts(raw, prefix) {
   });
 }
 
-// ID = КККТТ: первые 2 цифры — номер категории, последние 2 — номер товара в категории.
-// ID — строки (с кавычками), чтобы не терялся ведущий ноль.
-
-// Brawl Stars
-const brawlRaw = [
+  // Brawl Stars
+  const brawlRaw = [
   // 01 Пропуски
   ["0101", "Brawl Pass", "8.99", "8.99", "Пропуск", "Пропуски", 1, ["0101","0102","0103"], false, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/BrawlPass.JPEG"],
   ["0102", "Brawl Pass Plus", "12.99", "12.99", "Пропуск", "Пропуски", 1, ["0101","0102","0103"], false, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/BrawlPassPlus.JPEG"],
@@ -73,24 +70,21 @@ const brawlRaw = [
   //["0603", "Судья Милп", "9.99", "9.99", "Strikers", "Strikers", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/JudgeMilp.JPEG"],
   //["0604", "Суперфорвард Лу", "14.99", "14.99", "Strikers", "Strikers", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/SuperforwardLu.JPEG"],
   
-  // 07 Нано лапша / Виндсток
-  //["0701", "Набор: 3 скина", "29.99", "29.99", "Нано лапша", "Нано лапша", 1, ["0701"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/CyberShelly.JPEG", null, null, false,
-  //["https://cdn.jsdelivr.net/gh/placedgames/media/bs/TickoYaki.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/TechTara.JPEG"],
-  //["Скин «Кибер шелли»", "Скин «Тикояки»", "Скин «Техно тара»"]],
-  ["0702", "Скин: Виндсток грей", "14.99", "14.99", "Виндсток", "Виндсток", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/WindstockGray.JPEG",],
-  ["0703", "Скин: Турбина мо", "9.99", "9.99", "Виндсток", "Виндсток", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/TurbineMo.JPEG",],
-  ["0704", "Скин: Заряженный спраут", "9.99", "9.99", "Виндсток", "Виндсток", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/ChargedSprout.JPEG",],
-  ["0705", "Скин: Матёрый кэндзи", "9.99", "9.99", "Виндсток", "Виндсток", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/MatureKenji.JPEG",],
+  // 07 Виндсток
+  //["0702", "Скин: Виндсток грей", "14.99", "14.99", "Виндсток", "Виндсток", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/WindstockGray.JPEG",],
+  //["0703", "Скин: Турбина мо", "9.99", "9.99", "Виндсток", "Виндсток", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/TurbineMo.JPEG",],
+  //["0704", "Скин: Заряженный спраут", "9.99", "9.99", "Виндсток", "Виндсток", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/ChargedSprout.JPEG",],
+  //["0705", "Скин: Матёрый кэндзи", "9.99", "9.99", "Виндсток", "Виндсток", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/MatureKenji.JPEG",],
   
   // 08 Хеллоуин
   ["0801", "Скин: Доктор белльштейн", "9.99", "9.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/DR.BELLENSTEIN.JPEG"],
   ["0802", "Скин: Страхонавт дэмиан", "14.99", "14.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/TERRORNAUTDAMIAN.JPEG"],
   ["0803", "Скин: Чудовище пайпер", "9.99", "9.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/BELLENSTEINMONSTER.JPEG"],
-  ["0804", "Скин: Тёмный честер", "1.99", "1.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/DARKCHESTER.JPEG"],
-  ["0805", "Скин: Адский чак", "1.99", "1.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/INFERNOCHUCK.JPEG"],
   ["0806", "Скин: Пламенный гонщик чак", "9.99", "9.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/FLAMERIDERCHUCK.JPEG"],
   ["0807", "Скин: Зомброк", "1.99", "1.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/ZOMBROCK.JPEG"],
-  
+  ["0804", "Скин: Тёмный честер", "1.99", "1.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/DARKCHESTER.JPEG"],
+  ["0805", "Скин: Адский чак", "1.99", "1.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/INFERNOCHUCK.JPEG"],
+
   // 09 Esports скины
   //["0901", "Победитель Отис", "4.99", "4.99", "Esports", "Esports", 1, [], true, "https://storage.botpapa.me/files/12adebb0-505b-11f1-bef9-f1ec7a2c6e45.jpeg"],
   //["0902", "Чемпион мира Гас", "4.99", "4.99", "Esports", "Esports", 1, [], true, "https://storage.botpapa.me/files/0de56720-505b-11f1-bef9-f1ec7a2c6e45.jpeg"],
@@ -211,8 +205,13 @@ const brawlRaw = [
   ],
 
   // 15 Ежедневные акции
-  ["1501", "500 монет", "1.99", "1.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/Coins.JPEG"],
-  ["1502", "600 монет", "1.99", "1.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/Coins.JPEG"],
+  ["1501", "625 блингов", "0.99", "0.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/BLINGS2.JPEG"],
+  ["1502", "1275 блингов", "1.99", "1.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/BLINGS2.JPEG"],
+  ["1503", "1375 блингов", "1.99", "1.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/BLINGS2.JPEG"],
+  ["1504", "1500 блингов", "1.99", "1.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/BLINGS2.JPEG"],
+  ["1505", "1700 блингов", "0.99", "0.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/BLINGS2.JPEG"],
+  ["150", "500 монет", "1.99", "1.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/Coins.JPEG"],
+  ["150", "600 монет", "1.99", "1.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/Coins.JPEG"],
   ["1503", "900 монет", "0.99", "0.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/Coins.JPEG"],
   ["1504", "1100 монет", "3.99", "3.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/Coins.JPEG"],
   ["1505", "1255 монет", "4.99", "4.99", "Ежедн. акция", "Ежедн. акции", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/Coins.JPEG"],
