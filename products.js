@@ -1,5 +1,5 @@
 function getRubPrice(usdPrice, isOld = false) {
-  return Math.round(parseFloat(usdPrice) * (isOld ? 95 : 92));
+  return Math.round(parseFloat(usdPrice) * (isOld ? 96 : 93));
 }
 
 function makeProducts(raw, prefix) {
@@ -159,7 +159,7 @@ function makeProducts(raw, prefix) {
   //["1324", "Значок Reply Totem", "1.89", "1.89", "Esports", "Esports", 1, ["1322","1324"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/TOTEMPin.JPEG"],
   //["1325", "Спрей Reply Totem", "1.89", "1.89", "Esports", "Esports", 1, ["1322","1325"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/TOTEMSpray.JPEG"],
  
-  ["1326", "Спрей NAVI", "1.89", "1.89", "Esports", "Esports", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NATUSVINCERE.JPEG"],
+  ["1326", "Спрей NAVI", "1.89", "1.89", "Esports", "Esports", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NAVI.JPEG"],
   //["1327", "Набор: NAVI", "2.49", "2.49", "Esports", "Esports", 1, ["1327","1328","1329","1330"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NAVISpray.JPEG", null, null, false,
   //["https://cdn.jsdelivr.net/gh/placedgames/media/bs/NAVIPin.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NAVIIcon.JPEG"],
   //["Спрей NAVI", "Значок NAVI", "Иконка NAVI"]],
