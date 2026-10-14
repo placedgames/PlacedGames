@@ -1,5 +1,5 @@
 function getRubPrice(usdPrice, isOld = false) {
-  return Math.round(parseFloat(usdPrice) * (isOld ? 99 : 96));
+  return Math.round(parseFloat(usdPrice) * (isOld ? 100 : 96));
 }
 
 function makeProducts(raw, prefix) {
