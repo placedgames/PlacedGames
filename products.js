@@ -1,4 +1,12 @@
+const USD_TO_RUB = {
+  "0.99": [95, 99], "1.19": [114, 119], "1.79": [172, 179], "1.89": [181, 189], "1.99": [191, 199], "2.49": [239, 249], "2.99": [287, 299], "3.99": [383, 399], "4.99": [479, 499], "5.99": [575, 599], "6.99": [671, 699], "7.99": [767, 799], "8.99": [863, 899], "9.99": [959, 999], "10.99": [1055, 1099], "11.99": [1151, 1199],
+  "12.99": [1247, 1299], "13.99": [1343, 1399], "14.99": [1439, 1499], "15.99": [1535, 1599], "16.99": [1631, 1699], "17.99": [1727, 1799], "18.99": [1823, 1899], "19.99": [1919, 1999],
+  "24.99": [2399, 2499], "29.99": [2879, 2999], "32.99": [3167, 3299], "34.99": [3359, 3499], "37.99": [3647, 3799], "49.99": [4799, 4999], "99.99": [9599, 9999]
+};
+
 function getRubPrice(usdPrice, isOld = false) {
+  const prices = USD_TO_RUB[usdPrice];
+  if (prices) return isOld ? prices[1] : prices[0];
   return Math.round(parseFloat(usdPrice) * (isOld ? 100 : 96));
 }
 
@@ -159,7 +167,7 @@ function makeProducts(raw, prefix) {
   //["1324", "Значок Reply Totem", "1.89", "1.89", "Esports", "Esports", 1, ["1322","1324"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/TOTEMPin.JPEG"],
   //["1325", "Спрей Reply Totem", "1.89", "1.89", "Esports", "Esports", 1, ["1322","1325"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/TOTEMSpray.JPEG"],
  
-  ["1326", "Спрей NAVI", "1.89", "1.89", "Esports", "Esports", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NAVI.JPEG"],
+  ["1326", "Спрей NAVI", "1.89", "1.89", "Esports", "Esports", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NATUSVINCERE.JPEG"],
   //["1327", "Набор: NAVI", "2.49", "2.49", "Esports", "Esports", 1, ["1327","1328","1329","1330"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NAVISpray.JPEG", null, null, false,
   //["https://cdn.jsdelivr.net/gh/placedgames/media/bs/NAVIPin.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NAVIIcon.JPEG"],
   //["Спрей NAVI", "Значок NAVI", "Иконка NAVI"]],
