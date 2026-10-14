@@ -77,7 +77,16 @@ const brawlRaw = [
   [125, "Скин: Турбина мо", "9.99", "9.99", "Виндсток", "Виндсток", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/TurbineMo.JPEG",],
   [126, "Скин: Заряженный спраут", "9.99", "9.99", "Виндсток", "Виндсток", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/ChargedSprout.JPEG",],
   [127, "Скин: Матёрый кэндзи", "9.99", "9.99", "Виндсток", "Виндсток", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/MatureKenji.JPEG",],
-
+  
+  // Хеллоуин
+  [124, "Скин: Доктор белльштейн", "9.99", "9.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/DR.BELLENSTEIN.JPEG"],
+  [125, "Скин: Страхонавт дэмиан", "14.99", "14.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/TERRORNAUTDAMIAN.JPEG"],
+  [126, "Скин: Чудовище пайпер", "9.99", "9.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/BELLENSTEINMONSTER.JPEG"],
+  [127, "Скин: Тёмный честер", "1.99", "1.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/DARKCHESTER.JPEG"],
+  [128, "Скин: Адский чак", "1.99", "1.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/INFERNOCHUCK.JPEG"],
+  [129, "Скин: Пламенный гонщик чак", "9.99", "9.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/FLAMERIDERCHUCK.JPEG"],
+  [1182, "Скин: Зомброк", "1.99", "1.99", "Хеллоуин", "Хеллоуин", 1, [], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/ZOMBROCK.JPEG"],
+  
   // Esports скины
   //[15, "Победитель Отис", "4.99", "4.99", "Esports", "Esports", 1, [], true, "https://storage.botpapa.me/files/12adebb0-505b-11f1-bef9-f1ec7a2c6e45.jpeg"],
   //[16, "Чемпион мира Гас", "4.99", "4.99", "Esports", "Esports", 1, [], true, "https://storage.botpapa.me/files/0de56720-505b-11f1-bef9-f1ec7a2c6e45.jpeg"],
