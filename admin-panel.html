@@ -2552,12 +2552,12 @@ body { overflow-x: hidden; }
     });
     const data = await res.json();
     if (!data.success) {
-      document.body.innerHTML = `<div style="color:white;text-align:center;margin-top:40vh;font-size:20px;padding:20px;">Проверка не пройдена<br><span style="font-size:14px;color:#9e9e9e;">${data.reason || ''}</span></div>`;
+      document.body.innerHTML = `<div style="color:white;text-align:center;margin-top:40vh;font-size:20px;padding:20px;">Проверка не пройдена<br><span style="font-size:14px;color:#9e9e9e;">${escapeHtml(data.reason || '')}</span></div>`;
       return;
     }
     sessionStorage.setItem('adminSessionToken', data.sessionToken);
   } catch (e) {
-    document.body.innerHTML = `<div style="color:white;text-align:center;margin-top:40vh;font-size:20px;padding:20px;">Ошибка проверки<br><span style="font-size:14px;color:#9e9e9e;">${e.message}</span></div>`;
+    document.body.innerHTML = `<div style="color:white;text-align:center;margin-top:40vh;font-size:20px;padding:20px;">Ошибка проверки<br><span style="font-size:14px;color:#9e9e9e;">${escapeHtml(e.message)}</span></div>`;
     return;
   }
   const loader = document.getElementById('loaderOverlay');

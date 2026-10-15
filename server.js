@@ -4,13 +4,30 @@ const cors = require('cors');
 const { Pool } = require('pg');
 const rateLimit = require('express-rate-limit');
 const crypto = require('crypto');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
+const fs = require('fs');
 const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const ADMIN_ID = 7593972660;
+const ORDER_STATUS_CODES = ['pending', 'awaiting_code', 'processing', 'in_progress', 'completed', 'done', 'cancelled', 'notfound'];
+const PROMO_TYPES = ['all', 'first_order'];
+
+// Сравнение строк за постоянное время (защита от подбора по времени ответа)
+function safeEqualStr(a, b) {
+    const x = Buffer.from(String(a));
+    const y = Buffer.from(String(b));
+    return x.length === y.length && crypto.timingSafeEqual(x, y);
+}
+
+// Единый ответ на серверную ошибку: подробности только в логах, клиенту — общий текст
+function sendServerError(res, err) {
+    if (err && err.code === '23505') return res.status(400).json({ error: 'Такая запись уже существует' });
+    console.error('Ошибка сервера:', err && err.message);
+    if (!res.headersSent) res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+}
 
 // Сделай два:
 const PREVIEW_START_URL = 'https://i.postimg.cc/nzrHcz7L/F7C34F6E-75C4-4087-99AD-67943D3AFC8B.jpg';
@@ -48,10 +65,10 @@ function verifyAdminSessionToken(token) {
   if (!token || !token.includes('.')) return null;
   const [payloadB64, sig] = token.split('.');
   const expectedSig = crypto.createHmac('sha256', ADMIN_TOKEN).update(payloadB64).digest('hex');
-  if (sig !== expectedSig) return null;
+  if (!sig || !safeEqualStr(sig, expectedSig)) return null;
   try {
     const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
-    if (Date.now() > payload.exp) return null;
+    if (Date.now() > payload.exp || Number(payload.userId) !== ADMIN_ID) return null;
     return payload;
   } catch (e) {
     return null;
@@ -71,6 +88,12 @@ app.use(cors({
 }));
 
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    next();
+});
 app.use(express.json({ limit: '100kb' }));
 app.use('/api/', rateLimit({ windowMs: 60 * 1000, max: 120 }));
 
@@ -226,7 +249,9 @@ async function validatePromo(db, code, userId) {
     if (u.rows.length && !u.rows.every(x => x.status_code === 'notfound')) {
         return { valid: false, reason: 'already_used' };
     }
-    return { valid: true, discount: p.discount, code: upper };
+    const disc = parseInt(p.discount);
+    if (!Number.isInteger(disc) || disc < 1 || disc > 100) return { valid: false, reason: 'not_found' };
+    return { valid: true, discount: disc, code: upper };
 }
 
 
@@ -335,14 +360,14 @@ async function notifyAdminReview(bot, userName, userUsername, text) {
 
 // Уведомление о новом обращении
 async function notifyAdminTicket(bot, ticket) {
-    const usernameText = ticket.user_username ? `@${ticket.user_username}` : (ticket.user_name || 'Неизвестен');
+    const usernameText = escHtml(ticket.user_username ? `@${ticket.user_username}` : (ticket.user_name || 'Неизвестен'));
     const orderText = ticket.order_id ? `Заказ #${ticket.order_id}` : 'Не указан';
 
     const message =
         `${INVISIBLE_LINK}<b>🆕 Новое обращение от ${usernameText}</b>\n\n` +
-        `<b>Причина:</b> ${ticket.reason || 'Другая проблема'}\n` +
+        `<b>Причина:</b> ${escHtml(ticket.reason || 'Другая проблема')}\n` +
         `<b>Заказ:</b> ${orderText}\n\n` +
-        `<b>Текст:</b>\n${ticket.message}`;
+        `<b>Текст:</b>\n${escHtml(ticket.message)}`;
 
     await bot.telegram.sendMessage(ADMIN_ID, message, {
         parse_mode: 'HTML',
@@ -390,7 +415,7 @@ async function notifyUserStatus(bot, order, status, prevUserMsgId) {
         const message =
             `${INVISIBLE_LINK}<b>Обновление статуса заказа</b>\n\n` +
             `<b>Номер заказа:</b> #${order.order_number}\n` +
-            `<b>Статус:</b> ${status}`;
+            `<b>Статус:</b> ${escHtml(status)}`;
 
         const sent = await bot.telegram.sendMessage(order.user_id, message, {
             parse_mode: 'HTML',
@@ -472,6 +497,8 @@ async function initDB() {
         await pool.query(`ALTER TABLE reviews ADD COLUMN IF NOT EXISTS user_username TEXT`);
         await pool.query(`ALTER TABLE reviews ADD COLUMN IF NOT EXISTS satisfied BOOLEAN DEFAULT TRUE`);
         await pool.query(`ALTER TABLE reviews ADD COLUMN IF NOT EXISTS rating TEXT`);
+        await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS reviews_order_id_unique ON reviews(order_id) WHERE order_id IS NOT NULL`)
+            .catch(e => console.error('Индекс отзывов не создан (возможны дубли):', e.message));
         
         await pool.query(`
     CREATE TABLE IF NOT EXISTS referral_earnings (
@@ -637,7 +664,7 @@ app.get('/api/orders', adminAuth, async (req, res) => {
         const result = await pool.query('SELECT * FROM orders ORDER BY id DESC');
         res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -676,26 +703,35 @@ app.get('/api/users', adminAuth, async (req, res) => {
         res.json(result.rows);
     } catch (err) {
         console.error('Ошибка /api/users:', err.message);
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
-const upload = multer({ dest: '/tmp/' });
+const upload = multer({ dest: '/tmp/', limits: { fileSize: 200 * 1024 * 1024, files: 1 } });
 
-app.post('/admin/import-db', upload.single('backup'), (req, res) => {
-  const secret = req.headers['x-import-secret'];
-    if (!process.env.IMPORT_SECRET || secret !== process.env.IMPORT_SECRET) {
-    return res.status(401).send('Unauthorized');
-  }
+// Импорт БД по умолчанию ОТКЛЮЧЁН. Включить: ENABLE_DB_IMPORT=true и IMPORT_SECRET в env.
+// Секрет проверяется до приёма файла. pg_restore запускается без shell (execFile), аргументы не склеиваются.
+function requireImportEnabled(req, res, next) {
+    if (process.env.ENABLE_DB_IMPORT !== 'true') return res.status(403).json({ error: 'Импорт базы отключён' });
+    const secret = String(req.headers['x-import-secret'] || '');
+    const expected = String(process.env.IMPORT_SECRET || '');
+    if (!expected || !safeEqualStr(secret, expected)) return res.status(401).send('Unauthorized');
+    next();
+}
 
-  const filepath = req.file.path;
-  exec(`pg_restore --clean --if-exists -d "${process.env.DATABASE_URL}" ${filepath}`, (err, stdout, stderr) => {
-    if (err) {
-      console.error(stderr);
-      return res.status(500).send('Ошибка импорта: ' + stderr);
-    }
-    res.send('Готово! База восстановлена.');
-  });
+app.post('/admin/import-db', requireImportEnabled, upload.single('backup'), (req, res) => {
+    if (!req.file) return res.status(400).send('Файл не передан');
+    const filepath = req.file.path;
+    execFile('pg_restore', ['--clean', '--if-exists', '-d', process.env.DATABASE_URL, filepath],
+        { timeout: 10 * 60 * 1000 },
+        (err, stdout, stderr) => {
+            fs.unlink(filepath, () => {});
+            if (err) {
+                console.error('Ошибка pg_restore:', stderr);
+                return res.status(500).send('Ошибка импорта. Подробности в логах сервера.');
+            }
+            res.send('Готово! База восстановлена.');
+        });
 });
 
 // ЗАЩИЩЁННЫЕ ЭНДПОИНТЫ (требуют токен)
@@ -704,8 +740,9 @@ app.post('/api/order', userAuth, async (req, res) => {
     const ALLOWED_PAYMENTS = ['Кошелёк', 'Т-Банк', 'МТС Банк', 'ВТБ Банк', 'Сбер Банк', 'Ozon Банк', 'Альфа Банк'];
     const clip = (v, n) => (v == null ? null : String(v).slice(0, n));
     let saved;
-    const client = await pool.connect();
+    let client = null;
     try {
+        client = await pool.connect();
         const o = req.body || {};
         const tgUser = req.tgUser;
         const userId = req.tgUserId;
@@ -808,7 +845,7 @@ app.post('/api/order', userAuth, async (req, res) => {
         if (!err.status) console.error('Ошибка создания заказа:', err.message);
         return res.status(err.status || 500).json({ error: err.status ? err.message : 'Ошибка создания заказа' });
     } finally {
-        client.release();
+        if (client) client.release();
     }
 
     console.log(`Заказ #${saved.order_number} сохранён`);
@@ -836,7 +873,7 @@ app.get('/api/total-revenue', adminAuth, async (req, res) => {
         const result = await pool.query(`SELECT COALESCE(SUM(total), 0) as revenue FROM orders WHERE status_code IN ('completed', 'done')`);
         res.json({ revenue: parseInt(result.rows[0].revenue) });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -847,7 +884,7 @@ app.delete('/api/orders/:id', adminAuth, async (req, res) => {
         if (del.rows[0]) await releaseOrderBlockIfFree(pool, del.rows[0].user_id);
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -857,7 +894,7 @@ app.delete('/api/reviews/:id', adminAuth, async (req, res) => {
         await pool.query('DELETE FROM reviews WHERE id = $1', [id]);
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -866,7 +903,7 @@ app.get('/api/status', async (req, res) => {
         const result = await pool.query('SELECT COUNT(*) as count FROM orders');
         res.json({ status: 'ok', bot: !!BOT_TOKEN, ordersCount: parseInt(result.rows[0].count) });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -877,13 +914,17 @@ app.get('/api/user-orders', userOrAdminAuth, async (req, res) => {
         const result = await pool.query('SELECT * FROM orders WHERE user_id = $1 ORDER BY id DESC', [userId]);
         res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
 app.post('/api/update-status', adminAuth, async (req, res) => {
     try {
-        const { orderId, status, statusCode } = req.body;
+        const orderId = parseInt(req.body.orderId);
+        const status = String(req.body.status || '').slice(0, 100);
+        const statusCode = req.body.statusCode;
+        if (!Number.isInteger(orderId) || !status) return res.status(400).json({ error: 'Некорректные данные' });
+        if (statusCode != null && !ORDER_STATUS_CODES.includes(statusCode)) return res.status(400).json({ error: 'Некорректный статус' });
 
         const orderBefore = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
         if (!orderBefore.rows.length) return res.status(404).json({ error: 'Заказ не найден' });
@@ -976,7 +1017,7 @@ app.post('/api/update-status', adminAuth, async (req, res) => {
         res.json({ success: true, order: order });
     } catch (err) {
         console.error('Ошибка update-status:', err.message);
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1011,7 +1052,7 @@ app.post('/api/submit-code', userAuth, async (req, res) => {
 
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1038,11 +1079,11 @@ app.post('/api/refresh-order', userOrAdminAuth, async (req, res) => {
         res.json({
             ...order,
             user_id: '0', email: null, sender_name: null, payment_method: null,
-            verification_code: null, user_name: null, user_username: null,
+            verification_code: null, user_name: null, user_username: null, comment: null, user_msg_id: null, admin_msg_id: null,
             promo: order.promo ? '***' : null
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1066,11 +1107,11 @@ app.post('/api/track-user', userAuth, async (req, res) => {
                 user_username = EXCLUDED.user_username,
                 photo_url = EXCLUDED.photo_url,
                 last_seen = NOW()
-        `, [userId, String(u.first_name || '').slice(0, 100) || null, u.username || null, safeUrl(u.photo_url), validReferrer]);
+        `, [userId, String(u.first_name || '').slice(0, 100) || null, u.username ? String(u.username).slice(0, 64) : null, safeUrl(u.photo_url), validReferrer]);
 
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1101,7 +1142,7 @@ app.get('/api/referral-stats', userOrAdminAuth, async (req, res) => {
             earned24h: lastEarning.rows[0] ? Math.round(lastEarning.rows[0].amount) : 0
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1147,7 +1188,7 @@ app.get('/api/referral-list', userOrAdminAuth, async (req, res) => {
         res.json(list);
     } catch (err) {
         console.error('Ошибка /api/referral-list:', err.message);
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1163,7 +1204,7 @@ app.get('/api/user-info', userOrAdminAuth, async (req, res) => {
         if (!result.rows.length) return res.status(404).json({ error: 'Не найден' });
         res.json(result.rows[0]);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1174,7 +1215,7 @@ app.get('/api/user-balance', userOrAdminAuth, async (req, res) => {
         const result = await pool.query('SELECT balance FROM app_users WHERE user_id = $1', [String(userId)]);
         res.json({ balance: result.rows[0]?.balance || 0 });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1190,7 +1231,7 @@ app.get('/api/wallet-transactions', userOrAdminAuth, async (req, res) => {
         );
         res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1199,7 +1240,7 @@ app.delete('/api/wallet-transactions/:id', adminAuth, async (req, res) => {
         await pool.query('DELETE FROM wallet_transactions WHERE id = $1', [req.params.id]);
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1228,7 +1269,7 @@ app.post('/api/migrate-users', adminAuth, async (req, res) => {
         const count = await pool.query('SELECT COUNT(*) as count FROM app_users');
         res.json({ success: true, users: parseInt(count.rows[0].count) });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1243,7 +1284,7 @@ app.get('/api/debug-users', adminAuth, async (req, res) => {
             sample_order_users: sample.rows
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1252,7 +1293,7 @@ app.post('/api/check-promo', userAuth, async (req, res) => {
         const r = await validatePromo(pool, req.body.code, req.tgUserId);
         res.json(r.valid ? { valid: true, discount: r.discount } : { valid: false, reason: r.reason });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1294,7 +1335,7 @@ app.get('/api/check-rate-limit', userAuth, async (req, res) => {
     try {
         res.json({ limited: await isOrderBlocked(pool, req.tgUserId) });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1317,7 +1358,7 @@ app.get('/api/user/:userId', adminAuth, async (req, res) => {
         if (!userResult.rows.length) return res.status(404).json({ error: 'Не найден' });
         res.json(userResult.rows[0]);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1326,7 +1367,7 @@ app.post('/api/user/:userId/balance', adminAuth, async (req, res) => {
         const { userId } = req.params;
         const { amount } = req.body;
         const amt = parseInt(amount);
-        if (isNaN(amt) || amt === 0) return res.status(400).json({ error: 'Некорректная сумма' });
+        if (isNaN(amt) || amt === 0 || Math.abs(amt) > 10000000) return res.status(400).json({ error: 'Некорректная сумма' });
         const result = await pool.query(`
             INSERT INTO app_users (user_id, balance) VALUES ($1, $2)
             ON CONFLICT (user_id) DO UPDATE SET balance = app_users.balance + $2
@@ -1340,7 +1381,7 @@ app.post('/api/user/:userId/balance', adminAuth, async (req, res) => {
 
         res.json({ success: true, balance: result.rows[0].balance });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1352,7 +1393,7 @@ app.post('/api/user/:userId/status', adminAuth, async (req, res) => {
         await pool.query('UPDATE app_users SET status = $1 WHERE user_id = $2', [status, userId]);
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1361,6 +1402,9 @@ app.post('/api/sync-products', adminAuth, async (req, res) => {
         const { products } = req.body; // [{id, price, maxQty, conflictGroup}]
         if (!Array.isArray(products) || !products.length) {
             return res.status(400).json({ error: 'Пустой список товаров' });
+        }
+        if (products.length > 500 || products.some(p => !p || typeof p.id !== 'string' || p.id.length > 64 || !Number.isInteger(p.price) || p.price < 0 || p.price > 10000000)) {
+            return res.status(400).json({ error: 'Некорректные товары' });
         }
         for (const p of products) {
             await pool.query(`
@@ -1375,7 +1419,7 @@ app.post('/api/sync-products', adminAuth, async (req, res) => {
         }
         res.json({ success: true, count: products.length });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1389,7 +1433,7 @@ app.get('/api/promo-codes', adminAuth, async (req, res) => {
         const result = await pool.query('SELECT * FROM promo_codes ORDER BY id DESC');
         res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1397,19 +1441,27 @@ app.get('/api/promo-codes', adminAuth, async (req, res) => {
 app.post('/api/promo-codes', adminAuth, async (req, res) => {
     try {
         const { code, discount, type, userId, expiresAt, maxUses } = req.body;
-        if (!code || discount === undefined) {
-            return res.status(400).json({ error: 'Код и скидка обязательны' });
+        const cleanCode = String(code || '').toUpperCase().trim();
+        const discountNum = parseInt(discount);
+        const maxUsesNum = maxUses ? parseInt(maxUses) : null;
+        if (!/^[A-Z0-9_-]{3,32}$/.test(cleanCode) || !Number.isInteger(discountNum) || discountNum < 1 || discountNum > 100) {
+            return res.status(400).json({ error: 'Некорректный код или скидка (1–100%)' });
         }
+        if (maxUsesNum !== null && (!Number.isInteger(maxUsesNum) || maxUsesNum < 1)) {
+            return res.status(400).json({ error: 'Некорректный лимит использований' });
+        }
+        if (type && !PROMO_TYPES.includes(type)) return res.status(400).json({ error: 'Некорректный тип промокода' });
+        if (expiresAt && isNaN(new Date(expiresAt).getTime())) return res.status(400).json({ error: 'Некорректная дата' });
         await pool.query(
             `INSERT INTO promo_codes (code, discount, type, user_id, expires_at, max_uses) 
              VALUES ($1, $2, $3, $4, $5, $6)`,
             [
-                code.toUpperCase(),
-                parseInt(discount),
+                cleanCode,
+                discountNum,
                 type || 'all',
                 userId || null,
                 expiresAt || null,
-                maxUses ? parseInt(maxUses) : null
+                maxUsesNum
             ]
         );
         res.json({ success: true });
@@ -1417,7 +1469,7 @@ app.post('/api/promo-codes', adminAuth, async (req, res) => {
         if (err.code === '23505') {
             res.status(400).json({ error: 'Промокод с таким названием уже существует' });
         } else {
-            res.status(500).json({ error: err.message });
+            sendServerError(res, err);
         }
     }
 });
@@ -1428,7 +1480,7 @@ app.delete('/api/promo-codes/:id', adminAuth, async (req, res) => {
         await pool.query('UPDATE promo_codes SET active = FALSE WHERE id = $1', [req.params.id]);
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1438,7 +1490,7 @@ app.post('/api/promo-codes/:id/activate', adminAuth, async (req, res) => {
         await pool.query('UPDATE promo_codes SET active = TRUE WHERE id = $1', [req.params.id]);
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1448,7 +1500,7 @@ app.delete('/api/promo-codes/:id/delete', adminAuth, async (req, res) => {
         await pool.query('DELETE FROM promo_codes WHERE id = $1', [req.params.id]);
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1483,7 +1535,7 @@ app.get('/api/admin/store-stats', adminAuth, async (req, res) => {
             walletsTotal: parseInt(wallets.rows[0].s)
         });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1503,7 +1555,7 @@ app.get('/api/admin/wallet-transactions', adminAuth, async (req, res) => {
         ]);
         res.json({ total: parseInt(total.rows[0].s), transactions: tx.rows });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1524,7 +1576,7 @@ app.get('/api/admin/reviews', adminAuth, async (req, res) => {
         `, params);
         res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1541,20 +1593,21 @@ app.get('/api/settings', async (req, res) => {
             res.json(result.rows[0]);
         }
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
 app.post('/api/settings', adminAuth, async (req, res) => {
     try {
         const { bot_status } = req.body;
+        if (typeof bot_status !== 'string' || bot_status.length > 20) return res.status(400).json({ error: 'Некорректный статус' });
         await pool.query(`
             INSERT INTO settings (id, bot_status) VALUES (1, $1)
             ON CONFLICT (id) DO UPDATE SET bot_status = $1
         `, [bot_status]);
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1565,14 +1618,16 @@ app.post('/api/settings', adminAuth, async (req, res) => {
 app.get('/api/reviews', async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT r.*, o.items as order_items, o.game_name as order_game_name
+            SELECT r.id, r.user_id, r.user_name, r.user_username, r.photo_url, r.text, r.stars,
+                   r.satisfied, r.rating, r.order_id, r.order_number, r.created_at,
+                   o.items as order_items, o.game_name as order_game_name
             FROM reviews r
             LEFT JOIN orders o ON o.order_number = r.order_number
             ORDER BY r.created_at DESC LIMIT 50
         `);
         res.json(result.rows);
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1606,7 +1661,7 @@ app.post('/api/reviews', userAuth, async (req, res) => {
         }
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        sendServerError(res, err);
     }
 });
 
@@ -1615,10 +1670,12 @@ app.post('/api/reviews', userAuth, async (req, res) => {
 // =============================================
 app.post('/api/admin/verify-telegram', async (req, res) => {
   try {
+    const limit = checkRateLimit(req.ip);
+    if (!limit.allowed) return res.status(429).json({ success: false, reason: 'too_many_attempts' });
     const { initData } = req.body;
-    if (!initData) return res.status(400).json({ success: false });
+    if (!initData || typeof initData !== 'string' || initData.length > 4096) return res.status(400).json({ success: false });
+    if (!BOT_TOKEN) return res.status(503).json({ success: false });
 
-    const crypto = require('crypto');
     const params = new URLSearchParams(initData);
     const hash = params.get('hash');
     params.delete('hash');
@@ -1638,18 +1695,18 @@ app.post('/api/admin/verify-telegram', async (req, res) => {
       .update(dataCheckString)
       .digest('hex');
 
-    if (hash !== expectedHash) {
+    if (!hash || !safeEqualStr(hash, expectedHash)) {
       return res.status(403).json({ success: false, reason: 'invalid_signature' });
     }
 
     const authDate = parseInt(params.get('auth_date'));
     const now = Math.floor(Date.now() / 1000);
-    if (now - authDate > 86400) {
+    if (!authDate || now - authDate > 86400) {
       return res.status(403).json({ success: false, reason: 'expired' });
     }
 
     const user = JSON.parse(params.get('user') || '{}');
-    if (user.id !== 7593972660) {
+    if (Number(user.id) !== ADMIN_ID) {
       return res.status(403).json({ success: false, reason: 'not_admin' });
     }
 
@@ -1661,6 +1718,13 @@ app.post('/api/admin/verify-telegram', async (req, res) => {
     console.error('Ошибка верификации Telegram:', e.message);
     res.status(500).json({ success: false });
   }
+});
+
+app.use((err, req, res, next) => {
+    if (res.headersSent) return next(err);
+    if (err && err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Некорректный JSON' });
+    console.error('Ошибка запроса:', err && err.message);
+    res.status(err && err.status ? err.status : 500).json({ error: 'Ошибка запроса' });
 });
 
 process.on('unhandledRejection', (e) => console.error('unhandledRejection:', e));
