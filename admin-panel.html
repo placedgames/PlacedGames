@@ -2461,9 +2461,9 @@ body { overflow-x: hidden; }
     min-width: 0;
 }
 .chat-row-time {
-    font-size: 18px;
-    font-weight: 550;
-    color: var(--text-primary);
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--text-secondary);
     flex-shrink: 0;
 }
 .chat-row-bottom {
@@ -2501,38 +2501,44 @@ body { overflow-x: hidden; }
     inset: 0;
     z-index: 1100;
     background: var(--app-bg);
-    display: flex;
-    flex-direction: column;
     overflow: hidden;
-    padding-top: var(--tg-safe-area-inset-top, 0px);
+    touch-action: none;
+    overscroll-behavior: none;
 }
 /* закреплённый верх: шапка страницы + графа профиля (не двигаются вместе с перепиской) */
 .chat-top {
-    flex-shrink: 0;
-    position: relative;
+    position: absolute;
+    top: var(--tg-safe-area-inset-top, 0px);
+    left: 0;
+    right: 0;
     z-index: 5;
     padding: 0 16px;
-    background: var(--app-bg);
+    background: none;
+    pointer-events: none;
 }
+.chat-top .page-header-sticky { background: transparent; pointer-events: none; }
+.chat-top .page-header-title-btn,
+.chat-top .page-header-double-btn,
+.chat-top .chat-profile-bar { pointer-events: auto; }
 .chat-profile-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    height: 64px;
-    padding: 0 8px;
+    height: 53px;
+    padding: 0 6px;
     margin-bottom: 8px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 40px;
+    border-radius: 36px;
 }
 .chat-round-btn {
-    width: 46px;
-    height: 46px;
-    min-width: 46px;
+    width: 41px;
+    height: 41px;
+    min-width: 41px;
     border-radius: 50%;
-    border: 1px solid var(--border-color);
-    background: var(--header-btn-bg);
+    border: none;
+    background: rgba(160, 165, 175, 0.24);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2541,10 +2547,10 @@ body { overflow-x: hidden; }
 }
 .chat-round-btn svg { stroke: var(--icon-color-accent); }
 .chat-profile-avatar {
-    width: 46px;
-    height: 46px;
-    min-width: 46px;
-    font-size: 18px;
+    width: 41px;
+    height: 41px;
+    min-width: 41px;
+    font-size: 17px;
 }
 .chat-profile-center {
     flex: 1;
@@ -2573,12 +2579,13 @@ body { overflow-x: hidden; }
     text-overflow: ellipsis;
 }
 .chat-messages {
-    flex: 1;
-    min-height: 0;
+    position: absolute;
+    inset: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
-    padding: 6px 14px calc(var(--bottom-menu-offset, 16px) + 76px);
+    padding: 150px 14px calc(var(--bottom-menu-offset, 16px) + 76px);
     display: flex;
     flex-direction: column;
 }
@@ -2607,9 +2614,9 @@ body { overflow-x: hidden; }
     padding: 7px 11px 6px;
     border-radius: 18px;
     background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    border: none;
     color: var(--text-primary);
-    font-size: 16px;
+    font-size: 17px;
     line-height: 1.35;
     overflow-wrap: anywhere;
     word-wrap: break-word;
@@ -2664,8 +2671,15 @@ body { overflow-x: hidden; }
     cursor: pointer;
 }
 .chat-photo, .chat-video { width: min(250px, 64vw); }
-.chat-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.chat-media video { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
+.chat-media > img, .chat-media > video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.chat-media > video { background: #000; }
 .chat-video video { object-fit: contain; }
 .chat-media.is-sticker { width: 150px; height: 150px; background: none; border-radius: 0; font-size: 56px; }
 .chat-media.is-sticker img { object-fit: contain; }
@@ -2684,7 +2698,7 @@ body { overflow-x: hidden; }
     justify-content: center;
     pointer-events: none;
 }
-.chat-play svg { fill: #ffffff; margin-left: 3px; }
+.chat-play svg { fill: #ffffff; display: block; }
 .chat-dur {
     position: absolute;
     left: 8px;
@@ -2735,13 +2749,14 @@ body { overflow-x: hidden; }
     cursor: pointer;
     padding: 0;
 }
-.chat-voice-btn svg { fill: #ffffff; }
+.chat-voice-btn svg { fill: #ffffff; display: block; }
+.chat-voice-btn span { display: flex; align-items: center; justify-content: center; }
 .chat-voice .ic-pause { display: none; }
 .chat-voice.playing .ic-pause { display: block; }
 .chat-voice.playing .ic-play { display: none; }
 .chat-voice.loading .chat-voice-btn svg { opacity: 0; }
 .chat-voice-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
-.chat-voice-bar { height: 4px; border-radius: 2px; background: var(--input-bg-dark); overflow: hidden; }
+.chat-voice-bar { height: 7px; border-radius: 4px; background: var(--input-bg-dark); overflow: hidden; }
 .chat-voice-bar i { display: block; height: 100%; width: 0; background: var(--icon-color-accent); }
 .chat-voice-dur { font-size: 12px; line-height: 1.2; color: var(--text-secondary); }
 
@@ -3124,7 +3139,7 @@ body { overflow-x: hidden; }
 
 <!-- Полноэкранный чат (открывается из раздела «Чаты») -->
 <div id="chatView" class="chat-view" style="display:none;">
-    <div class="chat-top">
+    <div class="chat-top" id="chatTop">
         <div id="chatHeaderSlot"></div>
         <div class="chat-profile-bar">
             <button class="chat-round-btn" id="chatBackBtn" type="button" aria-label="Назад">
@@ -3132,7 +3147,6 @@ body { overflow-x: hidden; }
             </button>
             <div class="chat-profile-center">
                 <div class="chat-profile-name" id="chatHeadName"></div>
-                <div class="chat-profile-sub" id="chatHeadSub"></div>
             </div>
             <div class="chat-avatar chat-profile-avatar" id="chatHeadAvatar"></div>
         </div>
@@ -5154,6 +5168,7 @@ body { overflow-x: hidden; }
         }
       });
       v.addEventListener('play', () => box.querySelector('.chat-play')?.remove());
+      v.addEventListener('playing', () => box.querySelector(':scope > img')?.remove());
       v.play().catch(() => {});
     } catch (e) {
       if (token === chatState.token) chatToast((e && e.userMessage) || 'Не удалось загрузить видео');
@@ -5277,6 +5292,8 @@ body { overflow-x: hidden; }
     const off = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bottom-menu-offset'), 10) || 16;
     const near = chatIsNearBottom();
     msgs.style.paddingBottom = (bar.offsetHeight + off + 12) + 'px';
+    const top = $('chatTop');
+    if (top && top.offsetHeight) msgs.style.paddingTop = (top.getBoundingClientRect().bottom + 4) + 'px';
     if (near) chatScrollBottom();
   }
   function chatAutosize() {
@@ -5287,15 +5304,9 @@ body { overflow-x: hidden; }
     ta.style.overflowY = ta.scrollHeight > 120 ? 'auto' : 'hidden';
     chatFitInput();
   }
-  // клавиатура: чат подстраивается под видимую область
   function chatFitViewport() {
     const v = $('chatView');
-    const vv = window.visualViewport;
-    if (!v) return;
-    if (!chatState.userId || !vv) { v.style.height = ''; v.style.top = ''; v.style.bottom = ''; return; }
-    v.style.bottom = 'auto';
-    v.style.top = vv.offsetTop + 'px';
-    v.style.height = vv.height + 'px';
+    if (v) { v.style.height = ''; v.style.top = ''; v.style.bottom = ''; }
   }
 
   async function chatSend() {
@@ -5369,7 +5380,6 @@ body { overflow-x: hidden; }
     chatInjectHeader();
     $('chatHeadAvatar').innerHTML = chatAvatarHtml(chatState.user).replace(/^<div class="chat-avatar">/, '').replace(/<\/div>$/, '');
     $('chatHeadName').textContent = chatTitle(chatState.user);
-    $('chatHeadSub').textContent = chatState.user.user_username ? '@' + chatState.user.user_username : '@username';
     $('chatInput').value = '';
     $('chatMessages').innerHTML = `<div class="chat-empty">Загрузка…</div>`;
     $('chatView').style.display = 'flex';
@@ -5470,10 +5480,7 @@ body { overflow-x: hidden; }
       }
     });
     if ('ResizeObserver' in window) new ResizeObserver(() => chatFitInput()).observe($('chatInputBar'));
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', chatFitViewport);
-      window.visualViewport.addEventListener('scroll', chatFitViewport);
-    }
+    if ('ResizeObserver' in window) new ResizeObserver(() => chatFitInput()).observe($('chatTop'));
     $('chatsContent').addEventListener('click', (e) => {
       const row = e.target.closest('.chat-row[data-chat-user]');
       if (row) openChatView(row.dataset.chatUser, { user_name: row.dataset.userName, user_username: row.dataset.userUsername });
