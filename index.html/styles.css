@@ -1356,15 +1356,17 @@ svg.product-info-icon {
 .quick-links-row {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 0;
     margin-bottom: 13px;
-}
-
-.quick-link-card {
-    flex: 1;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 30px;
+    overflow: hidden;
+}
+
+.quick-link-card {
+    position: relative;
+    background: transparent;
     padding: 16px 17px 16px 19px;
     display: flex;
     align-items: center;
@@ -1372,6 +1374,17 @@ svg.product-info-icon {
     gap: 10px;
     cursor: pointer;
     transition: opacity 0.12s;
+}
+
+/* разделитель между пунктами — как в корзине */
+.quick-link-card + .quick-link-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 19px;
+    right: 17px;
+    height: 1px;
+    background: var(--divider-color);
 }
 
 .quick-link-text {
