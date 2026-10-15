@@ -2463,7 +2463,7 @@ switch (order.status_code) {
                 </div>
                 ${order.promo ? `<div class="order-detail-row">
                     <span class="order-detail-label">Промокод</span>
-                    <span class="order-detail-value">${isOwner ? `${order.promo} (${order.promo_discount}%)` : `*** (${order.promo_discount}%)`}</span>
+                    <span class="order-detail-value">${isOwner ? `${escapeHtml(order.promo)} (${Number(order.promo_discount) || 0}%)` : `*** (${Number(order.promo_discount) || 0}%)`}</span>
                 </div>` : ''}
                 ${verCode ? `<div class="order-detail-row">
                     <span class="order-detail-label">Код</span>
