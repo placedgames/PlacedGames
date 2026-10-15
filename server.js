@@ -514,6 +514,28 @@ async function initDB() {
         `);
         await pool.query(`CREATE INDEX IF NOT EXISTS bot_messages_user_id_id ON bot_messages(user_id, id)`)
             .catch(e => console.error('Индекс сообщений бота не создан:', e.message));
+
+        // Медиа в переписке: храним только file_id (и превью), сами файлы подтягиваются из Telegram по требованию
+        await pool.query(`ALTER TABLE bot_messages ADD COLUMN IF NOT EXISTS thumb_id TEXT`);
+        await pool.query(`ALTER TABLE bot_messages ADD COLUMN IF NOT EXISTS meta TEXT`);
+
+        // Отметки «прочитано» админом: последний прочитанный id входящих сообщений по каждому чату
+        const readsTable = await pool.query(`SELECT to_regclass('bot_chat_reads') AS t`);
+        const readsExisted = !!(readsTable.rows[0] && readsTable.rows[0].t);
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS bot_chat_reads (
+                user_id TEXT PRIMARY KEY,
+                last_read_id INTEGER NOT NULL DEFAULT 0
+            )
+        `);
+        if (!readsExisted) {
+            // первый запуск: всё, что уже есть в переписке, считаем прочитанным
+            await pool.query(`
+                INSERT INTO bot_chat_reads (user_id, last_read_id)
+                SELECT user_id, MAX(id) FROM bot_messages GROUP BY user_id
+                ON CONFLICT (user_id) DO NOTHING
+            `).catch(e => console.error('Не удалось проставить прочитанные чаты:', e.message));
+        }
         
         await pool.query(`
     CREATE TABLE IF NOT EXISTS referral_earnings (
@@ -631,14 +653,15 @@ await pool.query(`ALTER TABLE promo_codes ADD COLUMN IF NOT EXISTS used_count IN
 const BOT_TEXT_MAX = 4000;
 
 // Запись сообщения бота в историю переписки (ошибки не пробрасываются)
-async function logBotMessage(userId, direction, kind, text, fileId) {
+async function logBotMessage(userId, direction, kind, text, fileId, thumbId, meta) {
     try {
         const clipped = text == null ? null : String(text).slice(0, BOT_TEXT_MAX);
+        const metaStr = meta ? JSON.stringify(meta).slice(0, 500) : null;
         const r = await pool.query(
-            `INSERT INTO bot_messages (user_id, direction, kind, text, file_id)
-             VALUES ($1, $2, $3, $4, $5)
-             RETURNING id, user_id, direction, kind, text, file_id, created_at`,
-            [String(userId), direction, kind, clipped, fileId || null]
+            `INSERT INTO bot_messages (user_id, direction, kind, text, file_id, thumb_id, meta)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             RETURNING id, user_id, direction, kind, text, (thumb_id IS NOT NULL) AS has_thumb, meta, created_at`,
+            [String(userId), direction, kind, clipped, fileId || null, thumbId || null, metaStr]
         );
         return r.rows[0];
     } catch (e) {
@@ -673,6 +696,16 @@ function getBot() {
 
                                   botInstance.start(async (ctx) => {
             try {
+                // входящий /start тоже попадает в переписку (и считается непрочитанным)
+                try {
+                    if (ctx.chat && ctx.chat.type === 'private' && ctx.from && ctx.from.id !== ADMIN_ID) {
+                        await upsertBotUser(ctx.from);
+                        const startText = (ctx.message && typeof ctx.message.text === 'string' && ctx.message.text) || '/start';
+                        await logBotMessage(String(ctx.from.id), 'in', 'text', startText, null);
+                    }
+                } catch (e) {
+                    console.error('Ошибка логирования /start:', e.message);
+                }
                 const message =
     `${INVISIBLE_LINK_START}<b>Приветствуем в</b> <b><a href="https://t.me/PlacedGamesBot">Placed Games</a></b>\n\n` +
     `<b><a href="https://t.me/PlacedGamesBot">Placed Games</a></b> - это магазин для <b>покупки</b> доната в <b>разные игры</b>`;
@@ -709,6 +742,12 @@ function getBot() {
                 let kind = null;
                 let text = null;
                 let fileId = null;
+                let thumbId = null;
+                let meta = null;
+                const thumbOf = (o) => {
+                    const t = o && (o.thumbnail || o.thumb);
+                    return t && t.file_id ? t.file_id : null;
+                };
                 if (typeof msg.text === 'string') {
                     if (msg.text.startsWith('/')) return next();
                     kind = 'text';
@@ -718,11 +757,42 @@ function getBot() {
                     kind = 'photo';
                     text = msg.caption || null;
                     fileId = largest.file_id;
+                    meta = { w: largest.width, h: largest.height };
+                } else if (msg.animation) {
+                    kind = 'animation';
+                    text = msg.caption || null;
+                    fileId = msg.animation.file_id;
+                    thumbId = thumbOf(msg.animation);
+                    meta = { w: msg.animation.width, h: msg.animation.height, d: msg.animation.duration };
+                } else if (msg.video) {
+                    kind = 'video';
+                    text = msg.caption || null;
+                    fileId = msg.video.file_id;
+                    thumbId = thumbOf(msg.video);
+                    meta = { w: msg.video.width, h: msg.video.height, d: msg.video.duration, size: msg.video.file_size };
+                } else if (msg.video_note) {
+                    kind = 'video_note';
+                    fileId = msg.video_note.file_id;
+                    thumbId = thumbOf(msg.video_note);
+                    meta = { w: msg.video_note.length, h: msg.video_note.length, d: msg.video_note.duration, size: msg.video_note.file_size };
+                } else if (msg.voice) {
+                    kind = 'voice';
+                    fileId = msg.voice.file_id;
+                    meta = { d: msg.voice.duration, size: msg.voice.file_size };
+                } else if (msg.sticker) {
+                    kind = 'sticker';
+                    fileId = msg.sticker.file_id;
+                    thumbId = thumbOf(msg.sticker);
+                    meta = {
+                        w: msg.sticker.width, h: msg.sticker.height,
+                        anim: !!msg.sticker.is_animated, vid: !!msg.sticker.is_video,
+                        emoji: msg.sticker.emoji || null
+                    };
                 }
 
                 if (kind) {
                     await upsertBotUser(from);
-                    await logBotMessage(String(from.id), 'in', kind, text, fileId);
+                    await logBotMessage(String(from.id), 'in', kind, text, fileId, thumbId, meta);
                 }
             } catch (e) {
                 console.error('Ошибка логирования сообщения бота:', e.message);
@@ -1818,16 +1888,23 @@ app.get('/api/admin/chats', adminAuth, async (req, res) => {
                    au.user_name,
                    au.user_username,
                    au.photo_url,
-                   CASE WHEN lm.kind = 'photo' THEN 'Фото' ELSE lm.text END AS last_text,
+                   lm.text AS last_text,
                    lm.kind AS last_kind,
                    lm.direction AS last_direction,
-                   lm.created_at AS last_at
+                   lm.created_at AS last_at,
+                   EXISTS (
+                       SELECT 1 FROM bot_messages bm
+                       WHERE bm.user_id = lm.user_id
+                         AND bm.direction = 'in'
+                         AND bm.id > COALESCE(r.last_read_id, 0)
+                   ) AS unread
             FROM (
                 SELECT DISTINCT ON (user_id) id, user_id, direction, kind, text, created_at
                 FROM bot_messages
                 ORDER BY user_id, id DESC
             ) lm
             LEFT JOIN app_users au ON au.user_id = lm.user_id
+            LEFT JOIN bot_chat_reads r ON r.user_id = lm.user_id
             ORDER BY lm.id DESC
             LIMIT 200
         `);
@@ -1852,9 +1929,9 @@ app.get('/api/admin/chats/:userId', adminAuth, async (req, res) => {
         }
         params.push(limit);
         const result = await pool.query(`
-            SELECT id, direction, kind, text, file_id, created_at
+            SELECT id, direction, kind, text, has_thumb, meta, created_at
             FROM (
-                SELECT id, direction, kind, text, file_id, created_at
+                SELECT id, direction, kind, text, (thumb_id IS NOT NULL) AS has_thumb, meta, created_at
                 FROM bot_messages
                 WHERE ${where}
                 ORDER BY id DESC
@@ -1897,42 +1974,85 @@ app.post('/api/admin/chats/:userId/send', adminAuth, async (req, res) => {
     }
 });
 
-// Фото из переписки: ссылка на файл остаётся на сервере, клиент получает только байты
-app.get('/api/admin/chat-photo/:messageId', adminAuth, async (req, res) => {
+// Отметить чат прочитанным (все входящие на данный момент)
+app.post('/api/admin/chats/:userId/read', adminAuth, async (req, res) => {
+    try {
+        const userId = chatUserId(req.params.userId);
+        if (!userId) return res.status(400).json({ error: 'Некорректный пользователь' });
+        await pool.query(`
+            INSERT INTO bot_chat_reads (user_id, last_read_id)
+            SELECT $1, COALESCE(MAX(id), 0) FROM bot_messages WHERE user_id = $1
+            ON CONFLICT (user_id) DO UPDATE
+            SET last_read_id = GREATEST(bot_chat_reads.last_read_id, EXCLUDED.last_read_id)
+        `, [userId]);
+        res.json({ success: true });
+    } catch (err) {
+        sendServerError(res, err);
+    }
+});
+
+// Медиа из переписки (фото, видео, кружки, голосовые, гифки, стикеры).
+// Файл нигде не сохраняется: сервер берёт его у Telegram по file_id и сразу отдаёт клиенту.
+// ?thumb=1 — маленькое превью (для видео, кружков и анимированных стикеров).
+const CHAT_MEDIA_MIME = {
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif',
+    mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm',
+    oga: 'audio/ogg', ogg: 'audio/ogg', opus: 'audio/ogg', mp3: 'audio/mpeg', m4a: 'audio/mp4'
+};
+const CHAT_MEDIA_FALLBACK = {
+    photo: 'image/jpeg', video: 'video/mp4', animation: 'video/mp4', video_note: 'video/mp4',
+    voice: 'audio/ogg', sticker: 'image/webp'
+};
+
+async function sendChatMedia(req, res) {
     try {
         const id = parseInt(req.params.messageId);
         if (!Number.isInteger(id) || id < 1) return res.status(404).json({ error: 'Не найдено' });
-        const found = await pool.query(`SELECT file_id FROM bot_messages WHERE id = $1 AND kind = 'photo'`, [id]);
-        if (!found.rows.length || !found.rows[0].file_id) return res.status(404).json({ error: 'Не найдено' });
+        const found = await pool.query(`SELECT kind, file_id, thumb_id FROM bot_messages WHERE id = $1`, [id]);
+        if (!found.rows.length) return res.status(404).json({ error: 'Не найдено' });
+        const row = found.rows[0];
+        const wantThumb = req.query.thumb === '1';
+        const fileId = wantThumb ? row.thumb_id : row.file_id;
+        if (!fileId || !CHAT_MEDIA_FALLBACK[row.kind]) return res.status(404).json({ error: 'Не найдено' });
 
         const bot = getBot();
         if (!bot) return res.status(503).json({ error: 'Бот недоступен' });
 
         let fileUrl;
         try {
-            fileUrl = await bot.telegram.getFileLink(found.rows[0].file_id);
+            fileUrl = await bot.telegram.getFileLink(fileId);
         } catch (e) {
-            console.error('Telegram не отдал ссылку на фото:', e.message);
-            return res.status(502).json({ error: 'Не удалось получить фото' });
+            const tooBig = /too big/i.test(String(e && e.message));
+            console.error('Telegram не отдал ссылку на файл:', e.message);
+            return res.status(tooBig ? 413 : 502).json({ error: tooBig ? 'Файл слишком большой (больше 20 МБ)' : 'Не удалось получить файл' });
         }
 
         let upstream;
         try {
             upstream = await fetch(String(fileUrl));
         } catch (e) {
-            console.error('Не удалось загрузить фото из Telegram');
-            return res.status(502).json({ error: 'Не удалось получить фото' });
+            console.error('Не удалось загрузить файл из Telegram');
+            return res.status(502).json({ error: 'Не удалось получить файл' });
         }
-        if (!upstream.ok) return res.status(502).json({ error: 'Не удалось получить фото' });
+        if (!upstream.ok) return res.status(502).json({ error: 'Не удалось получить файл' });
 
         const buf = Buffer.from(await upstream.arrayBuffer());
-        res.setHeader('Content-Type', upstream.headers.get('content-type') || 'image/jpeg');
+        const ext = (String(fileUrl).split('?')[0].split('.').pop() || '').toLowerCase();
+        let mime = CHAT_MEDIA_MIME[ext];
+        if (!mime) {
+            const up = upstream.headers.get('content-type');
+            mime = up && up !== 'application/octet-stream' ? up : (wantThumb ? 'image/jpeg' : CHAT_MEDIA_FALLBACK[row.kind]);
+        }
+        res.setHeader('Content-Type', mime);
         res.setHeader('Cache-Control', 'private, max-age=86400');
         res.send(buf);
     } catch (err) {
         sendServerError(res, err);
     }
-});
+}
+app.get('/api/admin/chat-media/:messageId', adminAuth, sendChatMedia);
+// старый адрес оставлен для совместимости
+app.get('/api/admin/chat-photo/:messageId', adminAuth, sendChatMedia);
 
 // =============================================
 // НАСТРОЙКИ

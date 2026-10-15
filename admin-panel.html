@@ -2437,22 +2437,22 @@ body { overflow-x: hidden; }
     height: 100%;
     object-fit: cover;
 }
-.chat-avatar-sm { width: 36px; height: 36px; min-width: 36px; font-size: 15px; }
 .chat-row-body {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 4px;
 }
 .chat-row-top {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 10px;
 }
+/* имя и дата — как в карточке «Пользователи приложения» (wallet-tx-title / wallet-tx-amount) */
 .chat-row-name {
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 550;
     color: var(--text-primary);
     white-space: nowrap;
@@ -2461,16 +2461,32 @@ body { overflow-x: hidden; }
     min-width: 0;
 }
 .chat-row-time {
-    font-size: 13px;
-    color: var(--text-secondary);
+    font-size: 18px;
+    font-weight: 550;
+    color: var(--text-primary);
     flex-shrink: 0;
 }
+.chat-row-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
 .chat-row-preview {
-    font-size: 15px;
+    flex: 1;
+    min-width: 0;
+    font-size: 16px;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+.chat-unread-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--icon-color-accent);
+    flex-shrink: 0;
 }
 .chat-empty {
     text-align: center;
@@ -2487,48 +2503,69 @@ body { overflow-x: hidden; }
     background: var(--app-bg);
     display: flex;
     flex-direction: column;
-    padding-top: calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px));
+    overflow: hidden;
+    padding-top: var(--tg-safe-area-inset-top, 0px);
 }
-.chat-view-header {
+/* закреплённый верх: шапка страницы + графа профиля (не двигаются вместе с перепиской) */
+.chat-top {
     flex-shrink: 0;
+    position: relative;
+    z-index: 5;
+    padding: 0 16px;
+    background: var(--app-bg);
+}
+.chat-profile-bar {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
-    padding: 10px 16px;
-    background: var(--sticky-bg);
-    border-bottom: 1px solid var(--border-color);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    height: 64px;
+    padding: 0 8px;
+    margin-bottom: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 40px;
 }
-.chat-back-btn {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
+.chat-round-btn {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
     border-radius: 50%;
     border: 1px solid var(--border-color);
     background: var(--header-btn-bg);
-    color: var(--icon-color-accent);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     padding: 0;
 }
-.chat-head-info {
+.chat-round-btn svg { stroke: var(--icon-color-accent); }
+.chat-profile-avatar {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    font-size: 18px;
+}
+.chat-profile-center {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
-.chat-head-name {
-    font-size: 17px;
+.chat-profile-name {
+    max-width: 100%;
+    font-size: 18px;
     font-weight: 600;
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.chat-head-sub {
+.chat-profile-sub {
+    max-width: 100%;
     font-size: 14px;
     color: var(--text-secondary);
     white-space: nowrap;
@@ -2541,7 +2578,7 @@ body { overflow-x: hidden; }
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding: 12px 14px;
+    padding: 6px 14px calc(var(--bottom-menu-offset, 16px) + 76px);
     display: flex;
     flex-direction: column;
 }
@@ -2558,14 +2595,16 @@ body { overflow-x: hidden; }
 .chat-msg {
     display: flex;
     flex-direction: column;
-    max-width: 80%;
+    max-width: 82%;
     margin-bottom: 6px;
 }
 .chat-msg.in { align-self: flex-start; align-items: flex-start; }
 .chat-msg.out { align-self: flex-end; align-items: flex-end; }
 .chat-msg.pending { opacity: 0.6; }
 .chat-bubble {
-    padding: 8px 12px 7px;
+    display: flow-root;
+    position: relative;
+    padding: 7px 11px 6px;
     border-radius: 18px;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -2575,70 +2614,118 @@ body { overflow-x: hidden; }
     overflow-wrap: anywhere;
     word-wrap: break-word;
     min-width: 0;
+    max-width: 100%;
 }
 .chat-msg.in .chat-bubble { border-bottom-left-radius: 6px; }
+/* сообщение админа: синее, без обводки */
 .chat-msg.out .chat-bubble {
     border-bottom-right-radius: 6px;
-    background: rgba(76, 180, 233, 0.18);
-    border-color: rgba(76, 180, 233, 0.35);
+    background: var(--icon-color-accent);
+    border: none;
+    color: #ffffff;
 }
-.chat-text { white-space: pre-wrap; }
+.chat-text { white-space: pre-wrap; color: var(--text-primary); }
+.chat-msg.out .chat-text { color: #ffffff; }
 .chat-text + .chat-text { margin-top: 4px; }
 .chat-muted { color: var(--text-secondary); font-style: italic; }
+/* время — в правом нижнем углу сообщения, текст его не перекрывает */
 .chat-time {
+    float: right;
+    margin: 5px 0 -3px 10px;
     font-size: 12px;
+    line-height: 1.2;
     color: var(--text-secondary);
-    margin-top: 2px;
-    padding: 0 4px;
+    white-space: nowrap;
 }
-.chat-photo {
-    width: 220px;
-    max-width: 66vw;
-    aspect-ratio: 4 / 3;
-    border-radius: 12px;
-    background: var(--input-bg-dark);
+.chat-msg.out .chat-time { color: rgba(255, 255, 255, 0.78); }
+.chat-time-row {
+    text-align: right;
+    padding: 3px 5px 0 0;
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--text-secondary);
+}
+
+/* сообщения с медиа */
+.chat-bubble.has-media { padding: 5px; }
+.chat-bubble.has-media .chat-caption { padding: 6px 6px 2px; }
+.chat-bubble.is-bare { background: none; border: none; padding: 0; }
+.chat-bubble.is-bare .chat-time-row { padding: 2px 4px 0 0; }
+.chat-media {
+    position: relative;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
+    background: var(--input-bg-dark);
+    border-radius: 13px;
     color: var(--text-secondary);
     font-size: 14px;
+    cursor: pointer;
 }
-.chat-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-.chat-input-bar {
-    flex-shrink: 0;
+.chat-photo, .chat-video { width: min(250px, 64vw); }
+.chat-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.chat-media video { width: 100%; height: 100%; object-fit: cover; display: block; background: #000; }
+.chat-video video { object-fit: contain; }
+.chat-media.is-sticker { width: 150px; height: 150px; background: none; border-radius: 0; font-size: 56px; }
+.chat-media.is-sticker img { object-fit: contain; }
+.chat-media.is-round { width: min(200px, 56vw); height: min(200px, 56vw); border-radius: 50%; }
+.chat-play {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 48px;
+    height: 48px;
+    margin: -24px 0 0 -24px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
     display: flex;
-    align-items: flex-end;
-    gap: 8px;
-    padding: 8px 14px calc(8px + var(--tg-safe-area-inset-bottom, 0px));
-    background: var(--sticky-bg);
-    border-top: 1px solid var(--border-color);
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
 }
-.chat-input {
-    flex: 1;
-    min-width: 0;
-    resize: none;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    padding: 10px 14px;
-    font-size: 16px;
-    font-family: inherit;
+.chat-play svg { fill: #ffffff; margin-left: 3px; }
+.chat-dur {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #ffffff;
+    font-size: 12px;
     line-height: 1.3;
-    color: var(--text-primary);
-    max-height: 120px;
-    outline: none;
+    pointer-events: none;
 }
-.chat-input::placeholder { color: #a1a1aa; }
-.chat-send-btn {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
+.chat-media.loading .chat-play { display: none; }
+.chat-media.loading::after, .chat-voice.loading .chat-voice-btn::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 26px;
+    height: 26px;
+    margin: -13px 0 0 -13px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #ffffff;
+    animation: chatSpin 0.8s linear infinite;
+}
+@keyframes chatSpin { to { transform: rotate(360deg); } }
+
+/* голосовые */
+.chat-voice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 200px;
+    padding: 4px 8px 0 4px;
+}
+.chat-voice-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
     border-radius: 50%;
     border: none;
     background: var(--icon-color-accent);
@@ -2648,12 +2735,91 @@ body { overflow-x: hidden; }
     cursor: pointer;
     padding: 0;
 }
+.chat-voice-btn svg { fill: #ffffff; }
+.chat-voice .ic-pause { display: none; }
+.chat-voice.playing .ic-pause { display: block; }
+.chat-voice.playing .ic-play { display: none; }
+.chat-voice.loading .chat-voice-btn svg { opacity: 0; }
+.chat-voice-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.chat-voice-bar { height: 4px; border-radius: 2px; background: var(--input-bg-dark); overflow: hidden; }
+.chat-voice-bar i { display: block; height: 100%; width: 0; background: var(--icon-color-accent); }
+.chat-voice-dur { font-size: 12px; line-height: 1.2; color: var(--text-secondary); }
+
+/* просмотр фото на весь экран */
+.chat-lightbox {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.92);
+    cursor: pointer;
+}
+.chat-lightbox.open { display: flex; animation: chatFade 0.15s ease; }
+.chat-lightbox img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+@keyframes chatFade { from { opacity: 0; } to { opacity: 1; } }
+
+/* поле ввода: закреплено как нижнее меню, отступ — --bottom-menu-offset (настройки) */
+.chat-input-bar {
+    position: absolute;
+    left: var(--bottom-menu-offset, 16px);
+    right: var(--bottom-menu-offset, 16px);
+    bottom: var(--bottom-menu-offset, 16px);
+    z-index: 6;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    min-height: 52px;
+    padding: 6px 6px 6px 18px;
+    background: var(--sticky-bg);
+    border: 1px solid var(--bottom-menu-border);
+    border-radius: 30px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+.chat-input {
+    flex: 1;
+    min-width: 0;
+    resize: none;
+    background: transparent;
+    border: none;
+    padding: 9px 0;
+    font-size: 17px;
+    font-family: inherit;
+    line-height: 1.3;
+    color: var(--text-primary);
+    max-height: 120px;
+    outline: none;
+}
+.chat-input::placeholder { color: #a1a1aa; }
+.chat-send-btn {
+    width: 56px;
+    height: 38px;
+    min-width: 56px;
+    margin-bottom: 1px;
+    border-radius: 20px;
+    border: none;
+    background: var(--icon-color-accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+}
+.chat-send-btn svg { stroke: #ffffff; }
 .chat-send-btn:disabled { opacity: 0.4; }
 .chat-toast {
     position: absolute;
     left: 16px;
     right: 16px;
-    bottom: 80px;
+    bottom: calc(var(--bottom-menu-offset, 16px) + 72px);
+    z-index: 7;
     text-align: center;
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -2958,24 +3124,28 @@ body { overflow-x: hidden; }
 
 <!-- Полноэкранный чат (открывается из раздела «Чаты») -->
 <div id="chatView" class="chat-view" style="display:none;">
-    <div class="chat-view-header">
-        <button class="chat-back-btn" id="chatBackBtn" type="button" aria-label="Назад">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
-        </button>
-        <div class="chat-avatar chat-avatar-sm" id="chatHeadAvatar"></div>
-        <div class="chat-head-info">
-            <div class="chat-head-name" id="chatHeadName"></div>
-            <div class="chat-head-sub" id="chatHeadSub"></div>
+    <div class="chat-top">
+        <div id="chatHeaderSlot"></div>
+        <div class="chat-profile-bar">
+            <button class="chat-round-btn" id="chatBackBtn" type="button" aria-label="Назад">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <div class="chat-profile-center">
+                <div class="chat-profile-name" id="chatHeadName"></div>
+                <div class="chat-profile-sub" id="chatHeadSub"></div>
+            </div>
+            <div class="chat-avatar chat-profile-avatar" id="chatHeadAvatar"></div>
         </div>
     </div>
     <div class="chat-messages" id="chatMessages"></div>
-    <div class="chat-input-bar">
+    <div class="chat-input-bar" id="chatInputBar">
         <textarea class="chat-input" id="chatInput" rows="1" placeholder="Сообщение"></textarea>
         <button class="chat-send-btn" id="chatSendBtn" type="button" aria-label="Отправить">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M6 11l6-6 6 6"/></svg>
         </button>
     </div>
     <div class="chat-toast" id="chatToast"></div>
+    <div class="chat-lightbox" id="chatLightbox"><img alt=""></div>
 </div>
 
 <!-- Закреплённый блок (как #cartCheckoutFixed на фронтенде) -->
@@ -3378,7 +3548,7 @@ body { overflow-x: hidden; }
 
   function openPage(page, params = {}, opts = {}) {
     hideFixedBar();
-    closeChatView();
+    closeChatView({ skipHeader: true });
     const next = { page, params };
     if (!opts.fromBack && cur.page && !sameState(cur, next)) {
       if (opts.reset) {
@@ -3408,6 +3578,7 @@ body { overflow-x: hidden; }
   let renderToken = 0;
 
   function goBack() {
+    if (chatLightboxOpen()) { chatCloseLightbox(); return; }
     if (chatState.userId) { closeChatView(); return; }
     hideFixedBar();
     const prev = navStack.pop();
@@ -4604,17 +4775,18 @@ body { overflow-x: hidden; }
   const CHAT_PAGE_SIZE = 50;
   const CHAT_POLL_MS = 5000;
   const CHAT_LIST_MS = 15000;
-  const CHAT_SEARCH_ICON = `<svg class="icon icon--muted" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-5-5"/></svg>`;
+  const CHAT_SEARCH_ICON = `<img class="search-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E">`;
 
   let chatsList = [];
   let chatsLoaded = false;
   let chatsError = false;
   let chatsLoading = false;
   let chatsSearch = '';
+  let chatsFilter = 'all'; // all | read | unread
 
   const chatState = {
     userId: null, user: null, msgs: [], hasMore: true, loadingOld: false, sending: false,
-    pollTimer: null, observer: null, blobs: new Map(), toastTimer: null, token: 0
+    pollTimer: null, observer: null, blobs: new Map(), pending: new Map(), audio: null, toastTimer: null, token: 0
   };
 
   function chatDateObj(v) {
@@ -4651,23 +4823,71 @@ body { overflow-x: hidden; }
     const img = c.photo_url ? `<img src="${escapeHtml(c.photo_url)}" alt="" onerror="this.remove()">` : '';
     return `<div class="chat-avatar">${letter}${img}</div>`;
   }
+  const CHAT_KIND_LABELS = {
+    photo: 'Фото', video: 'Видео', video_note: 'Видеосообщение',
+    voice: 'Голосовое сообщение', animation: 'GIF', sticker: 'Стикер'
+  };
   function chatPreviewText(c) {
     const prefix = c.last_direction === 'out' ? 'Бот: ' : '';
-    const body = c.last_kind === 'photo' ? 'Фото' : (c.last_text || '');
+    const body = CHAT_KIND_LABELS[c.last_kind] || c.last_text || '';
     return prefix + body;
+  }
+  function chatMeta(m) {
+    if (m._meta) return m._meta;
+    let o = {};
+    try { o = m.meta ? JSON.parse(m.meta) : {}; } catch (e) { o = {}; }
+    m._meta = o && typeof o === 'object' ? o : {};
+    return m._meta;
+  }
+  function chatFmtDur(sec) {
+    sec = Math.max(0, Math.round(Number(sec) || 0));
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
   }
 
   // ----- список чатов -----
   function renderChatsList() {
     const el = $('chatsList');
     if (!el) return;
+
+    // варианты фильтра (счётчик только у «Все чаты»)
+    const sel = $('chatsFilterSelect');
+    if (sel) {
+      const sig = chatsList.length + '|' + chatsFilter;
+      if (sel.dataset.sig !== sig) {
+        sel.dataset.sig = sig;
+        const opts = [
+          { key: 'all', label: `Все чаты (${chatsList.length})` },
+          { key: 'read', label: 'Прочитанные' },
+          { key: 'unread', label: 'Непрочитанные' }
+        ];
+        sel.innerHTML = opts.map(o => `<option value="${o.key}" ${chatsFilter === o.key ? 'selected' : ''}>${o.label}</option>`).join('');
+      }
+    }
+
     if (!chatsLoaded) { el.innerHTML = `<div class="chat-empty">Загрузка…</div>`; return; }
     if (chatsError && !chatsList.length) { el.innerHTML = `<div class="chat-empty">Ошибка загрузки чатов</div>`; return; }
-    const q = chatsSearch.trim().toLowerCase();
-    const list = q
-      ? chatsList.filter(c => `${c.user_name || ''} ${c.user_username || ''}`.toLowerCase().includes(q))
-      : chatsList;
-    if (!list.length) { el.innerHTML = `<div class="chat-empty">${q ? 'Ничего не найдено' : 'Чатов пока нет'}</div>`; return; }
+
+    let list = chatsList;
+    if (chatsFilter === 'unread') list = list.filter(c => c.unread);
+    if (chatsFilter === 'read') list = list.filter(c => !c.unread);
+
+    const rawQ = chatsSearch.trim();
+    if (rawQ) {
+      if (rawQ.startsWith('@')) {
+        const uq = rawQ.slice(1).toLowerCase();
+        list = list.filter(c => (c.user_username || '').toLowerCase().includes(uq));
+      } else if (/^\d+$/.test(rawQ)) {
+        list = list.filter(c => String(c.user_id).includes(rawQ));
+      } else {
+        const nq = rawQ.toLowerCase();
+        list = list.filter(c => (c.user_name || '').toLowerCase().includes(nq));
+      }
+    }
+
+    if (!list.length) {
+      el.innerHTML = `<div class="chat-empty">${(rawQ || chatsFilter !== 'all') ? 'Ничего не найдено' : 'Чатов пока нет'}</div>`;
+      return;
+    }
     el.innerHTML = `<div class="chat-list-card">${list.map(c => `
         <div class="chat-row" data-chat-user="${escapeHtml(c.user_id)}" data-user-name="${escapeHtml(chatTitle(c))}" data-user-username="${escapeHtml(c.user_username || '')}">
             ${chatAvatarHtml(c)}
@@ -4676,7 +4896,10 @@ body { overflow-x: hidden; }
                     <span class="chat-row-name">${escapeHtml(chatTitle(c))}</span>
                     <span class="chat-row-time">${escapeHtml(chatFmtListTime(c.last_at))}</span>
                 </div>
-                <div class="chat-row-preview">${escapeHtml(chatPreviewText(c))}</div>
+                <div class="chat-row-bottom">
+                    <div class="chat-row-preview">${escapeHtml(chatPreviewText(c))}</div>
+                    ${c.unread ? '<span class="chat-unread-dot"></span>' : ''}
+                </div>
             </div>
         </div>`).join('')}</div>`;
   }
@@ -4704,8 +4927,12 @@ body { overflow-x: hidden; }
       container.innerHTML = `<div class="search-section" style="display:flex;gap:10px;margin-bottom:13px;align-items:center;">
         <div class="search-bar">
             ${CHAT_SEARCH_ICON}
-            <input type="text" class="search-input" id="chatsSearchInput" placeholder="Найти по имени или @нику" value="${escapeHtml(chatsSearch)}">
+            <input type="text" class="search-input" id="chatsSearchInput" placeholder="Имя, @юзернейм или ID" value="${escapeHtml(chatsSearch)}">
             <svg class="icon search-clear-btn icon--muted${chatsSearch ? ' visible' : ''}" id="chatsSearchClearBtn"><use href="#icon-cancel"></use></svg>
+        </div>
+        <div class="filter-btn" style="cursor:pointer;position:relative;overflow:hidden;">
+            <svg class="icon icon-filter-catalog icon--primary"><use href="#icon-filter"></use></svg>
+            <select id="chatsFilterSelect" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;font-size:16px;"></select>
         </div>
     </div>
     <div id="chatsList"></div>`;
@@ -4728,18 +4955,58 @@ body { overflow-x: hidden; }
     const d = last && chatDateObj(last.created_at);
     return d ? chatDayKey(d) : '';
   }
-  function chatBubbleHtml(m) {
-    let html = '';
-    if (m.kind === 'photo') {
-      html += `<div class="chat-photo" data-photo-id="${escapeHtml(m.id)}"><span>Фото</span></div>`;
-    }
-    if (m.text) {
-      html += `<div class="chat-text">${escapeHtml(m.text)}</div>`;
-    } else if (m.kind !== 'photo') {
-      html += `<div class="chat-text chat-muted">Сообщение без текста</div>`;
-    }
-    return html;
+  const CHAT_ICON_PLAY = `<svg width="22" height="22" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
+  const CHAT_ICON_PAUSE = `<svg width="20" height="20" viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>`;
+  const CHAT_MEDIA_KINDS = ['photo', 'video', 'video_note', 'voice', 'animation', 'sticker'];
+
+  function chatRatio(meta, def) {
+    const w = Number(meta.w), h = Number(meta.h);
+    const r = (w > 0 && h > 0) ? w / h : def;
+    return Math.min(Math.max(r, 0.7), 1.7);
   }
+
+  function chatMediaHtml(m) {
+    const id = escapeHtml(m.id);
+    const meta = chatMeta(m);
+    switch (m.kind) {
+      case 'photo':
+        return `<div class="chat-media chat-photo" data-kind="photo" data-id="${id}" style="aspect-ratio:${chatRatio(meta, 4 / 3).toFixed(3)}"><span class="chat-ph">Фото</span></div>`;
+      case 'animation':
+        return `<div class="chat-media chat-photo" data-kind="animation" data-id="${id}" style="aspect-ratio:${chatRatio(meta, 4 / 3).toFixed(3)}"><span class="chat-ph">GIF</span></div>`;
+      case 'video':
+        return `<div class="chat-media chat-video" data-kind="video" data-id="${id}" data-thumb="${m.has_thumb ? 1 : 0}" style="aspect-ratio:${chatRatio(meta, 16 / 9).toFixed(3)}">`
+          + `<span class="chat-ph">Видео</span>${meta.d ? `<span class="chat-dur">${chatFmtDur(meta.d)}</span>` : ''}<span class="chat-play">${CHAT_ICON_PLAY}</span></div>`;
+      case 'video_note':
+        return `<div class="chat-media is-round" data-kind="video_note" data-id="${id}" data-thumb="${m.has_thumb ? 1 : 0}">`
+          + `<span class="chat-ph">Видеосообщение</span>${meta.d ? `<span class="chat-dur">${chatFmtDur(meta.d)}</span>` : ''}<span class="chat-play">${CHAT_ICON_PLAY}</span></div>`;
+      case 'sticker': {
+        const useThumb = (meta.anim || meta.vid) ? 1 : 0; // анимированные стикеры показываем статичным превью
+        return `<div class="chat-media is-sticker" data-kind="sticker" data-id="${id}" data-thumb="${useThumb}"><span class="chat-ph">${escapeHtml(meta.emoji || 'Стикер')}</span></div>`;
+      }
+      case 'voice':
+        return `<div class="chat-voice" data-id="${id}" data-dur="${Number(meta.d) || 0}">`
+          + `<button class="chat-voice-btn" type="button" aria-label="Воспроизвести"><span class="ic-play">${CHAT_ICON_PLAY}</span><span class="ic-pause">${CHAT_ICON_PAUSE}</span></button>`
+          + `<div class="chat-voice-main"><div class="chat-voice-bar"><i></i></div><span class="chat-voice-dur">${chatFmtDur(meta.d)}</span></div></div>`;
+    }
+    return '';
+  }
+
+  function chatBubbleHtml(m, timeStr) {
+    const timeHtml = `<span class="chat-time">${escapeHtml(timeStr)}</span>`;
+    const isMedia = CHAT_MEDIA_KINDS.includes(m.kind);
+    if (isMedia) {
+      const bare = m.kind === 'sticker' || m.kind === 'video_note';
+      const cap = (m.text && !bare)
+        ? `<div class="chat-text chat-caption">${escapeHtml(m.text)}${timeHtml}</div>`
+        : `<div class="chat-time-row">${escapeHtml(timeStr)}</div>`;
+      return `<div class="chat-bubble ${bare ? 'is-bare' : 'has-media'}">${chatMediaHtml(m)}${cap}</div>`;
+    }
+    const body = m.text
+      ? `<div class="chat-text">${escapeHtml(m.text)}${timeHtml}</div>`
+      : `<div class="chat-text chat-muted">Сообщение без текста${timeHtml}</div>`;
+    return `<div class="chat-bubble">${body}</div>`;
+  }
+
   function chatMsgsHtml(list, prevKey) {
     let html = '';
     let pk = prevKey || '';
@@ -4749,21 +5016,22 @@ body { overflow-x: hidden; }
       const sep = d && key !== pk ? `<div class="chat-date-sep">${escapeHtml(chatDayLabel(d))}</div>` : '';
       const dir = m.direction === 'out' ? 'out' : 'in';
       html += `${sep}<div class="chat-msg ${dir}${m.pending ? ' pending' : ''}" data-msg-id="${escapeHtml(m.id)}">`
-        + `<div class="chat-bubble">${chatBubbleHtml(m)}</div>`
-        + `<div class="chat-time">${d ? chatFmtClock(d) : ''}</div></div>`;
+        + chatBubbleHtml(m, d ? chatFmtClock(d) : '')
+        + `</div>`;
       pk = key;
     }
     return html;
   }
   function chatRenderAll() {
     const el = $('chatMessages');
+    chatStopAudio();
     chatState.observer && chatState.observer.disconnect();
     if (!chatState.msgs.length) {
       el.innerHTML = `<div class="chat-empty">Сообщений пока нет</div>`;
       return;
     }
     el.innerHTML = chatMsgsHtml(chatState.msgs, '');
-    chatHydratePhotos(el);
+    chatHydrateMedia(el);
   }
   function chatAppendMsgs(list) {
     if (!list.length) return;
@@ -4773,42 +5041,181 @@ body { overflow-x: hidden; }
     chatState.msgs = chatState.msgs.concat(list);
     el.querySelector('.chat-empty')?.remove();
     el.insertAdjacentHTML('beforeend', chatMsgsHtml(list, prevKey));
-    chatHydratePhotos(el);
+    chatHydrateMedia(el);
     if (near || list.some(m => m.direction === 'out')) chatScrollBottom();
+    // пока чат открыт, новые входящие сразу считаются прочитанными
+    if (list.some(m => m.direction === 'in') && !document.hidden) chatMarkRead();
   }
 
-  // фото: грузим по требованию, в памяти вкладки (blob), без хранения
-  function chatHydratePhotos(root) {
-    root.querySelectorAll('.chat-photo[data-photo-id]:not([data-state])').forEach(box => {
+  async function chatMarkRead() {
+    const uid = chatState.userId;
+    if (!uid) return;
+    const c = chatsList.find(x => String(x.user_id) === String(uid));
+    if (c) c.unread = false;
+    try { await apiSend('POST', `/api/admin/chats/${encodeURIComponent(uid)}/read`, {}); } catch (e) {}
+  }
+
+  // медиа: файлы не хранятся на сервере — берём у Telegram по требованию и держим в памяти вкладки (blob)
+  async function chatBlobUrl(id, thumb) {
+    const key = String(id) + (thumb ? ':t' : '');
+    const cached = chatState.blobs.get(key);
+    if (cached) return cached;
+    const waiting = chatState.pending.get(key);
+    if (waiting) return waiting;
+    const token = chatState.token;
+    const job = (async () => {
+      const r = await fetch(API + '/api/admin/chat-media/' + encodeURIComponent(id) + (thumb ? '?thumb=1' : ''), {
+        cache: 'no-store', headers: { 'Authorization': `Bearer ${getAdminToken()}` }
+      });
+      if (!r.ok) {
+        let msg = '';
+        try { msg = (await r.json()).error || ''; } catch (e) {}
+        const err = new Error(msg || ('HTTP ' + r.status));
+        err.userMessage = msg;
+        throw err;
+      }
+      const blob = await r.blob();
+      if (token !== chatState.token) throw new Error('stale');
+      const url = URL.createObjectURL(blob);
+      chatState.blobs.set(key, url);
+      return url;
+    })();
+    chatState.pending.set(key, job);
+    try { return await job; } finally { chatState.pending.delete(key); }
+  }
+
+  function chatHydrateMedia(root) {
+    root.querySelectorAll('.chat-media[data-id]:not([data-state])').forEach(box => {
       box.dataset.state = 'wait';
       if (chatState.observer) chatState.observer.observe(box);
-      else chatLoadPhoto(box);
+      else chatLoadMedia(box);
     });
   }
-  async function chatLoadPhoto(box) {
-    const id = box.dataset.photoId;
+
+  function chatSetPlaceholder(box, text) {
+    const ph = box.querySelector('.chat-ph');
+    if (ph) ph.textContent = text;
+  }
+
+  async function chatLoadMedia(box) {
+    const kind = box.dataset.kind;
+    const hasThumb = box.dataset.thumb === '1';
     const token = chatState.token;
+    // видео и кружки: до нажатия показываем только превью
+    if ((kind === 'video' || kind === 'video_note') && !hasThumb) { box.dataset.state = 'ok'; return; }
+    const wantThumb = (kind === 'video' || kind === 'video_note') ? true : (kind === 'sticker' ? hasThumb : false);
+    box.dataset.state = 'loading';
     try {
-      let url = chatState.blobs.get(String(id));
-      if (!url) {
-        const r = await fetch(API + '/api/admin/chat-photo/' + encodeURIComponent(id), {
-          cache: 'no-store', headers: { 'Authorization': `Bearer ${getAdminToken()}` }
-        });
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        const blob = await r.blob();
-        if (token !== chatState.token) return;
-        url = URL.createObjectURL(blob);
-        chatState.blobs.set(String(id), url);
-      }
+      const url = await chatBlobUrl(box.dataset.id, wantThumb);
       if (token !== chatState.token || !box.isConnected) return;
-      box.innerHTML = `<img src="${url}" alt="Фото">`;
+      box.querySelector('.chat-ph')?.remove();
+      if (kind === 'animation') {
+        const v = document.createElement('video');
+        v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+        v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+        v.src = url;
+        box.insertBefore(v, box.firstChild);
+        v.play().catch(() => {});
+      } else {
+        const img = document.createElement('img');
+        img.alt = ''; img.draggable = false; img.src = url;
+        box.insertBefore(img, box.firstChild);
+      }
       box.dataset.state = 'ok';
     } catch (e) {
       if (token === chatState.token && box.isConnected) {
-        box.innerHTML = '<span>Фото</span>';
+        chatSetPlaceholder(box, e && e.userMessage ? e.userMessage : 'Не загрузилось. Нажмите, чтобы повторить');
         box.dataset.state = 'error';
       }
     }
+  }
+
+  async function chatPlayVideo(box) {
+    box.classList.add('loading');
+    const token = chatState.token;
+    try {
+      const url = await chatBlobUrl(box.dataset.id, false);
+      if (token !== chatState.token || !box.isConnected) return;
+      const v = document.createElement('video');
+      v.playsInline = true; v.autoplay = true;
+      v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+      v.controls = box.dataset.kind === 'video';
+      v.src = url;
+      const poster = box.querySelector('img');
+      if (poster) v.poster = poster.src;
+      box.querySelector('.chat-play')?.remove();
+      box.querySelector('.chat-dur')?.remove();
+      box.appendChild(v);
+      box.dataset.playing = '1';
+      v.addEventListener('ended', () => {
+        if (box.dataset.kind === 'video_note') {
+          v.currentTime = 0;
+          if (!box.querySelector('.chat-play')) box.insertAdjacentHTML('beforeend', `<span class="chat-play">${CHAT_ICON_PLAY}</span>`);
+        }
+      });
+      v.addEventListener('play', () => box.querySelector('.chat-play')?.remove());
+      v.play().catch(() => {});
+    } catch (e) {
+      if (token === chatState.token) chatToast((e && e.userMessage) || 'Не удалось загрузить видео');
+    } finally {
+      box.classList.remove('loading');
+    }
+  }
+
+  function chatStopAudio() {
+    const c = chatState.audio;
+    if (!c) return;
+    chatState.audio = null;
+    try { c.el.pause(); } catch (e) {}
+    c.box.classList.remove('playing');
+    const bar = c.box.querySelector('.chat-voice-bar i');
+    if (bar) bar.style.width = '0';
+  }
+
+  async function chatToggleVoice(box) {
+    const cur = chatState.audio;
+    if (cur && cur.box === box) {
+      if (cur.el.paused) cur.el.play().catch(() => {}); else cur.el.pause();
+      return;
+    }
+    chatStopAudio();
+    box.classList.add('loading');
+    const token = chatState.token;
+    try {
+      const url = await chatBlobUrl(box.dataset.id, false);
+      if (token !== chatState.token || !box.isConnected) return;
+      const a = new Audio(url);
+      const bar = box.querySelector('.chat-voice-bar i');
+      const total = Number(box.dataset.dur) || 0;
+      chatState.audio = { box, el: a };
+      a.addEventListener('timeupdate', () => {
+        const dur = isFinite(a.duration) && a.duration > 0 ? a.duration : total;
+        if (bar && dur) bar.style.width = Math.min(100, a.currentTime / dur * 100) + '%';
+      });
+      a.addEventListener('play', () => box.classList.add('playing'));
+      a.addEventListener('pause', () => box.classList.remove('playing'));
+      a.addEventListener('ended', () => chatStopAudio());
+      a.addEventListener('error', () => { chatToast('Не удалось воспроизвести голосовое на этом устройстве'); chatStopAudio(); });
+      await a.play();
+    } catch (e) {
+      chatToast((e && e.userMessage) || 'Не удалось воспроизвести голосовое');
+      chatStopAudio();
+    } finally {
+      box.classList.remove('loading');
+    }
+  }
+
+  // фото на весь экран: закрывается тапом по фото или по затемнённой области
+  function chatLightboxOpen() { return $('chatLightbox').classList.contains('open'); }
+  function chatOpenLightbox(src) {
+    const lb = $('chatLightbox');
+    lb.querySelector('img').src = src;
+    lb.classList.add('open');
+  }
+  function chatCloseLightbox() {
+    const lb = $('chatLightbox');
+    lb.classList.remove('open');
+    lb.querySelector('img').removeAttribute('src');
   }
 
   function chatStopPoll() {
@@ -4819,8 +5226,8 @@ body { overflow-x: hidden; }
     chatStopPoll();
     chatState.pollTimer = setInterval(chatPoll, CHAT_POLL_MS);
   }
-  async function chatPoll() {
-    if (!chatState.userId || document.hidden) return;
+  async function chatPoll(force) {
+    if (!chatState.userId || (document.hidden && !force)) return;
     const uid = chatState.userId;
     const token = chatState.token;
     try {
@@ -4828,6 +5235,8 @@ body { overflow-x: hidden; }
       if (token !== chatState.token || !Array.isArray(list)) return;
       const known = new Set(chatState.msgs.map(m => String(m.id)));
       chatAppendMsgs(list.filter(m => !known.has(String(m.id))));
+      // повторяем загрузку медиа, которое не удалось получить
+      $('chatMessages').querySelectorAll('.chat-media[data-state="error"]').forEach(box => chatLoadMedia(box));
     } catch (e) {}
   }
 
@@ -4861,12 +5270,32 @@ body { overflow-x: hidden; }
     clearTimeout(chatState.toastTimer);
     chatState.toastTimer = setTimeout(() => t.classList.remove('visible'), 2600);
   }
+  function chatFitInput() {
+    const bar = $('chatInputBar');
+    const msgs = $('chatMessages');
+    if (!bar || !msgs || !bar.offsetHeight) return;
+    const off = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bottom-menu-offset'), 10) || 16;
+    const near = chatIsNearBottom();
+    msgs.style.paddingBottom = (bar.offsetHeight + off + 12) + 'px';
+    if (near) chatScrollBottom();
+  }
   function chatAutosize() {
     const ta = $('chatInput');
     ta.style.height = 'auto';
     const h = Math.min(ta.scrollHeight, 120);
     ta.style.height = h + 'px';
     ta.style.overflowY = ta.scrollHeight > 120 ? 'auto' : 'hidden';
+    chatFitInput();
+  }
+  // клавиатура: чат подстраивается под видимую область
+  function chatFitViewport() {
+    const v = $('chatView');
+    const vv = window.visualViewport;
+    if (!v) return;
+    if (!chatState.userId || !vv) { v.style.height = ''; v.style.top = ''; v.style.bottom = ''; return; }
+    v.style.bottom = 'auto';
+    v.style.top = vv.offsetTop + 'px';
+    v.style.height = vv.height + 'px';
   }
 
   async function chatSend() {
@@ -4915,6 +5344,13 @@ body { overflow-x: hidden; }
     }
   }
 
+  function chatInjectHeader() {
+    document.querySelectorAll('.page-header-sticky').forEach(el => el.remove());
+    const opts = `<option value="" disabled>Выберите страницу</option>` +
+      NAV_PAGES.map(p => `<option value="${p.id}" ${p.id === 'chats' ? 'selected' : ''}>${p.title}</option>`).join('');
+    $('chatHeaderSlot').innerHTML = renderPageHeader(chatTitle(chatState.user), opts);
+  }
+
   function openChatView(userId, hint) {
     if (!userId) return;
     hapticLight();
@@ -4930,21 +5366,23 @@ body { overflow-x: hidden; }
     chatState.loadingOld = false;
     chatState.sending = false;
 
-    $('chatHeadAvatar').innerHTML = chatAvatarHtml(chatState.user);
+    chatInjectHeader();
+    $('chatHeadAvatar').innerHTML = chatAvatarHtml(chatState.user).replace(/^<div class="chat-avatar">/, '').replace(/<\/div>$/, '');
     $('chatHeadName').textContent = chatTitle(chatState.user);
-    $('chatHeadSub').textContent = chatSub(chatState.user);
+    $('chatHeadSub').textContent = chatState.user.user_username ? '@' + chatState.user.user_username : '@username';
     $('chatInput').value = '';
-    chatAutosize();
     $('chatMessages').innerHTML = `<div class="chat-empty">Загрузка…</div>`;
     $('chatView').style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    chatAutosize();
+    chatFitViewport();
 
     chatState.observer = ('IntersectionObserver' in window)
       ? new IntersectionObserver((entries) => {
           entries.forEach(en => {
             if (en.isIntersecting) {
               chatState.observer.unobserve(en.target);
-              chatLoadPhoto(en.target);
+              chatLoadMedia(en.target);
             }
           });
         }, { root: $('chatMessages'), rootMargin: '200px 0px' })
@@ -4958,6 +5396,7 @@ body { overflow-x: hidden; }
         chatState.hasMore = chatState.msgs.length >= CHAT_PAGE_SIZE;
         chatRenderAll();
         chatScrollBottom();
+        chatMarkRead();
       })
       .catch(() => {
         if (token !== chatState.token) return;
@@ -4968,14 +5407,17 @@ body { overflow-x: hidden; }
       });
   }
 
-  function closeChatView() {
+  function closeChatView(opts) {
     if (!chatState.userId) return;
     chatStopPoll();
+    chatStopAudio();
+    chatCloseLightbox();
     chatState.token++;
     if (chatState.observer) chatState.observer.disconnect();
     chatState.observer = null;
     chatState.blobs.forEach(u => { try { URL.revokeObjectURL(u); } catch (e) {} });
     chatState.blobs = new Map();
+    chatState.pending = new Map();
     chatState.userId = null;
     chatState.user = null;
     chatState.msgs = [];
@@ -4983,8 +5425,11 @@ body { overflow-x: hidden; }
     chatState.loadingOld = false;
     $('chatInput').blur();
     $('chatView').style.display = 'none';
+    chatFitViewport();
     $('chatMessages').innerHTML = '';
+    $('chatHeaderSlot').innerHTML = '';
     document.body.style.overflow = '';
+    if (!(opts && opts.skipHeader) && cur.page === 'chats') injectPageHeader();
     if (cur.page === 'chats') { renderChatsList(); loadChatsList(); }
   }
 
@@ -5001,6 +5446,34 @@ body { overflow-x: hidden; }
     });
     $('chatSendBtn').addEventListener('click', () => { hapticLight(); chatSend(); });
     $('chatBackBtn').addEventListener('click', () => { hapticLight(); closeChatView(); });
+    $('chatLightbox').addEventListener('click', () => chatCloseLightbox());
+    msgs.addEventListener('click', (e) => {
+      const t = e.target;
+      const voice = t.closest('.chat-voice');
+      if (voice) { hapticLight(); chatToggleVoice(voice); return; }
+      const box = t.closest('.chat-media');
+      if (!box) return;
+      if (box.dataset.state === 'error') { chatLoadMedia(box); return; }
+      const kind = box.dataset.kind;
+      if (kind === 'photo') {
+        const img = box.querySelector('img');
+        if (img) { hapticLight(); chatOpenLightbox(img.src); }
+      } else if (kind === 'video' || kind === 'video_note') {
+        const v = box.querySelector('video');
+        if (box.dataset.playing === '1') {
+          if (kind === 'video_note' && v) { if (v.paused) v.play().catch(() => {}); else v.pause(); }
+          return;
+        }
+        if (box.classList.contains('loading')) return;
+        hapticLight();
+        chatPlayVideo(box);
+      }
+    });
+    if ('ResizeObserver' in window) new ResizeObserver(() => chatFitInput()).observe($('chatInputBar'));
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', chatFitViewport);
+      window.visualViewport.addEventListener('scroll', chatFitViewport);
+    }
     $('chatsContent').addEventListener('click', (e) => {
       const row = e.target.closest('.chat-row[data-chat-user]');
       if (row) openChatView(row.dataset.chatUser, { user_name: row.dataset.userName, user_username: row.dataset.userUsername });
@@ -5587,6 +6060,7 @@ body { overflow-x: hidden; }
   // ОБНОВЛЕНИЕ ТЕКУЩЕЙ СТРАНИЦЫ
   // =============================================
   async function refreshCurrentPage() {
+    if (chatState.userId) return chatPoll(true);
     switch (cur.page) {
       case 'order':
         await loadOrders();                       // свежие данные заказа (смена статуса и т.п.)
@@ -5751,11 +6225,14 @@ body { overflow-x: hidden; }
     if (id === 'pageHeaderNavSelect') {
       if (!v) return;
       hapticLight();
+      if (chatState.userId && v === 'chats') { closeChatView(); return; }
       if (cur.page === 'user') { setUserTab(v, { scroll: true }); return; }
       if (v === cur.page) return;
       openPage(v, {}, MAIN_PAGES.includes(v) ? { reset: true } : {});
     } else if (id === 'orderStatusSelect') {
       ordersStatusFilter = v; hapticLight(); applyOrdersFilters();
+    } else if (id === 'chatsFilterSelect') {
+      chatsFilter = v; hapticLight(); renderChatsList();
     } else if (id === 'userStatusFilterSelect') {
       usersFilter = v; usersShowAll = false; hapticLight(); renderUsersView();
     } else if (id === 'promoFilterSelect') {
