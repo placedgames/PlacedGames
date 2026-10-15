@@ -499,6 +499,21 @@ async function initDB() {
         await pool.query(`ALTER TABLE reviews ADD COLUMN IF NOT EXISTS rating TEXT`);
         await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS reviews_order_id_unique ON reviews(order_id) WHERE order_id IS NOT NULL`)
             .catch(e => console.error('Индекс отзывов не создан (возможны дубли):', e.message));
+
+        // Переписка с ботом (только текст и file_id фото, байты картинок не храним)
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS bot_messages (
+                id SERIAL PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                direction TEXT NOT NULL,
+                kind TEXT NOT NULL,
+                text TEXT,
+                file_id TEXT,
+                created_at TIMESTAMPTZ DEFAULT NOW()
+            )
+        `);
+        await pool.query(`CREATE INDEX IF NOT EXISTS bot_messages_user_id_id ON bot_messages(user_id, id)`)
+            .catch(e => console.error('Индекс сообщений бота не создан:', e.message));
         
         await pool.query(`
     CREATE TABLE IF NOT EXISTS referral_earnings (
@@ -613,6 +628,42 @@ await pool.query(`ALTER TABLE promo_codes ADD COLUMN IF NOT EXISTS used_count IN
 // TELEGRAM BOT
 // =============================================
 
+const BOT_TEXT_MAX = 4000;
+
+// Запись сообщения бота в историю переписки (ошибки не пробрасываются)
+async function logBotMessage(userId, direction, kind, text, fileId) {
+    try {
+        const clipped = text == null ? null : String(text).slice(0, BOT_TEXT_MAX);
+        const r = await pool.query(
+            `INSERT INTO bot_messages (user_id, direction, kind, text, file_id)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id, user_id, direction, kind, text, file_id, created_at`,
+            [String(userId), direction, kind, clipped, fileId || null]
+        );
+        return r.rows[0];
+    } catch (e) {
+        console.error('Не удалось сохранить сообщение бота:', e.message);
+        return null;
+    }
+}
+
+// Обновляем имя пользователя из личного чата, чтобы список переписок показывал имена
+async function upsertBotUser(from) {
+    try {
+        await pool.query(
+            `INSERT INTO app_users (user_id, user_name, user_username, last_seen)
+             VALUES ($1, $2, $3, NOW())
+             ON CONFLICT (user_id) DO UPDATE SET
+                user_name = EXCLUDED.user_name,
+                user_username = COALESCE(EXCLUDED.user_username, app_users.user_username),
+                last_seen = NOW()`,
+            [String(from.id), String(from.first_name || 'Пользователь').slice(0, 100), from.username || null]
+        );
+    } catch (e) {
+        console.error('Не удалось обновить пользователя бота:', e.message);
+    }
+}
+
 let botInstance = null;
 
 function getBot() {
@@ -640,9 +691,43 @@ function getBot() {
                         ]
                     }
                 });
+                await logBotMessage(String(ctx.from.id), 'out', 'text', 'Приветствуем в Placed Games - это магазин для покупки доната в разные игры', null);
             } catch (e) {
                 console.error('Ошибка /start:', e.message);
             }
+        });
+
+        // Логируем входящие сообщения пользователей из личных чатов; команды и админ пропускаются.
+        // next() вызывается всегда, чтобы не перехватить /start и другие обработчики.
+        botInstance.on('message', async (ctx, next) => {
+            try {
+                const chat = ctx.chat;
+                const from = ctx.from;
+                const msg = ctx.message || {};
+                if (!chat || chat.type !== 'private' || !from || from.id === ADMIN_ID) return next();
+
+                let kind = null;
+                let text = null;
+                let fileId = null;
+                if (typeof msg.text === 'string') {
+                    if (msg.text.startsWith('/')) return next();
+                    kind = 'text';
+                    text = msg.text;
+                } else if (Array.isArray(msg.photo) && msg.photo.length) {
+                    const largest = msg.photo.reduce((a, b) => ((b.width * b.height) > (a.width * a.height) ? b : a));
+                    kind = 'photo';
+                    text = msg.caption || null;
+                    fileId = largest.file_id;
+                }
+
+                if (kind) {
+                    await upsertBotUser(from);
+                    await logBotMessage(String(from.id), 'in', kind, text, fileId);
+                }
+            } catch (e) {
+                console.error('Ошибка логирования сообщения бота:', e.message);
+            }
+            return next();
         });
 
         botInstance.launch().catch(err => {
@@ -1581,6 +1666,275 @@ app.get('/api/admin/reviews', adminAuth, async (req, res) => {
 });
 
 // =============================================
+// АДМИН: ПОДРОБНАЯ СТАТИСТИКА
+// =============================================
+
+const MSK_OFFSET_MS = 3 * 60 * 60 * 1000; // Москва без перехода на летнее время
+
+function addDaysStr(dayStr, n) {
+    const d = new Date(dayStr + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+}
+
+function parseOrderItems(raw) {
+    try {
+        const v = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        return Array.isArray(v) ? v.filter(x => x && typeof x === 'object') : [];
+    } catch (e) {
+        return [];
+    }
+}
+
+app.get('/api/admin/stats/detailed', adminAuth, async (req, res) => {
+    try {
+        const today = new Date(Date.now() + MSK_OFFSET_MS).toISOString().slice(0, 10);
+        const cutoff = Date.parse(addDaysStr(today, -29) + 'T00:00:00+03:00');
+
+        const [tot, days, pay, hours, items] = await Promise.all([
+            pool.query(`
+                SELECT
+                    (SELECT COUNT(*) FROM orders) AS orders,
+                    (SELECT COUNT(*) FROM orders WHERE status_code IN ('completed', 'done')) AS completed,
+                    (SELECT COUNT(*) FROM orders WHERE status_code = 'cancelled') AS cancelled,
+                    (SELECT COALESCE(SUM(total), 0) FROM orders WHERE status_code IN ('completed', 'done')) AS revenue,
+                    (SELECT COUNT(*) FROM app_users) AS users,
+                    (SELECT COUNT(*) FROM app_users WHERE first_seen >= NOW() - INTERVAL '7 days') AS new_users_7d,
+                    (SELECT COUNT(*) FROM app_users WHERE referrer_id IS NOT NULL) AS referrals,
+                    (SELECT COALESCE(SUM(balance), 0) FROM app_users) AS wallets_total,
+                    (SELECT COALESCE(SUM(amount), 0) FROM wallet_transactions WHERE type LIKE $1) AS cashback_paid
+            `, ['cashback%']),
+            pool.query(`
+                SELECT to_char(to_timestamp("timestamp" / 1000.0) AT TIME ZONE 'Europe/Moscow', 'YYYY-MM-DD') AS day,
+                       COUNT(*) AS orders,
+                       COUNT(*) FILTER (WHERE status_code IN ('completed', 'done')) AS completed,
+                       COALESCE(SUM(total) FILTER (WHERE status_code IN ('completed', 'done')), 0) AS revenue
+                FROM orders
+                WHERE "timestamp" >= $1
+                GROUP BY 1
+            `, [cutoff]),
+            pool.query(`
+                SELECT COALESCE(payment_method, 'Не указан') AS method,
+                       COUNT(*) AS count,
+                       COALESCE(SUM(total), 0) AS revenue
+                FROM orders
+                WHERE status_code IN ('completed', 'done')
+                GROUP BY 1
+                ORDER BY revenue DESC
+            `),
+            pool.query(`
+                SELECT EXTRACT(HOUR FROM to_timestamp("timestamp" / 1000.0) AT TIME ZONE 'Europe/Moscow')::int AS hour,
+                       COUNT(*) AS orders
+                FROM orders
+                WHERE "timestamp" IS NOT NULL
+                GROUP BY 1
+            `),
+            pool.query(`SELECT items FROM orders WHERE status_code IN ('completed', 'done') AND items IS NOT NULL`)
+        ]);
+
+        const t = tot.rows[0];
+        const completed = parseInt(t.completed);
+        const revenue = parseInt(t.revenue);
+
+        const dayMap = new Map(days.rows.map(r => [r.day, r]));
+        const byDay = [];
+        for (let i = 29; i >= 0; i--) {
+            const day = addDaysStr(today, -i);
+            const r = dayMap.get(day);
+            byDay.push({
+                day,
+                orders: r ? parseInt(r.orders) : 0,
+                completed: r ? parseInt(r.completed) : 0,
+                revenue: r ? parseInt(r.revenue) : 0
+            });
+        }
+
+        const byPayment = pay.rows.map(r => ({
+            method: r.method,
+            count: parseInt(r.count),
+            revenue: parseInt(r.revenue)
+        }));
+
+        const byHour = Array.from({ length: 24 }, (_, h) => ({ hour: h, orders: 0 }));
+        for (const r of hours.rows) {
+            const h = parseInt(r.hour);
+            if (h >= 0 && h < 24) byHour[h].orders = parseInt(r.orders);
+        }
+
+        const productMap = new Map();
+        for (const row of items.rows) {
+            for (const it of parseOrderItems(row.items)) {
+                if (it.id == null) continue;
+                const key = String(it.id);
+                const qty = parseInt(it.qty) || 0;
+                const price = Number(it.price) || 0;
+                const cur = productMap.get(key) || { id: key, name: it.name || key, qty: 0, revenue: 0 };
+                cur.qty += qty;
+                cur.revenue += qty * price;
+                productMap.set(key, cur);
+            }
+        }
+        const topProducts = [...productMap.values()]
+            .sort((a, b) => b.qty - a.qty)
+            .slice(0, 10);
+
+        res.json({
+            totals: {
+                orders: parseInt(t.orders),
+                completed,
+                cancelled: parseInt(t.cancelled),
+                revenue,
+                avgCheck: completed ? Math.round(revenue / completed) : 0,
+                users: parseInt(t.users),
+                newUsers7d: parseInt(t.new_users_7d),
+                referrals: parseInt(t.referrals),
+                walletsTotal: parseInt(t.wallets_total),
+                cashbackPaid: parseInt(t.cashback_paid)
+            },
+            byDay,
+            byPayment,
+            topProducts,
+            byHour
+        });
+    } catch (err) {
+        sendServerError(res, err);
+    }
+});
+
+// =============================================
+// АДМИН: ПЕРЕПИСКА С ПОЛЬЗОВАТЕЛЯМИ БОТА
+// =============================================
+
+function chatUserId(v) {
+    const s = typeof v === 'string' ? v.trim() : '';
+    return s && s.length <= 32 ? s : null;
+}
+
+// Список переписок: по одной строке на пользователя, новые сверху
+app.get('/api/admin/chats', adminAuth, async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT lm.user_id,
+                   au.user_name,
+                   au.user_username,
+                   au.photo_url,
+                   CASE WHEN lm.kind = 'photo' THEN 'Фото' ELSE lm.text END AS last_text,
+                   lm.kind AS last_kind,
+                   lm.direction AS last_direction,
+                   lm.created_at AS last_at
+            FROM (
+                SELECT DISTINCT ON (user_id) id, user_id, direction, kind, text, created_at
+                FROM bot_messages
+                ORDER BY user_id, id DESC
+            ) lm
+            LEFT JOIN app_users au ON au.user_id = lm.user_id
+            ORDER BY lm.id DESC
+            LIMIT 200
+        `);
+        res.json(result.rows);
+    } catch (err) {
+        sendServerError(res, err);
+    }
+});
+
+// Сообщения одного пользователя по возрастанию id; before — подгрузка более старых
+app.get('/api/admin/chats/:userId', adminAuth, async (req, res) => {
+    try {
+        const userId = chatUserId(req.params.userId);
+        if (!userId) return res.status(400).json({ error: 'Некорректный пользователь' });
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 50, 1), 200);
+        const before = parseInt(req.query.before);
+        const params = [userId];
+        let where = 'user_id = $1';
+        if (Number.isInteger(before) && before > 0) {
+            params.push(before);
+            where += ` AND id < $${params.length}`;
+        }
+        params.push(limit);
+        const result = await pool.query(`
+            SELECT id, direction, kind, text, file_id, created_at
+            FROM (
+                SELECT id, direction, kind, text, file_id, created_at
+                FROM bot_messages
+                WHERE ${where}
+                ORDER BY id DESC
+                LIMIT $${params.length}
+            ) t
+            ORDER BY id ASC
+        `, params);
+        res.json(result.rows);
+    } catch (err) {
+        sendServerError(res, err);
+    }
+});
+
+// Отправка ответа от имени бота (plain text, без пересылки)
+app.post('/api/admin/chats/:userId/send', adminAuth, async (req, res) => {
+    try {
+        const userId = chatUserId(req.params.userId);
+        if (!userId) return res.status(400).json({ error: 'Некорректный пользователь' });
+        const text = typeof req.body.text === 'string' ? req.body.text.trim() : '';
+        if (text.length < 1 || text.length > BOT_TEXT_MAX) {
+            return res.status(400).json({ error: 'Текст должен быть от 1 до 4000 символов' });
+        }
+        const bot = getBot();
+        if (!bot) return res.status(400).json({ error: 'Бот недоступен' });
+
+        try {
+            await bot.telegram.sendMessage(userId, text, { protect_content: true });
+        } catch (e) {
+            if (e && e.response) {
+                console.error('Telegram отказал в отправке:', e.message);
+                return res.status(400).json({ error: 'Пользователь не запускал бота или заблокировал его' });
+            }
+            throw e;
+        }
+
+        const message = await logBotMessage(userId, 'out', 'text', text, null);
+        res.json({ success: true, message });
+    } catch (err) {
+        sendServerError(res, err);
+    }
+});
+
+// Фото из переписки: ссылка на файл остаётся на сервере, клиент получает только байты
+app.get('/api/admin/chat-photo/:messageId', adminAuth, async (req, res) => {
+    try {
+        const id = parseInt(req.params.messageId);
+        if (!Number.isInteger(id) || id < 1) return res.status(404).json({ error: 'Не найдено' });
+        const found = await pool.query(`SELECT file_id FROM bot_messages WHERE id = $1 AND kind = 'photo'`, [id]);
+        if (!found.rows.length || !found.rows[0].file_id) return res.status(404).json({ error: 'Не найдено' });
+
+        const bot = getBot();
+        if (!bot) return res.status(503).json({ error: 'Бот недоступен' });
+
+        let fileUrl;
+        try {
+            fileUrl = await bot.telegram.getFileLink(found.rows[0].file_id);
+        } catch (e) {
+            console.error('Telegram не отдал ссылку на фото:', e.message);
+            return res.status(502).json({ error: 'Не удалось получить фото' });
+        }
+
+        let upstream;
+        try {
+            upstream = await fetch(String(fileUrl));
+        } catch (e) {
+            console.error('Не удалось загрузить фото из Telegram');
+            return res.status(502).json({ error: 'Не удалось получить фото' });
+        }
+        if (!upstream.ok) return res.status(502).json({ error: 'Не удалось получить фото' });
+
+        const buf = Buffer.from(await upstream.arrayBuffer());
+        res.setHeader('Content-Type', upstream.headers.get('content-type') || 'image/jpeg');
+        res.setHeader('Cache-Control', 'private, max-age=86400');
+        res.send(buf);
+    } catch (err) {
+        sendServerError(res, err);
+    }
+});
+
+// =============================================
 // НАСТРОЙКИ
 // =============================================
 
@@ -1718,6 +2072,88 @@ app.post('/api/admin/verify-telegram', async (req, res) => {
     console.error('Ошибка верификации Telegram:', e.message);
     res.status(500).json({ success: false });
   }
+});
+
+// =============================================
+// КЛИЕНТ: СВОИ ОТЗЫВЫ И ПУБЛИЧНАЯ СТАТИСТИКА
+// =============================================
+
+app.get('/api/user-reviews', userAuth, async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT r.id, r.user_id, r.user_name, r.user_username, r.photo_url, r.text, r.stars,
+                   r.satisfied, r.rating, r.order_id, r.order_number, r.created_at,
+                   o.items as order_items, o.game_name as order_game_name
+            FROM reviews r
+            LEFT JOIN orders o ON o.order_number = r.order_number
+            WHERE r.user_id = $1
+            ORDER BY r.created_at DESC LIMIT 100
+        `, [req.tgUserId]);
+        res.json(result.rows);
+    } catch (err) {
+        sendServerError(res, err);
+    }
+});
+
+// Агрегированная статистика магазина без персональных данных; кэш в памяти 5 минут
+let appStatsCache = { at: 0, data: null };
+const APP_STATS_TTL_MS = 5 * 60 * 1000;
+
+app.get('/api/app-stats', async (req, res) => {
+    try {
+        if (appStatsCache.data && Date.now() - appStatsCache.at < APP_STATS_TTL_MS) {
+            return res.json(appStatsCache.data);
+        }
+
+        const [orders, customers, users, reviews, items] = await Promise.all([
+            pool.query(`
+                SELECT COUNT(*) AS c, COALESCE(SUM(total), 0) AS revenue
+                FROM orders WHERE status_code IN ('completed', 'done')
+            `),
+            pool.query(`
+                SELECT COUNT(DISTINCT user_id) AS c
+                FROM orders WHERE status_code IN ('completed', 'done') AND user_id IS NOT NULL
+            `),
+            pool.query('SELECT COUNT(*) AS c FROM app_users'),
+            pool.query(`
+                SELECT COUNT(*) AS total,
+                       COUNT(*) FILTER (WHERE COALESCE(rating, CASE WHEN satisfied THEN 'good' ELSE 'bad' END) = 'good') AS good
+                FROM reviews
+            `),
+            pool.query(`SELECT items FROM orders WHERE status_code IN ('completed', 'done') AND items IS NOT NULL`)
+        ]);
+
+        const qtyById = new Map();
+        for (const row of items.rows) {
+            for (const it of parseOrderItems(row.items)) {
+                if (it.id == null) continue;
+                const key = String(it.id);
+                qtyById.set(key, (qtyById.get(key) || 0) + (parseInt(it.qty) || 0));
+            }
+        }
+        const topProducts = [...qtyById.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .map(([id, qty]) => ({ id, qty }));
+
+        const reviewsTotal = parseInt(reviews.rows[0].total);
+        const reviewsGood = parseInt(reviews.rows[0].good);
+
+        const data = {
+            completedOrders: parseInt(orders.rows[0].c),
+            revenue: parseInt(orders.rows[0].revenue),
+            customers: parseInt(customers.rows[0].c),
+            users: parseInt(users.rows[0].c),
+            reviews: reviewsTotal,
+            goodSharePercent: reviewsTotal ? Math.round(reviewsGood * 100 / reviewsTotal) : 0,
+            topProducts,
+            updatedAt: new Date().toISOString()
+        };
+        appStatsCache = { at: Date.now(), data };
+        res.json(data);
+    } catch (err) {
+        sendServerError(res, err);
+    }
 });
 
 app.use((err, req, res, next) => {
