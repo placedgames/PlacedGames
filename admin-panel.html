@@ -2525,7 +2525,7 @@ body { overflow-x: hidden; }
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    height: 55px;
+    height: 57px;
     padding: 0 6px;
     margin-bottom: 8px;
     background: var(--card-bg);
@@ -2533,12 +2533,12 @@ body { overflow-x: hidden; }
     border-radius: 36px;
 }
 .chat-round-btn {
-    width: 43px;
-    height: 43px;
-    min-width: 43px;
+    width: 45px;
+    height: 45px;
+    min-width: 45px;
     border-radius: 50%;
     border: none;
-    background: rgba(160, 165, 175, 0.24);
+    background: rgba(160, 165, 175, 0.13);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2558,16 +2558,16 @@ body { overflow-x: hidden; }
 }
 .chat-blur i { position: absolute; inset: 0; display: block; }
 .chat-blur-bottom { top: auto; bottom: 0; height: 90px; }
-.chat-blur-bottom i:nth-child(1) {
+.chat-blur.chat-blur-bottom i:nth-child(1) {
     -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 40%); mask-image: linear-gradient(to bottom, transparent 0%, #000 40%);
 }
-.chat-blur-bottom i:nth-child(2) {
+.chat-blur.chat-blur-bottom i:nth-child(2) {
     -webkit-mask-image: linear-gradient(to bottom, transparent 20%, #000 60%); mask-image: linear-gradient(to bottom, transparent 20%, #000 60%);
 }
-.chat-blur-bottom i:nth-child(3) {
+.chat-blur.chat-blur-bottom i:nth-child(3) {
     -webkit-mask-image: linear-gradient(to bottom, transparent 40%, #000 80%); mask-image: linear-gradient(to bottom, transparent 40%, #000 80%);
 }
-.chat-blur-bottom i:nth-child(4) {
+.chat-blur.chat-blur-bottom i:nth-child(4) {
     -webkit-mask-image: linear-gradient(to bottom, transparent 60%, #000 100%); mask-image: linear-gradient(to bottom, transparent 60%, #000 100%);
 }
 /* долгое нажатие вместо выделения текста */
@@ -2593,10 +2593,10 @@ body { overflow-x: hidden; }
     -webkit-mask-image: linear-gradient(to top, transparent 60%, #000 100%); mask-image: linear-gradient(to top, transparent 60%, #000 100%);
 }
 .chat-profile-avatar {
-    width: 43px;
-    height: 43px;
-    min-width: 43px;
-    font-size: 18px;
+    width: 45px;
+    height: 45px;
+    min-width: 45px;
+    font-size: 19px;
 }
 .chat-profile-center {
     flex: 1;
@@ -2609,8 +2609,8 @@ body { overflow-x: hidden; }
 }
 .chat-profile-name {
     max-width: 100%;
-    font-size: 18px;
-    font-weight: 500;
+    font-size: 19px;
+    font-weight: 550;
     line-height: 1.25;
     color: var(--text-primary);
     white-space: nowrap;
@@ -2619,7 +2619,7 @@ body { overflow-x: hidden; }
 }
 .chat-profile-sub {
     max-width: 100%;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.25;
     color: var(--text-secondary);
     white-space: nowrap;
@@ -5163,8 +5163,8 @@ body { overflow-x: hidden; }
     showPopup({
       message,
       buttons: [
-        { id: 'close', type: 'default', text: 'Закрыть' },
-        { id: 'delete', type: 'destructive', text: 'Удалить' }
+        { id: 'delete', type: 'destructive', text: 'Удалить' },
+        { type: 'close' }
       ]
     }, (id) => {
       if (id !== 'delete') return;
