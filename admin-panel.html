@@ -2403,8 +2403,8 @@ body { overflow-x: hidden; }
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 28px;
-    padding: 0 16px;
-    margin-bottom: 10px;
+    padding: 4px 16px;
+    margin-bottom: 14px;
 }
 .chat-row {
     display: flex;
@@ -2413,6 +2413,7 @@ body { overflow-x: hidden; }
     padding: 12px 0;
     cursor: pointer;
 }
+.chat-row + .chat-row { border-top: 1px solid var(--divider-color); }
 .chat-row:active { opacity: 0.6; }
 .chat-avatar {
     position: relative;
@@ -2853,8 +2854,8 @@ body { overflow-x: hidden; }
 /* поле ввода: закреплено как нижнее меню, отступ — --bottom-menu-offset (настройки) */
 .chat-input-bar {
     position: absolute;
-    left: 19px;
-    right: 19px;
+    left: 20px;
+    right: 20px;
     bottom: var(--bottom-menu-offset, 16px);
     z-index: 6;
     display: flex;
@@ -3665,9 +3666,11 @@ body { overflow-x: hidden; }
     if (chatLightboxOpen()) { chatCloseLightbox(); return; }
     if (chatState.userId) { closeChatView(); return; }
     hideFixedBar();
+    const backToChat = cur.page === 'user' && cur.params.fromChat ? cur.params.fromChat : null;
     const prev = navStack.pop();
-    if (!prev) { openPage('orders', {}, { fromBack: true }); return; }
-    openPage(prev.page, prev.params, { fromBack: true, scrollY: prev.scrollY });
+    if (!prev) { openPage('orders', {}, { fromBack: true }); }
+    else openPage(prev.page, prev.params, { fromBack: true, scrollY: prev.scrollY });
+    if (backToChat) openUserChat(backToChat);
   }
 
   function renderCurrent(ctx) {
@@ -3693,14 +3696,16 @@ body { overflow-x: hidden; }
   }
 
   // Открыть страницу пользователя по id (с подгрузкой данных для заголовка)
-  async function openUserPage(userId, hint) {
+  async function openUserPage(userId, hint, fromChat) {
     if (!userId) return;
     hapticLight();
     let name = hint && (hint.user_name || hint.nickname);
     if (!name) {
       try { const u = await apiGet(`/api/user/${encodeURIComponent(userId)}`); name = u.user_name; } catch (e) {}
     }
-    openPage('user', { id: String(userId), name: name || 'Пользователь', tab: 'wallet' });
+    const params = { id: String(userId), name: name || 'Пользователь', tab: 'wallet' };
+    if (fromChat) params.fromChat = String(fromChat);
+    openPage('user', params);
   }
 
   async function openOrderByNumber(number) {
@@ -4972,8 +4977,8 @@ body { overflow-x: hidden; }
       el.innerHTML = `<div class="chat-empty">${(rawQ || chatsFilter !== 'all') ? 'Ничего не найдено' : 'Чатов пока нет'}</div>`;
       return;
     }
-    el.innerHTML = `${list.map(c => `
-        <div class="chat-list-card"><div class="chat-row" data-chat-user="${escapeHtml(c.user_id)}" data-user-name="${escapeHtml(chatTitle(c))}" data-user-username="${escapeHtml(c.user_username || '')}">
+    el.innerHTML = `<div class="chat-list-card">${list.map(c => `
+        <div class="chat-row" data-chat-user="${escapeHtml(c.user_id)}" data-user-name="${escapeHtml(chatTitle(c))}" data-user-username="${escapeHtml(c.user_username || '')}">
             ${chatAvatarHtml(c)}
             <div class="chat-row-body">
                 <div class="chat-row-top">
@@ -4985,7 +4990,7 @@ body { overflow-x: hidden; }
                     ${c.unread ? '<span class="chat-unread-dot"></span>' : ''}
                 </div>
             </div>
-        </div></div>`).join('')}`;
+        </div>`).join('')}</div>`;
   }
 
   async function loadChatsList() {
@@ -5081,7 +5086,8 @@ body { overflow-x: hidden; }
     return `<span class="chat-body">${h}</span>`;
   }
 
-  function chatBubbleHtml(m, timeStr) {
+  function chatBubbleHtml(m, rawTime) {
+    const timeStr = (m.edited ? 'изменено ' : '') + rawTime;
     const timeHtml = `<span class="chat-time">${escapeHtml(timeStr)}</span>`;
     const isMedia = CHAT_MEDIA_KINDS.includes(m.kind);
     if (isMedia) {
@@ -5221,16 +5227,20 @@ body { overflow-x: hidden; }
   }
 
   // убираем сообщения из чата (удалены здесь, на другом устройстве или ботом при смене статуса заказа)
-  function chatRemoveMsgs(ids) {
-    const set = new Set(ids.map(String));
-    const before = chatState.msgs.length;
-    chatState.msgs = chatState.msgs.filter(m => !set.has(String(m.id)));
-    if (chatState.msgs.length === before) return;
+  function chatRerenderKeep() {
     const el = $('chatMessages');
     const keep = el.scrollTop;
     const wasBottom = chatIsNearBottom();
     chatRenderAll();
     if (wasBottom) chatScrollBottom(); else el.scrollTop = keep;
+  }
+
+  function chatRemoveMsgs(ids) {
+    const set = new Set(ids.map(String));
+    const before = chatState.msgs.length;
+    chatState.msgs = chatState.msgs.filter(m => !set.has(String(m.id)));
+    if (chatState.msgs.length === before) return;
+    chatRerenderKeep();
   }
 
   async function chatMarkRead() {
@@ -5426,6 +5436,16 @@ body { overflow-x: hidden; }
       const minId = list.length >= CHAT_PAGE_SIZE ? Math.min(...list.map(m => Number(m.id))) : 0;
       const gone = chatState.msgs.filter(m => !m.pending && !fresh.has(String(m.id)) && Number(m.id) >= minId).map(m => m.id);
       if (gone.length) chatRemoveMsgs(gone);
+      // пользователь изменил сообщение — обновляем текст и пометку «изменено»
+      const byId = new Map(chatState.msgs.map(m => [String(m.id), m]));
+      let edited = false;
+      list.forEach(m => {
+        const o = byId.get(String(m.id));
+        if (o && !o.pending && ((o.text || '') !== (m.text || '') || !!o.edited !== !!m.edited)) {
+          o.text = m.text; o.edited = m.edited; edited = true;
+        }
+      });
+      if (edited) chatRerenderKeep();
       chatAppendMsgs(list.filter(m => !known.has(String(m.id))));
       // повторяем загрузку медиа, которое не удалось получить
       $('chatMessages').querySelectorAll('.chat-media[data-state="error"]').forEach(box => chatLoadMedia(box));
@@ -5576,7 +5596,7 @@ body { overflow-x: hidden; }
     $('chatHeadAvatar').innerHTML = chatAvatarHtml(chatState.user).replace(/^<div class="chat-avatar">/, '').replace(/<\/div>$/, '');
     $('chatHeadName').textContent = chatTitle(chatState.user);
     $('chatInput').value = '';
-    $('chatMessages').innerHTML = `<div class="chat-loading"><i></i><i></i><i></i></div>`;
+    $('chatMessages').innerHTML = '';
     $('chatView').style.display = 'flex';
     document.body.style.overflow = 'hidden';
     chatAutosize();
@@ -5594,6 +5614,7 @@ body { overflow-x: hidden; }
       : null;
 
     const token = chatState.token;
+    showTopLoader();
     apiGet(`/api/admin/chats/${encodeURIComponent(chatState.userId)}?limit=${CHAT_PAGE_SIZE}`)
       .then(list => {
         if (token !== chatState.token) return;
@@ -5608,6 +5629,7 @@ body { overflow-x: hidden; }
         $('chatMessages').innerHTML = `<div class="chat-empty">Ошибка загрузки переписки</div>`;
       })
       .finally(() => {
+        hideTopLoader();
         if (token === chatState.token) chatStartPoll();
       });
   }
@@ -5656,7 +5678,7 @@ body { overflow-x: hidden; }
     $('chatLightbox').addEventListener('click', () => chatCloseLightbox());
     $('chatHeadCenter').addEventListener('click', () => {
       const u = chatState.user;
-      if (u) openUserPage(u.user_id, { user_name: chatTitle(u) });
+      if (u) openUserPage(u.user_id, { user_name: chatTitle(u) }, u.user_id);
     });
 
     // долгое нажатие на сообщение — окно с информацией
