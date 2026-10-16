@@ -40,6 +40,11 @@ const INVISIBLE_LINK = `<a href="${PREVIEW_IMAGE_URL}">&#8205;</a>`;
 const APP_URL = 'https://placedgames.up.railway.app/';
 const ORDERS_PAGE_URL = `${APP_URL}#orders`;
 const REVIEWS_PAGE_URL = `${APP_URL}#reviews`;
+// ссылки из уведомлений админу ведут в админ-панель (открывает нужный заказ, отзывы или чат)
+const ADMIN_PANEL_URL = `${APP_URL}admin-panel.html`;
+const adminOrderUrl = (num) => `${ADMIN_PANEL_URL}?page=order&number=${encodeURIComponent(String(num))}`;
+const ADMIN_REVIEWS_URL = `${ADMIN_PANEL_URL}?page=reviews`;
+const adminChatUrl = (userId) => `${ADMIN_PANEL_URL}?page=chat&user=${encodeURIComponent(String(userId))}`;
 
 // Запрет пересылки сообщений
 const NO_FORWARD = { protect_content: true };
@@ -308,7 +313,7 @@ async function notifyAdmin(bot, order) {
         ...NO_FORWARD,
         reply_markup: {
             inline_keyboard: [[
-                { text: 'Открыть заказ в приложении', web_app: { url: ORDERS_PAGE_URL } }
+                { text: 'Открыть заказ в приложении', web_app: { url: adminOrderUrl(order.order_number) } }
             ]]
         }
     });
@@ -332,7 +337,7 @@ async function notifyAdminCode(bot, order, code, prevAdminMsgId) {
         ...NO_FORWARD,
         reply_markup: {
             inline_keyboard: [[
-                { text: 'Открыть заказ в приложении', web_app: { url: ORDERS_PAGE_URL } }
+                { text: 'Открыть заказ в приложении', web_app: { url: adminOrderUrl(order.order_number) } }
             ]]
         }
     });
@@ -352,7 +357,7 @@ async function notifyAdminReview(bot, userName, userUsername, text) {
         ...NO_FORWARD,
         reply_markup: {
             inline_keyboard: [[
-                { text: 'Открыть отзыв в приложении', web_app: { url: REVIEWS_PAGE_URL } }
+                { text: 'Открыть отзыв в приложении', web_app: { url: ADMIN_REVIEWS_URL } }
             ]]
         }
     });
@@ -527,6 +532,14 @@ async function initDB() {
         await pool.query(`ALTER TABLE bot_messages ADD COLUMN IF NOT EXISTS meta TEXT`);
         // id сообщения в Telegram (нужен, чтобы удалять сообщения и у пользователя)
         await pool.query(`ALTER TABLE bot_messages ADD COLUMN IF NOT EXISTS tg_message_id BIGINT`);
+
+        // Ожидание обращения после /support
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS bot_support_state (
+                user_id TEXT PRIMARY KEY,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )
+        `);
 
         // Отметки «прочитано» админом: последний прочитанный id входящих сообщений по каждому чату
         const readsTable = await pool.query(`SELECT to_regclass('bot_chat_reads') AS t`);
@@ -718,6 +731,8 @@ function getBot() {
 
                                   botInstance.start(async (ctx) => {
             try {
+                // /start отменяет начатое обращение в поддержку
+                if (ctx.from) await pool.query(`DELETE FROM bot_support_state WHERE user_id = $1`, [String(ctx.from.id)]).catch(() => {});
                 // входящий /start тоже попадает в переписку (и считается непрочитанным)
                 try {
                     if (ctx.chat && ctx.chat.type === 'private' && ctx.from && ctx.from.id !== ADMIN_ID) {
@@ -752,8 +767,8 @@ function getBot() {
             }
         });
 
-        // Логируем входящие сообщения пользователей из личных чатов; команды и админ пропускаются.
-        // next() вызывается всегда, чтобы не перехватить /start и другие обработчики.
+        // Логируем входящие сообщения пользователей из личных чатов (включая команды); админ пропускается.
+        // Здесь же работает /support: пользователь описывает проблему, админу приходит уведомление.
         botInstance.on('message', async (ctx, next) => {
             try {
                 const chat = ctx.chat;
@@ -770,8 +785,8 @@ function getBot() {
                     const t = o && (o.thumbnail || o.thumb);
                     return t && t.file_id ? t.file_id : null;
                 };
+                const isCommand = typeof msg.text === 'string' && msg.text.startsWith('/');
                 if (typeof msg.text === 'string') {
-                    if (msg.text.startsWith('/')) return next();
                     kind = 'text';
                     text = msg.text;
                 } else if (Array.isArray(msg.photo) && msg.photo.length) {
@@ -816,8 +831,48 @@ function getBot() {
                     await upsertBotUser(from);
                     await logBotMessage(String(from.id), 'in', kind, text, fileId, thumbId, meta, msg.message_id);
                 }
+
+                const userId = String(from.id);
+                const command = isCommand ? msg.text.trim().split(/[\s@]/)[0].toLowerCase() : null;
+
+                // /support — просим описать проблему
+                if (command === '/support') {
+                    await pool.query(
+                        `INSERT INTO bot_support_state (user_id, created_at) VALUES ($1, NOW())
+                         ON CONFLICT (user_id) DO UPDATE SET created_at = NOW()`, [userId]);
+                    const prompt = 'Здравствуйте! Опишите, пожалуйста, вашу проблему, и мы соединим вас с оператором. Вы также можете прикрепить фото или видео размером до 20 МБ.';
+                    const sent = await ctx.reply(prompt, { ...NO_FORWARD });
+                    await logBotMessage(userId, 'out', 'text', prompt, null, null, null, sent && sent.message_id);
+                    return;
+                }
+
+                // пользователь ответил после /support (текст, фото или видео) — принимаем обращение
+                if (!isCommand && (kind === 'text' || kind === 'photo' || kind === 'video')) {
+                    const pending = await pool.query(
+                        `DELETE FROM bot_support_state
+                         WHERE user_id = $1 AND created_at > NOW() - INTERVAL '24 hours'
+                         RETURNING user_id`, [userId]);
+                    if (pending.rows.length) {
+                        const accepted = 'Принято! Оператор ответит вам в ближайшее время (обычно это занимает не более 20 минут).';
+                        const sent = await ctx.reply(accepted, { ...NO_FORWARD });
+                        await logBotMessage(userId, 'out', 'text', accepted, null, null, null, sent && sent.message_id);
+
+                        const body = text && text.trim() ? text.trim().slice(0, 1000) : (kind === 'video' ? 'Видео' : 'Фото');
+                        await ctx.telegram.sendMessage(ADMIN_ID,
+                            `${INVISIBLE_LINK}<b>Получено новое обращение</b>\n\n<b>Текст обращения:</b>\n${escHtml(body)}`,
+                            {
+                                parse_mode: 'HTML',
+                                ...NO_FORWARD,
+                                reply_markup: {
+                                    inline_keyboard: [[
+                                        { text: 'Открыть чат в приложении', web_app: { url: adminChatUrl(userId) } }
+                                    ]]
+                                }
+                            });
+                    }
+                }
             } catch (e) {
-                console.error('Ошибка логирования сообщения бота:', e.message);
+                console.error('Ошибка обработки сообщения бота:', e.message);
             }
             return next();
         });

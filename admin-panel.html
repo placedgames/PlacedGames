@@ -2402,7 +2402,7 @@ body { overflow-x: hidden; }
 .chat-list-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 30px;
+    border-radius: 28px;
     padding: 0 16px;
     margin-bottom: 10px;
 }
@@ -2460,7 +2460,7 @@ body { overflow-x: hidden; }
     min-width: 0;
 }
 .chat-row-time {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 500;
     color: var(--text-secondary);
     flex-shrink: 0;
@@ -2636,7 +2636,28 @@ body { overflow-x: hidden; }
     display: flex;
     flex-direction: column;
 }
+.chat-blur { background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.4)); }
+.chat-blur.chat-blur-bottom { background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.4)); }
+:root[data-theme="light"] .chat-blur { background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.14)); }
+:root[data-theme="light"] .chat-blur.chat-blur-bottom { background: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.14)); }
 .chat-messages > :first-child { margin-top: auto; }
+/* загрузка чата: три точки сверху */
+.chat-messages > .chat-loading { margin-top: 0; align-self: center; display: flex; gap: 7px; padding: 14px 0; }
+.chat-loading i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    animation: chatDots 1.2s infinite ease-in-out both;
+}
+.chat-loading i:nth-child(2) { animation-delay: 0.15s; }
+.chat-loading i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes chatDots {
+    0%, 80%, 100% { opacity: 0.25; transform: scale(0.8); }
+    40% { opacity: 1; transform: scale(1); }
+}
+.chat-cmd { color: var(--icon-color-accent); }
+#chatHeadCenter { cursor: pointer; }
 .chat-date-sep {
     align-self: center;
     font-size: 13px;
@@ -2645,7 +2666,7 @@ body { overflow-x: hidden; }
     border: none;
     border-radius: 20px;
     padding: 3px 12px;
-    margin: 10px 0 8px;
+    margin: 12px 0 8px;
 }
 .chat-msg {
     display: flex;
@@ -3189,7 +3210,7 @@ body { overflow-x: hidden; }
     <div class="chat-top" id="chatTop">
         <div class="chat-profile-bar">
             <div class="chat-avatar chat-profile-avatar" id="chatHeadAvatar"></div>
-            <div class="chat-profile-center">
+            <div class="chat-profile-center" id="chatHeadCenter">
                 <div class="chat-profile-name" id="chatHeadName"></div>
                 <div class="chat-profile-sub">был(а) недавно</div>
             </div>
@@ -3532,6 +3553,7 @@ body { overflow-x: hidden; }
       // Список: ник (нельзя выбрать) + Кошелёк / Заказы / Отзывы / Рефералы
       title = cur.params.name || 'Пользователь';
       optionsHtml = `<option value="" disabled>${escapeHtml(title)}</option>` +
+        `<option value="chat">Чат</option>` +
         USER_TABS.map(t => `<option value="${t.id}" ${t.id === (cur.params.tab || 'wallet') ? 'selected' : ''}>${t.title}</option>`).join('');
     } else {
       title = cur.page === 'order' ? `Заказ #${cur.params.number || ''}` : (PAGE_TITLES[cur.page] || '');
@@ -5032,7 +5054,7 @@ body { overflow-x: hidden; }
     const meta = chatMeta(m);
     switch (m.kind) {
       case 'photo':
-        return `<div class="chat-media chat-photo" data-kind="photo" data-id="${id}" style="aspect-ratio:${chatRatio(meta, 4 / 3).toFixed(3)}"><span class="chat-ph">Фото</span></div>`;
+        return `<div class="chat-media chat-photo" data-kind="photo" data-id="${id}" style="aspect-ratio:4 / 3"><span class="chat-ph">Фото</span></div>`;
       case 'animation':
         return `<div class="chat-media chat-photo" data-kind="animation" data-id="${id}" style="aspect-ratio:${chatRatio(meta, 4 / 3).toFixed(3)}"><span class="chat-ph">GIF</span></div>`;
       case 'video':
@@ -5053,20 +5075,26 @@ body { overflow-x: hidden; }
     return '';
   }
 
+  function chatTextHtml(m) {
+    let h = escapeHtml(m.text);
+    if (m.direction !== 'out') h = h.replace(/^(\s*)(\/[A-Za-z0-9_]+(?:@[A-Za-z0-9_]+)?)/, '$1<span class="chat-cmd">$2</span>');
+    return `<span class="chat-body">${h}</span>`;
+  }
+
   function chatBubbleHtml(m, timeStr) {
     const timeHtml = `<span class="chat-time">${escapeHtml(timeStr)}</span>`;
     const isMedia = CHAT_MEDIA_KINDS.includes(m.kind);
     if (isMedia) {
       const bare = m.kind === 'sticker' || m.kind === 'video_note';
       const cap = (m.text && !bare)
-        ? `<div class="chat-text chat-caption">${escapeHtml(m.text)}${timeHtml}</div>`
+        ? `<div class="chat-text chat-caption">${chatTextHtml(m)}${timeHtml}</div>`
         : `<div class="chat-time-row">${escapeHtml(timeStr)}</div>`;
       const photoLike = m.kind === 'photo' || m.kind === 'animation' || m.kind === 'video';
       return `<div class="chat-bubble ${bare ? 'is-bare' : (photoLike ? 'has-media has-photo' : 'has-media')}">${chatMediaHtml(m)}${cap}</div>`;
     }
     const body = m.text
-      ? `<div class="chat-text">${escapeHtml(m.text)}${timeHtml}</div>`
-      : `<div class="chat-text chat-muted">Сообщение без текста${timeHtml}</div>`;
+      ? `<div class="chat-text">${chatTextHtml(m)}${timeHtml}</div>`
+      : `<div class="chat-text chat-muted"><span class="chat-body">Сообщение без текста</span>${timeHtml}</div>`;
     return `<div class="chat-bubble">${body}</div>`;
   }
 
@@ -5118,11 +5146,10 @@ body { overflow-x: hidden; }
       b.dataset.tight = '1';
       const t = b.querySelector('.chat-text');
       if (!t) return;
-      const node = Array.from(t.childNodes).find(n => n.nodeType === 3);
-      if (!node || !b.offsetWidth) return;
+      const body = t.querySelector('.chat-body');
+      if (!body || !b.offsetWidth) return;
       const range = document.createRange();
-      range.setStart(node, 0);
-      range.setEnd(node, node.length);
+      range.selectNodeContents(body);
       const rects = Array.from(range.getClientRects()).filter(r => r.width > 0);
       if (!rects.length) return;
       let minL = Infinity, maxR = -Infinity, last = rects[0];
@@ -5441,12 +5468,12 @@ body { overflow-x: hidden; }
     if (!bar || !msgs || !bar.offsetHeight) return;
     const off = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--bottom-menu-offset'), 10) || 16;
     const near = chatIsNearBottom();
-    msgs.style.paddingBottom = (bar.offsetHeight + off + 12) + 'px';
+    msgs.style.paddingBottom = (bar.offsetHeight + off + 4) + 'px';
     const top = $('chatTop');
     const pbar = top && top.querySelector('.chat-profile-bar');
     if (pbar && pbar.offsetHeight) {
       const bottom = pbar.getBoundingClientRect().bottom;
-      msgs.style.paddingTop = (bottom + 8) + 'px';
+      msgs.style.paddingTop = (bottom + 14) + 'px';
       const blur = $('chatBlur');
       if (blur) blur.style.height = (bottom + 4) + 'px';
     }
@@ -5514,6 +5541,23 @@ body { overflow-x: hidden; }
     }
   }
 
+  // открыть чат пользователя (данные для шапки подгружаются, если их нет)
+  async function openUserChat(userId, hint) {
+    if (!userId) return;
+    let h = Object.assign({}, hint || {});
+    try {
+      const u = await apiGet(`/api/user/${encodeURIComponent(userId)}`);
+      if (u) {
+        h = {
+          user_name: u.user_name || h.user_name || '',
+          user_username: u.user_username || h.user_username || '',
+          photo_url: u.photo_url || h.photo_url || ''
+        };
+      }
+    } catch (e) {}
+    openChatView(userId, h);
+  }
+
   function openChatView(userId, hint) {
     if (!userId) return;
     hapticLight();
@@ -5532,7 +5576,7 @@ body { overflow-x: hidden; }
     $('chatHeadAvatar').innerHTML = chatAvatarHtml(chatState.user).replace(/^<div class="chat-avatar">/, '').replace(/<\/div>$/, '');
     $('chatHeadName').textContent = chatTitle(chatState.user);
     $('chatInput').value = '';
-    $('chatMessages').innerHTML = `<div class="chat-empty">Загрузка…</div>`;
+    $('chatMessages').innerHTML = `<div class="chat-loading"><i></i><i></i><i></i></div>`;
     $('chatView').style.display = 'flex';
     document.body.style.overflow = 'hidden';
     chatAutosize();
@@ -5610,6 +5654,10 @@ body { overflow-x: hidden; }
       Promise.resolve(chatPoll(true)).finally(hideTopLoader);
     });
     $('chatLightbox').addEventListener('click', () => chatCloseLightbox());
+    $('chatHeadCenter').addEventListener('click', () => {
+      const u = chatState.user;
+      if (u) openUserPage(u.user_id, { user_name: chatTitle(u) });
+    });
 
     // долгое нажатие на сообщение — окно с информацией
     let lpTimer = null, lpX = 0, lpY = 0;
@@ -6419,7 +6467,15 @@ body { overflow-x: hidden; }
       if (!v) return;
       hapticLight();
       if (chatState.userId && v === 'chats') { closeChatView(); return; }
-      if (cur.page === 'user') { setUserTab(v, { scroll: true }); return; }
+      if (cur.page === 'user') {
+        if (v === 'chat') {
+          e.target.value = cur.params.tab || 'wallet';
+          openUserChat(cur.params.id, { user_name: cur.params.name });
+          return;
+        }
+        setUserTab(v, { scroll: true });
+        return;
+      }
       if (v === cur.page) return;
       openPage(v, {}, MAIN_PAGES.includes(v) ? { reset: true } : {});
     } else if (id === 'orderStatusSelect') {
@@ -6484,6 +6540,23 @@ body { overflow-x: hidden; }
     openPage('orders');
     $('bottomMenuWrapper').style.opacity = '1';
     updateMenuState();
+
+    // переход по ссылкам из уведомлений бота: ?page=order&number=XXXX, ?page=reviews, ?page=chat&user=ID
+    try {
+      const q = new URLSearchParams(location.search);
+      const pg = q.get('page');
+      if (pg === 'order' && q.get('number')) {
+        (async () => {
+          try { if (!allOrders.length) await loadOrders(); } catch (e) {}
+          openOrderByNumber(q.get('number'));
+        })();
+      } else if (pg === 'reviews') {
+        openPage('reviews');
+      } else if (pg === 'chat' && q.get('user')) {
+        openPage('chats');
+        openUserChat(q.get('user'));
+      }
+    } catch (e) {}
   })();
 
 })();
