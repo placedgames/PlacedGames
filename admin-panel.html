@@ -2403,8 +2403,8 @@ body { overflow-x: hidden; }
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 28px;
-    padding: 4px 16px;
-    margin-bottom: 14px;
+    padding: 0 16px 0 12px;
+    margin-bottom: 10px;
 }
 .chat-row {
     display: flex;
@@ -2413,7 +2413,6 @@ body { overflow-x: hidden; }
     padding: 12px 0;
     cursor: pointer;
 }
-.chat-row + .chat-row { border-top: 1px solid var(--divider-color); }
 .chat-row:active { opacity: 0.6; }
 .chat-avatar {
     position: relative;
@@ -2675,6 +2674,7 @@ body { overflow-x: hidden; }
     max-width: 82%;
     margin-bottom: 10px;
 }
+.chat-msg.tight-next { margin-bottom: 5px; }
 .chat-msg.in { align-self: flex-start; align-items: flex-start; }
 .chat-msg.out { align-self: flex-end; align-items: flex-end; }
 .chat-msg.pending { opacity: 0.6; }
@@ -4977,8 +4977,8 @@ body { overflow-x: hidden; }
       el.innerHTML = `<div class="chat-empty">${(rawQ || chatsFilter !== 'all') ? 'Ничего не найдено' : 'Чатов пока нет'}</div>`;
       return;
     }
-    el.innerHTML = `<div class="chat-list-card">${list.map(c => `
-        <div class="chat-row" data-chat-user="${escapeHtml(c.user_id)}" data-user-name="${escapeHtml(chatTitle(c))}" data-user-username="${escapeHtml(c.user_username || '')}">
+    el.innerHTML = `${list.map(c => `
+        <div class="chat-list-card"><div class="chat-row" data-chat-user="${escapeHtml(c.user_id)}" data-user-name="${escapeHtml(chatTitle(c))}" data-user-username="${escapeHtml(c.user_username || '')}">
             ${chatAvatarHtml(c)}
             <div class="chat-row-body">
                 <div class="chat-row-top">
@@ -4990,7 +4990,7 @@ body { overflow-x: hidden; }
                     ${c.unread ? '<span class="chat-unread-dot"></span>' : ''}
                 </div>
             </div>
-        </div>`).join('')}</div>`;
+        </div></div>`).join('')}`;
   }
 
   async function loadChatsList() {
@@ -5112,7 +5112,7 @@ body { overflow-x: hidden; }
       const key = d ? chatDayKey(d) : pk;
       const sep = d && key !== pk ? `<div class="chat-date-sep">${escapeHtml(chatDayLabel(d))}</div>` : '';
       const dir = m.direction === 'out' ? 'out' : 'in';
-      html += `${sep}<div class="chat-msg ${dir}${m.pending ? ' pending' : ''}" data-msg-id="${escapeHtml(m.id)}">`
+      html += `${sep}<div class="chat-msg ${dir}${m.pending ? ' pending' : ''}" data-msg-id="${escapeHtml(m.id)}" data-dir="${dir}" data-ts="${d ? d.getTime() : 0}">`
         + chatBubbleHtml(m, d ? chatFmtClock(d) : '')
         + `</div>`;
       pk = key;
@@ -5129,6 +5129,7 @@ body { overflow-x: hidden; }
     }
     el.innerHTML = chatMsgsHtml(chatState.msgs, '');
     chatTightenBubbles(el);
+    chatApplyGrouping(el);
     chatHydrateMedia(el);
   }
   function chatAppendMsgs(list) {
@@ -5140,6 +5141,7 @@ body { overflow-x: hidden; }
     el.querySelector('.chat-empty')?.remove();
     el.insertAdjacentHTML('beforeend', chatMsgsHtml(list, prevKey));
     chatTightenBubbles(el);
+    chatApplyGrouping(el);
     chatHydrateMedia(el);
     if (near || list.some(m => m.direction === 'out')) chatScrollBottom();
     // пока чат открыт, новые входящие сразу считаются прочитанными
@@ -5227,6 +5229,16 @@ body { overflow-x: hidden; }
   }
 
   // убираем сообщения из чата (удалены здесь, на другом устройстве или ботом при смене статуса заказа)
+  function chatApplyGrouping(root) {
+    const GAP = 5 * 60 * 1000;
+    root.querySelectorAll('.chat-msg').forEach(el => {
+      const prev = el.previousElementSibling;
+      if (!prev || !prev.classList.contains('chat-msg')) return;
+      const dt = Number(el.dataset.ts) - Number(prev.dataset.ts);
+      prev.classList.toggle('tight-next', prev.dataset.dir === el.dataset.dir && dt >= 0 && dt <= GAP);
+    });
+  }
+
   function chatRerenderKeep() {
     const el = $('chatMessages');
     const keep = el.scrollTop;
@@ -5530,6 +5542,7 @@ body { overflow-x: hidden; }
     el.querySelector('.chat-empty')?.remove();
     el.insertAdjacentHTML('beforeend', chatMsgsHtml([tmp], chatLastDayKey()));
     chatTightenBubbles(el);
+    chatApplyGrouping(el);
     chatScrollBottom();
 
     const restore = () => {

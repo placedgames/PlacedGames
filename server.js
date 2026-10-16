@@ -532,6 +532,7 @@ async function initDB() {
         await pool.query(`ALTER TABLE bot_messages ADD COLUMN IF NOT EXISTS meta TEXT`);
         // id сообщения в Telegram (нужен, чтобы удалять сообщения и у пользователя)
         await pool.query(`ALTER TABLE bot_messages ADD COLUMN IF NOT EXISTS tg_message_id BIGINT`);
+        await pool.query(`ALTER TABLE bot_messages ADD COLUMN IF NOT EXISTS edited BOOLEAN NOT NULL DEFAULT FALSE`);
 
         // Ожидание обращения после /support
         await pool.query(`
@@ -877,7 +878,30 @@ function getBot() {
             return next();
         });
 
-        botInstance.launch().catch(err => {
+        // Пользователь изменил своё сообщение — обновляем его в переписке
+        botInstance.on('edited_message', async (ctx, next) => {
+            try {
+                const msg = ctx.editedMessage || (ctx.update && ctx.update.edited_message);
+                const from = ctx.from;
+                if (msg && ctx.chat && ctx.chat.type === 'private' && from && from.id !== ADMIN_ID) {
+                    const newText = typeof msg.text === 'string' ? msg.text : (msg.caption || null);
+                    const upd = await pool.query(
+                        `UPDATE bot_messages SET text = $3, edited = TRUE
+                         WHERE user_id = $1 AND direction = 'in' AND tg_message_id = $2`,
+                        [String(from.id), msg.message_id, newText ? String(newText).slice(0, BOT_TEXT_MAX) : null]
+                    );
+                    console.log(`Изменено сообщение ${msg.message_id} пользователя ${from.id}, обновлено записей: ${upd.rowCount}`);
+                }
+            } catch (e) {
+                console.error('Ошибка обработки изменённого сообщения:', e.message);
+            }
+            return next();
+        });
+
+        // Явно просим Telegram присылать изменённые сообщения (edited_message): иначе действует
+        // список типов обновлений, заданный при прошлых запусках бота
+        const botUpdateTypes = ['message', 'edited_message', 'callback_query', 'my_chat_member'];
+        botInstance.launch({ allowedUpdates: botUpdateTypes, polling: { allowedUpdates: botUpdateTypes } }).catch(err => {
         console.error('Ошибка запуска бота:', err.message);
         });
 
@@ -2006,9 +2030,9 @@ app.get('/api/admin/chats/:userId', adminAuth, async (req, res) => {
         }
         params.push(limit);
         const result = await pool.query(`
-            SELECT id, direction, kind, text, has_thumb, meta, created_at
+            SELECT id, direction, kind, text, has_thumb, meta, edited, created_at
             FROM (
-                SELECT id, direction, kind, text, (thumb_id IS NOT NULL) AS has_thumb, meta, created_at
+                SELECT id, direction, kind, text, (thumb_id IS NOT NULL) AS has_thumb, meta, edited, created_at
                 FROM bot_messages
                 WHERE ${where}
                 ORDER BY id DESC
