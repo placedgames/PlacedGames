@@ -2403,8 +2403,8 @@ body { overflow-x: hidden; }
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 30px;
-    padding: 4px 16px;
-    margin-bottom: 14px;
+    padding: 0 16px;
+    margin-bottom: 10px;
 }
 .chat-row {
     display: flex;
@@ -2413,7 +2413,6 @@ body { overflow-x: hidden; }
     padding: 12px 0;
     cursor: pointer;
 }
-.chat-row + .chat-row { border-top: 1px solid var(--divider-color); }
 .chat-row:active { opacity: 0.6; }
 .chat-avatar {
     position: relative;
@@ -2637,6 +2636,7 @@ body { overflow-x: hidden; }
     display: flex;
     flex-direction: column;
 }
+.chat-messages > :first-child { margin-top: auto; }
 .chat-date-sep {
     align-self: center;
     font-size: 13px;
@@ -2651,7 +2651,7 @@ body { overflow-x: hidden; }
     display: flex;
     flex-direction: column;
     max-width: 82%;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
 }
 .chat-msg.in { align-self: flex-start; align-items: flex-start; }
 .chat-msg.out { align-self: flex-end; align-items: flex-end; }
@@ -2659,7 +2659,7 @@ body { overflow-x: hidden; }
 .chat-bubble {
     display: flow-root;
     position: relative;
-    padding: 7px 11px 6px;
+    padding: 8px 11px;
     border-radius: 18px;
     background: var(--card-bg);
     border: none;
@@ -2686,7 +2686,7 @@ body { overflow-x: hidden; }
 /* время — в правом нижнем углу сообщения, текст его не перекрывает */
 .chat-time {
     float: right;
-    margin: 5px 0 -3px 10px;
+    margin: 9px 0 0 10px;
     font-size: 12px;
     line-height: 1.2;
     color: var(--text-secondary);
@@ -2703,7 +2703,7 @@ body { overflow-x: hidden; }
 
 /* сообщения с медиа */
 .chat-bubble.has-media { padding: 5px; }
-.chat-bubble.has-media .chat-caption { padding: 6px 6px 2px; }
+.chat-bubble.has-media .chat-caption { padding: 7px 6px 3px; }
 .chat-bubble.is-bare { background: none; border: none; padding: 0; }
 .chat-bubble.is-bare .chat-time-row { padding: 2px 4px 0 0; }
 .chat-media {
@@ -2839,7 +2839,6 @@ body { overflow-x: hidden; }
     display: flex;
     align-items: flex-end;
     gap: 8px;
-    min-height: 52px;
     padding: 6px 6px 6px 18px;
     background: var(--header-btn-bg);
     border: 1px solid var(--border-color);
@@ -2851,20 +2850,20 @@ body { overflow-x: hidden; }
     resize: none;
     background: transparent;
     border: none;
-    padding: 9px 0;
+    padding: 8px 0;
     font-size: 18px;
     font-family: inherit;
-    line-height: 1.3;
+    line-height: 24px;
     color: var(--text-primary);
     max-height: 120px;
     outline: none;
 }
 .chat-input::placeholder { color: #a1a1aa; }
 .chat-send-btn {
-    width: 56px;
-    height: 38px;
-    min-width: 56px;
-    margin-bottom: 1px;
+    width: 58px;
+    height: 40px;
+    min-width: 58px;
+    margin: 0;
     border-radius: 20px;
     border: none;
     background: var(--icon-color-accent);
@@ -3195,7 +3194,7 @@ body { overflow-x: hidden; }
                 <div class="chat-profile-sub">был(а) недавно</div>
             </div>
             <button class="chat-round-btn" id="chatRefreshBtn" type="button" aria-label="Обновить">
-                <svg class="icon icon--accent" style="width:22px;height:22px;"><use href="#icon-refresh"></use></svg>
+                <svg class="icon icon--accent" style="width:25px;height:25px;"><use href="#icon-refresh"></use></svg>
             </button>
         </div>
     </div>
@@ -4951,8 +4950,8 @@ body { overflow-x: hidden; }
       el.innerHTML = `<div class="chat-empty">${(rawQ || chatsFilter !== 'all') ? 'Ничего не найдено' : 'Чатов пока нет'}</div>`;
       return;
     }
-    el.innerHTML = `<div class="chat-list-card">${list.map(c => `
-        <div class="chat-row" data-chat-user="${escapeHtml(c.user_id)}" data-user-name="${escapeHtml(chatTitle(c))}" data-user-username="${escapeHtml(c.user_username || '')}">
+    el.innerHTML = `${list.map(c => `
+        <div class="chat-list-card"><div class="chat-row" data-chat-user="${escapeHtml(c.user_id)}" data-user-name="${escapeHtml(chatTitle(c))}" data-user-username="${escapeHtml(c.user_username || '')}">
             ${chatAvatarHtml(c)}
             <div class="chat-row-body">
                 <div class="chat-row-top">
@@ -4964,7 +4963,7 @@ body { overflow-x: hidden; }
                     ${c.unread ? '<span class="chat-unread-dot"></span>' : ''}
                 </div>
             </div>
-        </div>`).join('')}</div>`;
+        </div></div>`).join('')}`;
   }
 
   async function loadChatsList() {
