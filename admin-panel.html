@@ -2525,7 +2525,7 @@ body { overflow-x: hidden; }
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    height: 53px;
+    height: 55px;
     padding: 0 6px;
     margin-bottom: 8px;
     background: var(--card-bg);
@@ -2533,9 +2533,9 @@ body { overflow-x: hidden; }
     border-radius: 36px;
 }
 .chat-round-btn {
-    width: 41px;
-    height: 41px;
-    min-width: 41px;
+    width: 43px;
+    height: 43px;
+    min-width: 43px;
     border-radius: 50%;
     border: none;
     background: rgba(160, 165, 175, 0.24);
@@ -2557,6 +2557,25 @@ body { overflow-x: hidden; }
     pointer-events: none;
 }
 .chat-blur i { position: absolute; inset: 0; display: block; }
+.chat-blur-bottom { top: auto; bottom: 0; height: 90px; }
+.chat-blur-bottom i:nth-child(1) {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 40%); mask-image: linear-gradient(to bottom, transparent 0%, #000 40%);
+}
+.chat-blur-bottom i:nth-child(2) {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 20%, #000 60%); mask-image: linear-gradient(to bottom, transparent 20%, #000 60%);
+}
+.chat-blur-bottom i:nth-child(3) {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 40%, #000 80%); mask-image: linear-gradient(to bottom, transparent 40%, #000 80%);
+}
+.chat-blur-bottom i:nth-child(4) {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 60%, #000 100%); mask-image: linear-gradient(to bottom, transparent 60%, #000 100%);
+}
+/* долгое нажатие вместо выделения текста */
+.chat-msg, .chat-msg * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
 .chat-blur i:nth-child(1) {
     -webkit-backdrop-filter: blur(1px); backdrop-filter: blur(1px);
     -webkit-mask-image: linear-gradient(to top, transparent 0%, #000 40%); mask-image: linear-gradient(to top, transparent 0%, #000 40%);
@@ -2574,10 +2593,10 @@ body { overflow-x: hidden; }
     -webkit-mask-image: linear-gradient(to top, transparent 60%, #000 100%); mask-image: linear-gradient(to top, transparent 60%, #000 100%);
 }
 .chat-profile-avatar {
-    width: 41px;
-    height: 41px;
-    min-width: 41px;
-    font-size: 17px;
+    width: 43px;
+    height: 43px;
+    min-width: 43px;
+    font-size: 18px;
 }
 .chat-profile-center {
     flex: 1;
@@ -2590,7 +2609,7 @@ body { overflow-x: hidden; }
 }
 .chat-profile-name {
     max-width: 100%;
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 500;
     line-height: 1.25;
     color: var(--text-primary);
@@ -2600,7 +2619,7 @@ body { overflow-x: hidden; }
 }
 .chat-profile-sub {
     max-width: 100%;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.25;
     color: var(--text-secondary);
     white-space: nowrap;
@@ -2623,7 +2642,7 @@ body { overflow-x: hidden; }
     font-size: 13px;
     color: var(--text-secondary);
     background: var(--card-bg);
-    border: 1px solid var(--border-color);
+    border: none;
     border-radius: 20px;
     padding: 3px 12px;
     margin: 10px 0 8px;
@@ -3181,6 +3200,7 @@ body { overflow-x: hidden; }
         </div>
     </div>
     <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-blur chat-blur-bottom" id="chatBlurBottom"><i></i><i></i><i></i><i></i></div>
     <div class="chat-input-bar" id="chatInputBar">
         <textarea class="chat-input" id="chatInput" rows="1" placeholder="Сообщение"></textarea>
         <button class="chat-send-btn" id="chatSendBtn" type="button" aria-label="Отправить">
@@ -5123,6 +5143,70 @@ body { overflow-x: hidden; }
     });
   }
 
+  // ----- информация о сообщении (долгое нажатие) и удаление -----
+  const CHAT_TYPE_LABELS = {
+    text: 'Сообщение', photo: 'Фото', video: 'Видео', video_note: 'Видеосообщение',
+    voice: 'Голосовое сообщение', animation: 'GIF', sticker: 'Стикер'
+  };
+  function chatFmtFullDate(d) {
+    const day = new Intl.DateTimeFormat('ru-RU', { timeZone: CHAT_TZ, day: '2-digit', month: '2-digit', year: '2-digit' }).format(d);
+    return `${chatFmtClock(d)} ${day}`;
+  }
+
+  function chatShowMsgInfo(msgId) {
+    const m = chatState.msgs.find(x => String(x.id) === String(msgId));
+    if (!m) return;
+    hapticLight();
+    const d = chatDateObj(m.created_at);
+    let message = `Информация о сообщении:\n\nТип: ${CHAT_TYPE_LABELS[m.kind] || 'Сообщение'}\nДата: ${d ? chatFmtFullDate(d) : '—'}`;
+    if (m.text) message += `\nТекст сообщения:\n${m.text}`;
+    showPopup({
+      message,
+      buttons: [
+        { id: 'close', type: 'default', text: 'Закрыть' },
+        { id: 'delete', type: 'destructive', text: 'Удалить' }
+      ]
+    }, (id) => {
+      if (id !== 'delete') return;
+      showPopup({
+        message: 'Удалить сообщение? Оно будет удалено в чате, у пользователя и у бота.',
+        buttons: [{ id: 'yes', type: 'destructive', text: 'Удалить' }, { id: 'cancel', type: 'cancel' }]
+      }, (id2) => { if (id2 === 'yes') chatDeleteMsg(m); });
+    });
+  }
+
+  async function chatDeleteMsg(m) {
+    const uid = chatState.userId;
+    if (!uid) return;
+    try {
+      const r = await apiSend('DELETE', `/api/admin/chats/${encodeURIComponent(uid)}/messages/${encodeURIComponent(m.id)}`);
+      if (uid !== chatState.userId) return;
+      if (r.ok) {
+        chatRemoveMsgs([String(m.id)]);
+        if (r.data && r.data.telegram === false) chatToast('Удалено в чате, но Telegram не дал удалить у пользователя (прошло больше 48 часов)');
+        else if (r.data && r.data.telegram === null) chatToast('Удалено в чате. У пользователя удалить нельзя: сообщение отправлено до обновления');
+        else hapticLight();
+      } else {
+        chatToast((r.data && r.data.error) || 'Не удалось удалить');
+      }
+    } catch (e) {
+      chatToast('Ошибка соединения');
+    }
+  }
+
+  // убираем сообщения из чата (удалены здесь, на другом устройстве или ботом при смене статуса заказа)
+  function chatRemoveMsgs(ids) {
+    const set = new Set(ids.map(String));
+    const before = chatState.msgs.length;
+    chatState.msgs = chatState.msgs.filter(m => !set.has(String(m.id)));
+    if (chatState.msgs.length === before) return;
+    const el = $('chatMessages');
+    const keep = el.scrollTop;
+    const wasBottom = chatIsNearBottom();
+    chatRenderAll();
+    if (wasBottom) chatScrollBottom(); else el.scrollTop = keep;
+  }
+
   async function chatMarkRead() {
     const uid = chatState.userId;
     if (!uid) return;
@@ -5311,6 +5395,11 @@ body { overflow-x: hidden; }
       const list = await apiGet(`/api/admin/chats/${encodeURIComponent(uid)}?limit=${CHAT_PAGE_SIZE}`);
       if (token !== chatState.token || !Array.isArray(list)) return;
       const known = new Set(chatState.msgs.map(m => String(m.id)));
+      // сообщения, которых больше нет на сервере (удалены), убираем из чата
+      const fresh = new Set(list.map(m => String(m.id)));
+      const minId = list.length >= CHAT_PAGE_SIZE ? Math.min(...list.map(m => Number(m.id))) : 0;
+      const gone = chatState.msgs.filter(m => !m.pending && !fresh.has(String(m.id)) && Number(m.id) >= minId).map(m => m.id);
+      if (gone.length) chatRemoveMsgs(gone);
       chatAppendMsgs(list.filter(m => !known.has(String(m.id))));
       // повторяем загрузку медиа, которое не удалось получить
       $('chatMessages').querySelectorAll('.chat-media[data-state="error"]').forEach(box => chatLoadMedia(box));
@@ -5362,6 +5451,8 @@ body { overflow-x: hidden; }
       const blur = $('chatBlur');
       if (blur) blur.style.height = (bottom + 4) + 'px';
     }
+    const bb = $('chatBlurBottom');
+    if (bb) bb.style.height = Math.max(0, $('chatView').clientHeight - bar.getBoundingClientRect().top + 4) + 'px';
     if (near) chatScrollBottom();
   }
   function chatAutosize() {
@@ -5520,7 +5611,40 @@ body { overflow-x: hidden; }
       Promise.resolve(chatPoll(true)).finally(hideTopLoader);
     });
     $('chatLightbox').addEventListener('click', () => chatCloseLightbox());
+
+    // долгое нажатие на сообщение — окно с информацией
+    let lpTimer = null, lpX = 0, lpY = 0;
+    const lpCancel = () => { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } };
+    msgs.addEventListener('touchstart', (e) => {
+      chatState.longFired = false;
+      lpCancel();
+      const el = e.target.closest('.chat-msg');
+      if (!el || el.classList.contains('pending') || e.touches.length !== 1) return;
+      lpX = e.touches[0].clientX; lpY = e.touches[0].clientY;
+      lpTimer = setTimeout(() => {
+        lpTimer = null;
+        chatState.longFired = true;
+        chatShowMsgInfo(el.dataset.msgId);
+      }, 500);
+    }, { passive: true });
+    msgs.addEventListener('touchmove', (e) => {
+      if (!lpTimer) return;
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - lpX) > 10 || Math.abs(t.clientY - lpY) > 10) lpCancel();
+    }, { passive: true });
+    msgs.addEventListener('touchend', lpCancel, { passive: true });
+    msgs.addEventListener('touchcancel', lpCancel, { passive: true });
+    msgs.addEventListener('scroll', lpCancel, { passive: true });
+    // компьютер: правая кнопка мыши
+    msgs.addEventListener('contextmenu', (e) => {
+      const el = e.target.closest('.chat-msg');
+      if (!el) return;
+      e.preventDefault();
+      if (!el.classList.contains('pending')) chatShowMsgInfo(el.dataset.msgId);
+    });
     msgs.addEventListener('click', (e) => {
+      // после долгого нажатия отпускание пальца не должно открывать фото/видео
+      if (chatState.longFired) { chatState.longFired = false; e.preventDefault(); return; }
       const t = e.target;
       const voice = t.closest('.chat-voice');
       if (voice) { hapticLight(); chatToggleVoice(voice); return; }

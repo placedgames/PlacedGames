@@ -401,6 +401,9 @@ async function notifyUser(bot, order) {
             }
         });
 
+        await logBotMessage(order.user_id, 'out', 'text',
+            `Заказ был успешно создан\n\nНомер заказа: #${order.order_number}\nСтатус: Ожидает проверки`,
+            null, null, null, sent.message_id);
         return sent.message_id;
     } catch (e) {
         console.error('Не удалось уведомить пользователя:', e.message);
@@ -411,6 +414,7 @@ async function notifyUser(bot, order) {
 async function notifyUserStatus(bot, order, status, prevUserMsgId) {
     try {
         await safeDeleteMessage(bot, order.user_id, prevUserMsgId);
+        await unlogBotMessage(order.user_id, prevUserMsgId);
 
         const message =
             `${INVISIBLE_LINK}<b>Обновление статуса заказа</b>\n\n` +
@@ -427,6 +431,9 @@ async function notifyUserStatus(bot, order, status, prevUserMsgId) {
             }
         });
 
+        await logBotMessage(order.user_id, 'out', 'text',
+            `Обновление статуса заказа\n\nНомер заказа: #${order.order_number}\nСтатус: ${status}`,
+            null, null, null, sent.message_id);
         return sent.message_id;
     } catch (e) {
         console.error('Не удалось отправить статус пользователю:', e.message);
@@ -518,6 +525,8 @@ async function initDB() {
         // Медиа в переписке: храним только file_id (и превью), сами файлы подтягиваются из Telegram по требованию
         await pool.query(`ALTER TABLE bot_messages ADD COLUMN IF NOT EXISTS thumb_id TEXT`);
         await pool.query(`ALTER TABLE bot_messages ADD COLUMN IF NOT EXISTS meta TEXT`);
+        // id сообщения в Telegram (нужен, чтобы удалять сообщения и у пользователя)
+        await pool.query(`ALTER TABLE bot_messages ADD COLUMN IF NOT EXISTS tg_message_id BIGINT`);
 
         // Отметки «прочитано» админом: последний прочитанный id входящих сообщений по каждому чату
         const readsTable = await pool.query(`SELECT to_regclass('bot_chat_reads') AS t`);
@@ -653,20 +662,33 @@ await pool.query(`ALTER TABLE promo_codes ADD COLUMN IF NOT EXISTS used_count IN
 const BOT_TEXT_MAX = 4000;
 
 // Запись сообщения бота в историю переписки (ошибки не пробрасываются)
-async function logBotMessage(userId, direction, kind, text, fileId, thumbId, meta) {
+async function logBotMessage(userId, direction, kind, text, fileId, thumbId, meta, tgMessageId) {
     try {
         const clipped = text == null ? null : String(text).slice(0, BOT_TEXT_MAX);
         const metaStr = meta ? JSON.stringify(meta).slice(0, 500) : null;
         const r = await pool.query(
-            `INSERT INTO bot_messages (user_id, direction, kind, text, file_id, thumb_id, meta)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)
+            `INSERT INTO bot_messages (user_id, direction, kind, text, file_id, thumb_id, meta, tg_message_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
              RETURNING id, user_id, direction, kind, text, (thumb_id IS NOT NULL) AS has_thumb, meta, created_at`,
-            [String(userId), direction, kind, clipped, fileId || null, thumbId || null, metaStr]
+            [String(userId), direction, kind, clipped, fileId || null, thumbId || null, metaStr, tgMessageId || null]
         );
         return r.rows[0];
     } catch (e) {
         console.error('Не удалось сохранить сообщение бота:', e.message);
         return null;
+    }
+}
+
+// Бот удалил своё сообщение в Telegram — убираем его и из переписки
+async function unlogBotMessage(userId, tgMessageId) {
+    if (!tgMessageId) return;
+    try {
+        await pool.query(
+            `DELETE FROM bot_messages WHERE user_id = $1 AND direction = 'out' AND tg_message_id = $2`,
+            [String(userId), tgMessageId]
+        );
+    } catch (e) {
+        console.error('Не удалось убрать сообщение из переписки:', e.message);
     }
 }
 
@@ -701,7 +723,7 @@ function getBot() {
                     if (ctx.chat && ctx.chat.type === 'private' && ctx.from && ctx.from.id !== ADMIN_ID) {
                         await upsertBotUser(ctx.from);
                         const startText = (ctx.message && typeof ctx.message.text === 'string' && ctx.message.text) || '/start';
-                        await logBotMessage(String(ctx.from.id), 'in', 'text', startText, null);
+                        await logBotMessage(String(ctx.from.id), 'in', 'text', startText, null, null, null, ctx.message && ctx.message.message_id);
                     }
                 } catch (e) {
                     console.error('Ошибка логирования /start:', e.message);
@@ -709,7 +731,7 @@ function getBot() {
                 const message =
     `${INVISIBLE_LINK_START}<b>Приветствуем в</b> <b><a href="https://t.me/PlacedGamesBot">Placed Games</a></b>\n\n` +
     `<b><a href="https://t.me/PlacedGamesBot">Placed Games</a></b> - это магазин для <b>покупки</b> доната в <b>разные игры</b>`;
-                await ctx.reply(message, {
+                const startSent = await ctx.reply(message, {
                     parse_mode: 'HTML',
                     ...NO_FORWARD,
                     reply_markup: {
@@ -724,7 +746,7 @@ function getBot() {
                         ]
                     }
                 });
-                await logBotMessage(String(ctx.from.id), 'out', 'text', 'Приветствуем в Placed Games - это магазин для покупки доната в разные игры', null);
+                await logBotMessage(String(ctx.from.id), 'out', 'text', 'Приветствуем в Placed Games\n\nPlaced Games - это магазин для покупки доната в разные игры', null, null, null, startSent && startSent.message_id);
             } catch (e) {
                 console.error('Ошибка /start:', e.message);
             }
@@ -792,7 +814,7 @@ function getBot() {
 
                 if (kind) {
                     await upsertBotUser(from);
-                    await logBotMessage(String(from.id), 'in', kind, text, fileId, thumbId, meta);
+                    await logBotMessage(String(from.id), 'in', kind, text, fileId, thumbId, meta, msg.message_id);
                 }
             } catch (e) {
                 console.error('Ошибка логирования сообщения бота:', e.message);
@@ -1957,8 +1979,9 @@ app.post('/api/admin/chats/:userId/send', adminAuth, async (req, res) => {
         const bot = getBot();
         if (!bot) return res.status(400).json({ error: 'Бот недоступен' });
 
+        let sentMsg = null;
         try {
-            await bot.telegram.sendMessage(userId, text, { protect_content: true });
+            sentMsg = await bot.telegram.sendMessage(userId, text, { protect_content: true });
         } catch (e) {
             if (e && e.response) {
                 console.error('Telegram отказал в отправке:', e.message);
@@ -1967,8 +1990,43 @@ app.post('/api/admin/chats/:userId/send', adminAuth, async (req, res) => {
             throw e;
         }
 
-        const message = await logBotMessage(userId, 'out', 'text', text, null);
+        const message = await logBotMessage(userId, 'out', 'text', text, null, null, null, sentMsg && sentMsg.message_id);
         res.json({ success: true, message });
+    } catch (err) {
+        sendServerError(res, err);
+    }
+});
+
+// Удалить сообщение: из переписки и из Telegram (у пользователя)
+app.delete('/api/admin/chats/:userId/messages/:messageId', adminAuth, async (req, res) => {
+    try {
+        const userId = chatUserId(req.params.userId);
+        const id = parseInt(req.params.messageId);
+        if (!userId || !Number.isInteger(id) || id < 1) return res.status(400).json({ error: 'Некорректный запрос' });
+        const found = await pool.query(
+            `SELECT id, tg_message_id FROM bot_messages WHERE id = $1 AND user_id = $2`, [id, userId]
+        );
+        if (!found.rows.length) return res.status(404).json({ error: 'Сообщение не найдено' });
+        const tgId = found.rows[0].tg_message_id;
+
+        // true — удалено в Telegram, false — Telegram не дал удалить, null — id сообщения неизвестен (старая запись)
+        let telegram = null;
+        if (tgId) {
+            const bot = getBot();
+            if (!bot) {
+                telegram = false;
+            } else {
+                try {
+                    await bot.telegram.deleteMessage(userId, Number(tgId));
+                    telegram = true;
+                } catch (e) {
+                    telegram = /message to delete not found/i.test(String(e && e.message));
+                    if (!telegram) console.log(`Не удалось удалить сообщение ${tgId} у пользователя: ${e.message}`);
+                }
+            }
+        }
+        await pool.query(`DELETE FROM bot_messages WHERE id = $1`, [id]);
+        res.json({ success: true, telegram });
     } catch (err) {
         sendServerError(res, err);
     }
