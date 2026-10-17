@@ -16,7 +16,7 @@
 }
 
 :root {
-    --app-bg: #151516;
+    --app-bg: #141415;
     --card-bg: #252528;
     --col-bg: #171718;
     --slider-bg: #1c1c1e;
@@ -30,7 +30,7 @@
     --input-bg: #3a3a3d;
     --input2-bg: #323235;
     --input-bg-dark: #303033;
-    --sticky-bg: rgba(40, 40, 44, 0.95);
+    --sticky-bg: rgba(40, 40, 44, 0.98);
     --sticky-bg2: rgba(38, 38, 42, 0.95);
     --bottom-menu-border: rgba(54, 55, 58, 1);
     --fixed-border: rgba(48, 48, 51, 1);
