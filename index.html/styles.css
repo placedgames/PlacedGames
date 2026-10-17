@@ -25,15 +25,15 @@
     --text-secondary: #9e9e9e;
     --text-muted: #cbcdcd;
     --text-price-old: #9ca3af;
-    --border-color: rgba(40, 40, 43, 1);
+    --border-color: rgba(42, 42, 45, 1);
     --divider-color: rgba(51, 51, 54, 1);
     --input-bg: #3a3a3d;
     --input2-bg: #323235;
     --input-bg-dark: #303033;
-    --sticky-bg: rgba(40, 40, 44, 0.99);
-    --sticky-bg2: rgba(38, 38, 42, 0.99);
-    --bottom-menu-border: rgba(57, 57, 60, 1);
-    --fixed-border: rgba(50, 50, 53, 1);
+    --sticky-bg: rgba(40, 40, 44, 0.95);
+    --sticky-bg2: rgba(38, 38, 42, 0.95);
+    --bottom-menu-border: rgba(54, 55, 58, 1);
+    --fixed-border: rgba(48, 48, 51, 1);
     --menu-slider-bg: rgba(200, 200, 204, 0.1);
     --accent-blue-bg: rgba(56, 150, 200, 0.1);
     /* ===== Размеры иконок (редактируй здесь) ===== */
