@@ -38,11 +38,11 @@ function makeProducts(raw, prefix) {
   ["0103", "Улучш. до BP+", "4.99", "4.99", "Пропуск", "Пропуски", 1, ["0101","0102","0103"], false, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/BrawlPassPlus.JPEG"],
   ["0104", "Pro Pass", "24.99", "24.99", "Пропуск", "Пропуски", 1, [], false, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/ProPass.JPEG"],
 
-  // 02 Боец Нори
-  //["0201", "Боец Нори", "24.99", "24.99", "Боец Нори", "Боец Нори", 1, ["0201","0202","0203"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/Nori.JPEG"],
-  //["0202", "Набор: Нори", "29.99", "29.99", "Боец Нори", "Боец Нори", 1, ["0201","0202","0203"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/Nori.JPEG", null, null, false,
-  //["https://cdn.jsdelivr.net/gh/placedgames/media/bs/NoriGT1.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NoriGT2.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NoriSP1.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NoriSP2.JPEG"],
-  //["Боец Нори", "Гаджет «Сеть для рыбы»", "Гаджет «Рыбный перекус»", "Зв. сила «Весь в маму»", "Зв. сила «Крупный улов»"]],
+  // 02 Боец Винс
+  ["0201", "Боец Винс", "24.99", "24.99", "Боец Нори", "Боец Нори", 1, ["0201","0202","0203"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/VINS.JPEG"],
+  ["0202", "Набор: Винс", "29.99", "29.99", "Боец Нори", "Боец Нори", 1, ["0201","0202","0203"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/VINS.JPEG", null, null, false,
+  ["https://cdn.jsdelivr.net/gh/placedgames/media/bs/VG1.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/VG2.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/VSP1.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/VSP2.JPEG"],
+  ["Боец Винс", "Гаджет «Горячий кофе»", "Гаджет «Метамольфозы»", "Зв. сила «Идите к папочке»", "Зв. сила «Жучий жгут»"]],
   //["0203", "Набор: Нори", "37.99", "37.99", "Боец Нори", "Боец Нори", 1, ["0201","0202","0203"], true, "https://cdn.jsdelivr.net/gh/placedgames/media/bs/Nori.JPEG", null, null, false,
   //["https://cdn.jsdelivr.net/gh/placedgames/media/bs/PR11.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NoriGT1.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NoriGT2.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NoriSP1.JPEG", "https://cdn.jsdelivr.net/gh/placedgames/media/bs/NoriSP2.JPEG"],
   //["Боец Нори", "Улучшение до 11 силы", "Гаджет «Сеть для рыбы»", "Гаджет «Рыбный перекус»", "Зв. сила «Весь в маму»", "Зв. сила «Крупный улов»"]],
