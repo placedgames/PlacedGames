@@ -674,7 +674,7 @@ const games = [{
     warnText: 'Для отправки подарка укажите ваш юзернейм в Telegram.',
     instructionText: 'Информация о товаре:\n\nПосле подтверждения оплаты товар будет отправлен на указанный вами «username».\n\nОжидание выполнения заказа занимает от 5 до 20 минут.',
     enabled: true,
-    getProducts: () => window.tgProducts || []
+    getProducts: () => window.asProducts || []
 }];
 
 preloadImages(getAllProductImageUrls());
