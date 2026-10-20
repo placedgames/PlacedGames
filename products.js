@@ -474,7 +474,7 @@ const asRaw = [
   ["0101", "США: 5 USD", "5", "5", "Под. карта США", "Под. карты США", 2, [], false, "https://cdn.jsdelivr.net/gh/placedgames/media/as/US2.JPEG"],
 
 ];
-window.tgProducts = makeProducts(tgRaw, 'tg_');
+window.asProducts = makeProducts(asRaw, 'as_');
 
 const products = window.brawlProducts;
 window.products = products;
