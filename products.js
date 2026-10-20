@@ -467,6 +467,12 @@ const tgRaw = [
   ["0402", "6 мес. премиум", null, null, "Премиум", "Премиум", 1, ["0401","0402","0403"], false, "https://cdn.jsdelivr.net/gh/placedgames/media/tg/1500Stars.JPEG", 1329, 1349, true],
   ["0403", "1 год премиум", null, null, "Премиум", "Премиум", 1, ["0401","0402","0403"], false, "https://cdn.jsdelivr.net/gh/placedgames/media/tg/2500Stars.JPEG", 2399, 2419, true],
 
+// App Store
+const asRaw = [  
+  // 01 Под. карты
+  ["0101", "США: 2 USD", "2", "2", "Под. карта США", "Под. карты США", 2, [], false, "https://cdn.jsdelivr.net/gh/placedgames/media/as/US2.JPEG"],
+  ["0101", "США: 5 USD", "5", "5", "Под. карта США", "Под. карты США", 2, [], false, "https://cdn.jsdelivr.net/gh/placedgames/media/as/US2.JPEG"],
+
 ];
 window.tgProducts = makeProducts(tgRaw, 'tg_');
 
