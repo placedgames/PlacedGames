@@ -473,8 +473,8 @@ window.tgProducts = makeProducts(tgRaw, 'tg_');
 // App Store
 const asRaw = [  
   // 01 Под. карты
-  ["0101", "США: 2 USD", "2", "2", "Под. карта США", "Под. карты США", 2, [], false, "https://cdn.jsdelivr.net/gh/placedgames/media/as/US2.JPEG"],
-  ["0101", "США: 5 USD", "5", "5", "Под. карта США", "Под. карты США", 2, [], false, "https://cdn.jsdelivr.net/gh/placedgames/media/as/US2.JPEG"],
+  ["0101", "США: 2 USD", "2", "2", "Под. карта США", "Под. карты США", 2, [], false, "https://cdn.jsdelivr.net/gh/placedgames/media/as/USA2.JPEG"],
+  ["0103", "США: 5 USD", "5", "5", "Под. карта США", "Под. карты США", 2, [], false, "https://cdn.jsdelivr.net/gh/placedgames/media/as/USA2.JPEG"],
 
 ];
 window.asProducts = makeProducts(asRaw, 'as_');
