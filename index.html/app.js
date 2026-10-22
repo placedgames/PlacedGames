@@ -4510,7 +4510,7 @@ function applyTheme(theme) {
     const tg = window.Telegram?.WebApp;
     if (tg) {
         const bg = getThemeBgColor(theme);
-        tg.setHeaderColor('#000000');
+        try { tg.setHeaderColor(bg); } catch (e) {}
         try { tg.setBackgroundColor(bg); } catch (e) {}
     }
 }
@@ -4694,7 +4694,7 @@ function applyTheme(theme) {
                 tg.requestFullscreen();
             }
         } catch (e) {}
-        try { const bg0 = getThemeBgColor(localStorage.getItem('appTheme') || 'dark'); tg.setHeaderColor('bg_color'); tg.setBackgroundColor(bg0); } catch (e) {}
+        try { const bg0 = getThemeBgColor(localStorage.getItem('appTheme') || 'dark'); tg.setHeaderColor(bg0); tg.setBackgroundColor(bg0); } catch (e) {}
         try { if (tg.disableClosingConfirmation) tg.disableClosingConfirmation(); } catch (e) {}
         try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) {}
         initBackButtonHandler();
