@@ -16,11 +16,11 @@
 }
 
 :root {
-    --app-bg: #141415;
-    --card-bg: #252528;
-    --col-bg: #161617;
+    --app-bg: #1d1d1f;
+    --card-bg: #2c2c2e;
+    --col-bg: #1d1d1f;
     --slider-bg: #1c1c1e;
-    --header-btn-bg: #262629;
+    --header-btn-bg: #2c2c2e;
     --text-primary: #ffffff;
     --text-secondary: #9e9e9e;
     --text-muted: #cbcdcd;
