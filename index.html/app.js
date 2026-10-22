@@ -4510,7 +4510,7 @@ function applyTheme(theme) {
     const tg = window.Telegram?.WebApp;
     if (tg) {
         const bg = getThemeBgColor(theme);
-        tg.setHeaderColor('#080808');
+        tg.setHeaderColor('#000000');
         try { tg.setBackgroundColor(bg); } catch (e) {}
     }
 }
