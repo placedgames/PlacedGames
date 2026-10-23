@@ -102,12 +102,85 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
     mask-composite: exclude;
 }
 
+/* ---------- 2б. Второй слой: мягкое свечение ВНУТРИ карточки ---------- */
+/* Плавно затухает от обводки внутрь (примерно на 2px) и по длине грани, как основной блик */
+:root {
+    --glass2-rgb: 130, 132, 142;  /* свой цвет второго слоя */
+    --glass2-a: 0.5;              /* яркость у самой обводки (0 = выключить) */
+    --glass2-blur: 4px;           /* глубина затухания: 4px ≈ 2px видимого свечения внутрь */
+    --glass2-spread: 1px;         /* насколько плотный край до начала затухания */
+}
+
+[data-theme="light"] {
+    --glass2-rgb: 120, 120, 132;
+    --glass2-a: 0.35;
+}
+
+html[data-dark="tinted"]:not([data-theme="light"]) {
+    --glass2-rgb: 110, 130, 160;
+}
+
+.search-bar::after,
+.page-header-title-btn::after,
+.page-header-double-btn::after,
+.product-card::after,
+.cart-item::after,
+.content-card::after,
+.order-data-card::after,
+.order-main-card::after,
+.profile-main-card::after,
+.quick-link-card::after,
+.referral-main-card::after,
+.review-card::after,
+.checkout-card::after,
+#menuPill::after,
+#profileMenuWrapper > div:first-child::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 var(--glass2-blur) var(--glass2-spread) rgba(var(--glass2-rgb), var(--glass2-a));
+    -webkit-mask-image:
+        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
+            #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
+        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
+            #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
+        radial-gradient(ellipse 30px 48% at 100% 50%,
+            rgba(0,0,0,0.4) 0%, transparent 100%);
+    mask-image:
+        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
+            #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
+        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
+            #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
+        radial-gradient(ellipse 30px 48% at 100% 50%,
+            rgba(0,0,0,0.4) 0%, transparent 100%);
+}
+
+#menuPill,
+#profileMenuWrapper > div:first-child {
+    --glass2-rgb: 160, 162, 172;
+    --glass2-a: 0.6;
+}
+
+html[data-dark="tinted"]:not([data-theme="light"]) #menuPill,
+html[data-dark="tinted"]:not([data-theme="light"]) #profileMenuWrapper > div:first-child {
+    --glass2-rgb: 140, 165, 195;
+}
+
+[data-theme="light"] #menuPill,
+[data-theme="light"] #profileMenuWrapper > div:first-child {
+    --glass2-rgb: 110, 110, 122;
+    --glass2-a: 0.4;
+}
+
 /* Блик карточек товаров рисуем поверх картинки/карусели */
 .product-card {
     isolation: isolate;
 }
 
-.product-card::before {
+.product-card::before,
+.product-card::after {
     z-index: 3;
 }
 
@@ -702,7 +775,7 @@ svg.product-info-icon {
     aspect-ratio: 1 / 1;
     object-fit: cover;
     padding: 7px;
-    border-radius: 43px; /* 36 видимых + 7 padding */
+    border-radius: 41px; /* 34 видимых + 7 padding */
     box-sizing: border-box;
 }
 
@@ -734,7 +807,7 @@ svg.product-info-icon {
     flex-shrink: 0;
     object-fit: cover;
     padding: 0;
-    border-radius: 36px;
+    border-radius: 34px;
     box-sizing: border-box;
 }
 
