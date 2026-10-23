@@ -2249,10 +2249,10 @@ svg.product-info-icon {
 
 /* =====================================================================
    LIQUID GLASS — блики вместо обводки
-   Вставь в САМЫЙ КОНЕЦ styles.css. Больше ничего менять не нужно.
+   Вставь в САМЫЙ КОНЕЦ styles.css (старую версию этого блока удали).
 
-   Блики есть:   лево-верх (угол + верхняя грань)
-                 право-низ (угол + нижняя грань)
+   Блики есть:   лево-верх (угол + вся верхняя грань)
+                 право-низ (угол + вся нижняя грань)
                  право (слабо)
    Бликов нет:   право-верх (угол), лево-низ (угол), левая грань
 
@@ -2262,22 +2262,22 @@ svg.product-info-icon {
    ===================================================================== */
 
 :root {
-    --glass-rgb: 255, 255, 255;   /* цвет бликов */
-    --glass-strong: 0.28;         /* яркость углов: лево-верх и право-низ */
-    --glass-faint: 0.08;          /* яркость правой стороны */
-    --glass-w: 0.7px;             /* толщина блика (~2 физ. пикселя на iPhone) */
-    --glass-h: 60%;               /* как далеко блик тянется вдоль верха/низа */
-    --glass-v: min(26px, 55%);    /* как далеко блик стекает вниз/вверх по бокам */
+    --glass-rgb: 160, 162, 170;   /* цвет бликов (серый) */
+    --glass-strong: 0.55;         /* яркость углов: лево-верх и право-низ */
+    --glass-faint: 0.22;          /* яркость правой стороны */
+    --glass-w: 1px;               /* толщина блика */
+    --glass-h: 100%;              /* 100% = блик тянется вдоль ВСЕЙ верхней/нижней грани */
+    --glass-v: min(28px, 55%);    /* как далеко блик стекает вниз/вверх по бокам */
 }
 
 [data-theme="light"] {
-    --glass-rgb: 90, 90, 105;
-    --glass-strong: 0.2;
-    --glass-faint: 0.07;
+    --glass-rgb: 110, 110, 122;
+    --glass-strong: 0.28;
+    --glass-faint: 0.1;
 }
 
 html[data-dark="tinted"]:not([data-theme="light"]) {
-    --glass-rgb: 205, 228, 255;
+    --glass-rgb: 155, 172, 195;
 }
 
 /* ---------- 1. Убираем старую обводку (место под неё остаётся) ---------- */
@@ -2330,17 +2330,17 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
     border-radius: inherit;
     pointer-events: none;
     background:
-        /* лево-верх: угол + верхняя грань */
+        /* лево-верх: угол + верхняя грань на всю длину */
         radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
             rgba(var(--glass-rgb), var(--glass-strong)) 0%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.55)) 30%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.14)) 65%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.7)) 40%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.32)) 72%,
             rgba(var(--glass-rgb), 0) 100%),
-        /* право-низ: угол + нижняя грань */
+        /* право-низ: угол + нижняя грань на всю длину */
         radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
             rgba(var(--glass-rgb), var(--glass-strong)) 0%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.55)) 30%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.14)) 65%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.7)) 40%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.32)) 72%,
             rgba(var(--glass-rgb), 0) 100%),
         /* правая сторона: слабо, по центру */
         radial-gradient(ellipse 30px 48% at 100% 50%,
