@@ -11,22 +11,22 @@
    ===================================================================== */
 
 :root {
-    --glass-rgb: 72, 74, 82;      /* цвет бликов (тёмно-серый) */
-    --glass-strong: 0.13;         /* яркость углов: лево-верх и право-низ */
-    --glass-faint: 0.045;         /* яркость правой стороны */
+    --glass-rgb: 88, 90, 98;      /* цвет бликов (тёмно-серый) */
+    --glass-strong: 0.16;         /* яркость углов: лево-верх и право-низ */
+    --glass-faint: 0.058;         /* яркость правой стороны */
     --glass-w: 1px;               /* толщина блика */
     --glass-h: 100%;              /* 100% = блик тянется вдоль ВСЕЙ верхней/нижней грани */
     --glass-v: min(28px, 55%);    /* как далеко блик стекает вниз/вверх по бокам */
 }
 
 [data-theme="light"] {
-    --glass-rgb: 95, 95, 108;
-    --glass-strong: 0.08;
-    --glass-faint: 0.03;
+    --glass-rgb: 102, 102, 115;
+    --glass-strong: 0.11;
+    --glass-faint: 0.04;
 }
 
 html[data-dark="tinted"]:not([data-theme="light"]) {
-    --glass-rgb: 70, 84, 106;
+    --glass-rgb: 82, 98, 122;
 }
 
 /* ---------- 1. Убираем старую обводку (место под неё остаётся) ---------- */
@@ -105,19 +105,19 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
 /* ---------- 2б. Второй слой: мягкое свечение ВНУТРИ карточки ---------- */
 /* Плавно затухает от обводки внутрь (примерно на 2px) и по длине грани, как основной блик */
 :root {
-    --glass2-rgb: 85, 87, 96;     /* свой цвет второго слоя */
-    --glass2-a: 0.2;              /* яркость у самой обводки (0 = выключить) */
+    --glass2-rgb: 100, 102, 111;  /* свой цвет второго слоя */
+    --glass2-a: 0.3;              /* яркость у самой обводки (0 = выключить) */
     --glass2-blur: 3px;           /* глубина затухания: 3px ≈ 1.5–2px видимого свечения внутрь */
     --glass2-spread: 1px;         /* насколько плотный край до начала затухания */
 }
 
 [data-theme="light"] {
-    --glass2-rgb: 100, 100, 114;
-    --glass2-a: 0.14;
+    --glass2-rgb: 110, 110, 123;
+    --glass2-a: 0.21;
 }
 
 html[data-dark="tinted"]:not([data-theme="light"]) {
-    --glass2-rgb: 85, 100, 125;
+    --glass2-rgb: 97, 115, 140;
 }
 
 .search-bar::after,
@@ -159,19 +159,19 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
 
 #menuPill,
 #profileMenuWrapper > div:first-child {
-    --glass2-rgb: 100, 102, 112;
-    --glass2-a: 0.26;
+    --glass2-rgb: 122, 124, 134;
+    --glass2-a: 0.36;
 }
 
 html[data-dark="tinted"]:not([data-theme="light"]) #menuPill,
 html[data-dark="tinted"]:not([data-theme="light"]) #profileMenuWrapper > div:first-child {
-    --glass2-rgb: 105, 125, 150;
+    --glass2-rgb: 122, 145, 172;
 }
 
 [data-theme="light"] #menuPill,
 [data-theme="light"] #profileMenuWrapper > div:first-child {
-    --glass2-rgb: 95, 95, 108;
-    --glass2-a: 0.18;
+    --glass2-rgb: 102, 102, 115;
+    --glass2-a: 0.25;
 }
 
 /* Блик карточек товаров рисуем поверх картинки/карусели */
@@ -202,9 +202,9 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
 
 #menuPill,
 #profileMenuWrapper > div:first-child {
-    --glass-rgb: 90, 92, 100;     /* цвет блика меню */
-    --glass-strong: 0.2;
-    --glass-faint: 0.1;
+    --glass-rgb: 108, 110, 118;   /* цвет блика меню */
+    --glass-strong: 0.26;
+    --glass-faint: 0.13;
     background: var(--menu-glass-bg) !important;
     -webkit-backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
     backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
@@ -212,14 +212,14 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
 
 html[data-dark="tinted"]:not([data-theme="light"]) #menuPill,
 html[data-dark="tinted"]:not([data-theme="light"]) #profileMenuWrapper > div:first-child {
-    --glass-rgb: 100, 118, 142;
+    --glass-rgb: 118, 136, 161;
 }
 
 [data-theme="light"] #menuPill,
 [data-theme="light"] #profileMenuWrapper > div:first-child {
-    --glass-rgb: 95, 95, 108;
-    --glass-strong: 0.15;
-    --glass-faint: 0.07;
+    --glass-rgb: 102, 102, 115;
+    --glass-strong: 0.21;
+    --glass-faint: 0.09;
 }
 
 .page {
