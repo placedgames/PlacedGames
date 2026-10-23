@@ -2262,7 +2262,7 @@ svg.product-info-icon {
    ===================================================================== */
 
 :root {
-    --glass-rgb: 105, 107, 115;   /* цвет бликов (серый) */
+    --glass-rgb: 105, 107, 115;   /* цвет бликов (тёмно-серый) */
     --glass-strong: 0.24;         /* яркость углов: лево-верх и право-низ */
     --glass-faint: 0.09;          /* яркость правой стороны */
     --glass-w: 1px;               /* толщина блика */
@@ -2271,13 +2271,13 @@ svg.product-info-icon {
 }
 
 [data-theme="light"] {
-    --glass-rgb: 110, 120, 122;
-    --glass-strong: 0.28;
-    --glass-faint: 0.1;
+    --glass-rgb: 110, 110, 122;
+    --glass-strong: 0.18;
+    --glass-faint: 0.06;
 }
 
 html[data-dark="tinted"]:not([data-theme="light"]) {
-    --glass-rgb: 155, 172, 195;
+    --glass-rgb: 95, 112, 138;
 }
 
 /* ---------- 1. Убираем старую обводку (место под неё остаётся) ---------- */
@@ -2333,14 +2333,14 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
         /* лево-верх: угол + верхняя грань на всю длину */
         radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
             rgba(var(--glass-rgb), var(--glass-strong)) 0%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.7)) 40%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.32)) 72%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.5)) 40%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.18)) 72%,
             rgba(var(--glass-rgb), 0) 100%),
         /* право-низ: угол + нижняя грань на всю длину */
         radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
             rgba(var(--glass-rgb), var(--glass-strong)) 0%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.7)) 40%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.32)) 72%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.5)) 40%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.18)) 72%,
             rgba(var(--glass-rgb), 0) 100%),
         /* правая сторона: слабо, по центру */
         radial-gradient(ellipse 30px 48% at 100% 50%,
@@ -2351,4 +2351,18 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     mask-composite: exclude;
+}
+
+/* ---------- 3. Нижнее меню: блик чуть ярче, чем у остальных ---------- */
+/* Меняй только эти две переменные — остальные элементы не затронуты */
+#menuPill,
+#profileMenuWrapper > div:first-child {
+    --glass-strong: 0.38;
+    --glass-faint: 0.15;
+}
+
+[data-theme="light"] #menuPill,
+[data-theme="light"] #profileMenuWrapper > div:first-child {
+    --glass-strong: 0.28;
+    --glass-faint: 0.1;
 }
