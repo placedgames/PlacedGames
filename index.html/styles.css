@@ -1,3 +1,154 @@
+/* =====================================================================
+   LIQUID GLASS — блики вместо обводки
+   Блики есть:   лево-верх (угол + вся верхняя грань)
+                 право-низ (угол + вся нижняя грань)
+                 право (слабо)
+   Бликов нет:   право-верх (угол), лево-низ (угол), левая грань
+
+   Bottom card (.order-items-card, .review-items-card, .cart-item-delivery,
+   .profile-bottom-card, .referral-bottom-card, .filter-btn и инлайн
+   col-bg карточки) НЕ затрагиваются — у них остаётся прежняя обводка.
+   ===================================================================== */
+
+:root {
+    --glass-rgb: 105, 107, 115;   /* цвет бликов (тёмно-серый) */
+    --glass-strong: 0.24;         /* яркость углов: лево-верх и право-низ */
+    --glass-faint: 0.09;          /* яркость правой стороны */
+    --glass-w: 1px;               /* толщина блика */
+    --glass-h: 100%;              /* 100% = блик тянется вдоль ВСЕЙ верхней/нижней грани */
+    --glass-v: min(28px, 55%);    /* как далеко блик стекает вниз/вверх по бокам */
+}
+
+[data-theme="light"] {
+    --glass-rgb: 110, 110, 122;
+    --glass-strong: 0.18;
+    --glass-faint: 0.06;
+}
+
+html[data-dark="tinted"]:not([data-theme="light"]) {
+    --glass-rgb: 95, 112, 138;
+}
+
+/* ---------- 1. Убираем старую обводку (место под неё остаётся) ---------- */
+.search-bar,
+.page-header-title-btn,
+.page-header-double-btn,
+.product-card,
+.cart-item,
+.content-card,
+.order-data-card,
+.order-main-card,
+.profile-main-card,
+.quick-link-card,
+.referral-main-card,
+.review-card,
+.checkout-card,
+#menuPill,
+#profileMenuWrapper > div:first-child {
+    position: relative;
+    border-color: transparent !important;
+}
+
+/* overflow:hidden обрезал бы блик, который лежит на самой границе */
+.product-card,
+.page-header-title-btn,
+#menuPill {
+    overflow: visible !important;
+}
+
+/* ---------- 2. Сам блик ---------- */
+.search-bar::before,
+.page-header-title-btn::before,
+.page-header-double-btn::before,
+.product-card::before,
+.cart-item::before,
+.content-card::before,
+.order-data-card::before,
+.order-main-card::before,
+.profile-main-card::before,
+.quick-link-card::before,
+.referral-main-card::before,
+.review-card::before,
+.checkout-card::before,
+#menuPill::before,
+#profileMenuWrapper > div:first-child::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    padding: var(--glass-w);
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+        /* лево-верх: угол + верхняя грань на всю длину */
+        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
+            rgba(var(--glass-rgb), var(--glass-strong)) 0%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.5)) 40%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.18)) 72%,
+            rgba(var(--glass-rgb), 0) 100%),
+        /* право-низ: угол + нижняя грань на всю длину */
+        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
+            rgba(var(--glass-rgb), var(--glass-strong)) 0%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.5)) 40%,
+            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.18)) 72%,
+            rgba(var(--glass-rgb), 0) 100%),
+        /* правая сторона: слабо, по центру */
+        radial-gradient(ellipse 30px 48% at 100% 50%,
+            rgba(var(--glass-rgb), var(--glass-faint)) 0%,
+            rgba(var(--glass-rgb), 0) 100%);
+    /* оставляем только кольцо шириной padding */
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+}
+
+/* Блик карточек товаров рисуем поверх картинки/карусели */
+.product-card {
+    isolation: isolate;
+}
+
+.product-card::before {
+    z-index: 3;
+}
+
+/* ---------- 3. Нижнее меню: стекло, светлее и меньше окрашивается фоном ---------- */
+/* Меняй значения здесь — остальные элементы не затронуты */
+:root {
+    --menu-glass-bg: rgba(44, 44, 48, 0.8);   /* светлее и плотнее; меньше последнее число = прозрачнее */
+    --menu-glass-blur: 30px;                    /* размытие фона под меню */
+    --menu-glass-saturate: 0.8;                /* 1 = цвета как есть, меньше 1 = приглушает цвет под меню */
+}
+
+[data-theme="light"] {
+    --menu-glass-bg: rgba(254, 254, 255, 0.78);
+}
+
+html[data-dark="tinted"]:not([data-theme="light"]) {
+    --menu-glass-bg: rgba(64, 78, 94, 0.74);
+}
+
+#menuPill,
+#profileMenuWrapper > div:first-child {
+    --glass-rgb: 140, 142, 150;   /* светлее серый для блика меню */
+    --glass-strong: 0.4;
+    --glass-faint: 0.22;
+    background: var(--menu-glass-bg) !important;
+    -webkit-backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
+    backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
+}
+
+html[data-dark="tinted"]:not([data-theme="light"]) #menuPill,
+html[data-dark="tinted"]:not([data-theme="light"]) #profileMenuWrapper > div:first-child {
+    --glass-rgb: 135, 155, 180;
+}
+
+[data-theme="light"] #menuPill,
+[data-theme="light"] #profileMenuWrapper > div:first-child {
+    --glass-rgb: 110, 110, 122;
+    --glass-strong: 0.34;
+    --glass-faint: 0.14;
+}
+
 .page {
     display: none !important;
 }
@@ -140,25 +291,19 @@ body {
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     color: var(--text-primary);
     padding-bottom: 130px;
-}
-
-body {
     padding-top: var(--tg-safe-area-inset-top, 0px);
 }
 
 body {
     -webkit-user-select: none;
     user-select: none;
+    touch-action: pan-y;
 }
 
 #payment-page .form-select-readonly,
 #payment-page .card-number-text {
     -webkit-user-select: text;
     user-select: text;
-}
-
-body {
-    touch-action: pan-y;
 }
 
 .page-header-sticky {
@@ -557,7 +702,7 @@ svg.product-info-icon {
     aspect-ratio: 1 / 1;
     object-fit: cover;
     padding: 7px;
-    border-radius: 33px;
+    border-radius: 43px; /* 36 видимых + 7 padding */
     box-sizing: border-box;
 }
 
@@ -565,7 +710,7 @@ svg.product-info-icon {
     position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
-    border-radius: 33px;
+    border-radius: 39px 39px 0 0; /* как верх карточки, иначе углы перекрывают блик */
     overflow: hidden;
     box-sizing: border-box;
     background: var(--card-bg);
@@ -1345,7 +1490,6 @@ svg.product-info-icon {
     background: var(--col-bg);
     border: 1px solid var(--col-border-color);
     border-radius: 0 0 35px 35px;
-    border-radius: 0 0 35px 35px;
     padding: 11px 11px;
     margin-top: -29px;
     padding-top: 41px;
@@ -1885,9 +2029,6 @@ svg.product-info-icon {
     opacity: 0.6;
 }
 
-.help-faq-item {
-}
-
 .help-faq-row {
     display: flex;
     justify-content: space-between;
@@ -2245,148 +2386,4 @@ svg.product-info-icon {
 
 .btn-dots span:nth-child(3) {
     animation-delay: 0.36s;
-}
-
-/* =====================================================================
-   LIQUID GLASS — блики вместо обводки
-   Вставь в САМЫЙ КОНЕЦ styles.css (старую версию этого блока удали).
-
-   Блики есть:   лево-верх (угол + вся верхняя грань)
-                 право-низ (угол + вся нижняя грань)
-                 право (слабо)
-   Бликов нет:   право-верх (угол), лево-низ (угол), левая грань
-
-   Bottom card (.order-items-card, .review-items-card, .cart-item-delivery,
-   .profile-bottom-card, .referral-bottom-card, .filter-btn и инлайн
-   col-bg карточки) НЕ затрагиваются — у них остаётся прежняя обводка.
-   ===================================================================== */
-
-:root {
-    --glass-rgb: 105, 107, 115;   /* цвет бликов (тёмно-серый) */
-    --glass-strong: 0.24;         /* яркость углов: лево-верх и право-низ */
-    --glass-faint: 0.09;          /* яркость правой стороны */
-    --glass-w: 1px;               /* толщина блика */
-    --glass-h: 100%;              /* 100% = блик тянется вдоль ВСЕЙ верхней/нижней грани */
-    --glass-v: min(28px, 55%);    /* как далеко блик стекает вниз/вверх по бокам */
-}
-
-[data-theme="light"] {
-    --glass-rgb: 110, 110, 122;
-    --glass-strong: 0.18;
-    --glass-faint: 0.06;
-}
-
-html[data-dark="tinted"]:not([data-theme="light"]) {
-    --glass-rgb: 95, 112, 138;
-}
-
-/* ---------- 1. Убираем старую обводку (место под неё остаётся) ---------- */
-.search-bar,
-.page-header-title-btn,
-.page-header-double-btn,
-.product-card,
-.cart-item,
-.content-card,
-.order-data-card,
-.order-main-card,
-.profile-main-card,
-.quick-link-card,
-.referral-main-card,
-.review-card,
-.checkout-card,
-#menuPill,
-#profileMenuWrapper > div:first-child {
-    position: relative;
-    border-color: transparent !important;
-}
-
-/* overflow:hidden обрезал бы блик, который лежит на самой границе */
-.product-card,
-.page-header-title-btn,
-#menuPill {
-    overflow: visible !important;
-}
-
-/* ---------- 2. Сам блик ---------- */
-.search-bar::before,
-.page-header-title-btn::before,
-.page-header-double-btn::before,
-.product-card::before,
-.cart-item::before,
-.content-card::before,
-.order-data-card::before,
-.order-main-card::before,
-.profile-main-card::before,
-.quick-link-card::before,
-.referral-main-card::before,
-.review-card::before,
-.checkout-card::before,
-#menuPill::before,
-#profileMenuWrapper > div:first-child::before {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    padding: var(--glass-w);
-    border-radius: inherit;
-    pointer-events: none;
-    background:
-        /* лево-верх: угол + верхняя грань на всю длину */
-        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
-            rgba(var(--glass-rgb), var(--glass-strong)) 0%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.5)) 40%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.18)) 72%,
-            rgba(var(--glass-rgb), 0) 100%),
-        /* право-низ: угол + нижняя грань на всю длину */
-        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
-            rgba(var(--glass-rgb), var(--glass-strong)) 0%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.5)) 40%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.18)) 72%,
-            rgba(var(--glass-rgb), 0) 100%),
-        /* правая сторона: слабо, по центру */
-        radial-gradient(ellipse 30px 48% at 100% 50%,
-            rgba(var(--glass-rgb), var(--glass-faint)) 0%,
-            rgba(var(--glass-rgb), 0) 100%);
-    /* оставляем только кольцо шириной padding */
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    -webkit-mask-composite: xor;
-    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    mask-composite: exclude;
-}
-
-/* ---------- 3. Нижнее меню: стекло, светлее и меньше окрашивается фоном ---------- */
-/* Меняй значения здесь — остальные элементы не затронуты */
-:root {
-    --menu-glass-bg: rgba(44, 44, 48, 0.8);   /* светлее и плотнее; меньше последнее число = прозрачнее */
-    --menu-glass-blur: 30px;                    /* размытие фона под меню */
-    --menu-glass-saturate: 0.8;                /* 1 = цвета как есть, меньше 1 = приглушает цвет под меню */
-}
-
-[data-theme="light"] {
-    --menu-glass-bg: rgba(254, 254, 255, 0.78);
-}
-
-html[data-dark="tinted"]:not([data-theme="light"]) {
-    --menu-glass-bg: rgba(64, 78, 94, 0.74);
-}
-
-#menuPill,
-#profileMenuWrapper > div:first-child {
-    --glass-rgb: 140, 142, 150;   /* светлее серый для блика меню */
-    --glass-strong: 0.4;
-    --glass-faint: 0.22;
-    background: var(--menu-glass-bg) !important;
-    -webkit-backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
-    backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
-}
-
-html[data-dark="tinted"]:not([data-theme="light"]) #menuPill,
-html[data-dark="tinted"]:not([data-theme="light"]) #profileMenuWrapper > div:first-child {
-    --glass-rgb: 135, 155, 180;
-}
-
-[data-theme="light"] #menuPill,
-[data-theme="light"] #profileMenuWrapper > div:first-child {
-    --glass-rgb: 110, 110, 122;
-    --glass-strong: 0.34;
-    --glass-faint: 0.14;
 }
