@@ -12,8 +12,8 @@
 
 :root {
     --glass-rgb: 88, 90, 98;      /* цвет бликов (тёмно-серый) */
-    --glass-strong: 0.16;         /* яркость углов: лево-верх и право-низ */
-    --glass-faint: 0.058;         /* яркость правой стороны */
+    --glass-strong: 0.15;         /* яркость углов: лево-верх и право-низ */
+    --glass-faint: 0.054;         /* яркость правой стороны */
     --glass-w: 1px;               /* толщина блика */
     --glass-h: 100%;              /* 100% = блик тянется вдоль ВСЕЙ верхней/нижней грани */
     --glass-v: min(28px, 55%);    /* как далеко блик стекает вниз/вверх по бокам */
@@ -21,8 +21,8 @@
 
 [data-theme="light"] {
     --glass-rgb: 102, 102, 115;
-    --glass-strong: 0.11;
-    --glass-faint: 0.04;
+    --glass-strong: 0.105;
+    --glass-faint: 0.038;
 }
 
 html[data-dark="tinted"]:not([data-theme="light"]) {
@@ -106,14 +106,14 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
 /* Плавно затухает от обводки внутрь (примерно на 2px) и по длине грани, как основной блик */
 :root {
     --glass2-rgb: 100, 102, 111;  /* свой цвет второго слоя */
-    --glass2-a: 0.3;              /* яркость у самой обводки (0 = выключить) */
+    --glass2-a: 0.28;             /* яркость у самой обводки (0 = выключить) */
     --glass2-blur: 3px;           /* глубина затухания: 3px ≈ 1.5–2px видимого свечения внутрь */
     --glass2-spread: 1px;         /* насколько плотный край до начала затухания */
 }
 
 [data-theme="light"] {
     --glass2-rgb: 110, 110, 123;
-    --glass2-a: 0.21;
+    --glass2-a: 0.2;
 }
 
 html[data-dark="tinted"]:not([data-theme="light"]) {
@@ -160,18 +160,18 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
 #menuPill,
 #profileMenuWrapper > div:first-child {
     --glass2-rgb: 122, 124, 134;
-    --glass2-a: 0.36;
+    --glass2-a: 0.34;
 }
 
 html[data-dark="tinted"]:not([data-theme="light"]) #menuPill,
 html[data-dark="tinted"]:not([data-theme="light"]) #profileMenuWrapper > div:first-child {
-    --glass2-rgb: 122, 145, 172;
+    --glass2-rgb: 95, 115, 138;
 }
 
 [data-theme="light"] #menuPill,
 [data-theme="light"] #profileMenuWrapper > div:first-child {
     --glass2-rgb: 102, 102, 115;
-    --glass2-a: 0.25;
+    --glass2-a: 0.24;
 }
 
 /* Блик карточек товаров рисуем поверх картинки/карусели */
@@ -197,14 +197,14 @@ html[data-dark="tinted"]:not([data-theme="light"]) #profileMenuWrapper > div:fir
 }
 
 html[data-dark="tinted"]:not([data-theme="light"]) {
-    --menu-glass-bg: rgba(64, 78, 94, 0.74);
+    --menu-glass-bg: rgba(30, 38, 48, 0.82);
 }
 
 #menuPill,
 #profileMenuWrapper > div:first-child {
     --glass-rgb: 108, 110, 118;   /* цвет блика меню */
-    --glass-strong: 0.26;
-    --glass-faint: 0.13;
+    --glass-strong: 0.25;
+    --glass-faint: 0.12;
     background: var(--menu-glass-bg) !important;
     -webkit-backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
     backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
@@ -212,14 +212,14 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
 
 html[data-dark="tinted"]:not([data-theme="light"]) #menuPill,
 html[data-dark="tinted"]:not([data-theme="light"]) #profileMenuWrapper > div:first-child {
-    --glass-rgb: 118, 136, 161;
+    --glass-rgb: 90, 106, 128;
 }
 
 [data-theme="light"] #menuPill,
 [data-theme="light"] #profileMenuWrapper > div:first-child {
     --glass-rgb: 102, 102, 115;
-    --glass-strong: 0.21;
-    --glass-faint: 0.09;
+    --glass-strong: 0.2;
+    --glass-faint: 0.085;
 }
 
 .page {
