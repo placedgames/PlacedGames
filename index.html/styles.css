@@ -557,7 +557,7 @@ svg.product-info-icon {
     aspect-ratio: 1 / 1;
     object-fit: cover;
     padding: 7px;
-    border-radius: 37px;
+    border-radius: 36px;
     box-sizing: border-box;
 }
 
@@ -565,7 +565,7 @@ svg.product-info-icon {
     position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
-    border-radius: 37px;
+    border-radius: 36px;
     overflow: hidden;
     box-sizing: border-box;
     background: var(--card-bg);
