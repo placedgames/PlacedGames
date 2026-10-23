@@ -2353,16 +2353,32 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
     mask-composite: exclude;
 }
 
-/* ---------- 3. Нижнее меню: блик чуть ярче, чем у остальных ---------- */
-/* Меняй только эти две переменные — остальные элементы не затронуты */
+/* ---------- 3. Нижнее меню: стекло (прозрачность + blur) и блик поярче ---------- */
+/* Меняй значения здесь — остальные элементы не затронуты */
+:root {
+    --menu-glass-bg: rgba(40, 40, 44, 0.52);   /* прозрачность меню: меньше число = прозрачнее */
+    --menu-glass-blur: 22px;                    /* сила размытия фона под меню */
+}
+
+[data-theme="light"] {
+    --menu-glass-bg: rgba(254, 254, 255, 0.55);
+}
+
+html[data-dark="tinted"]:not([data-theme="light"]) {
+    --menu-glass-bg: rgba(43, 54, 66, 0.52);
+}
+
 #menuPill,
 #profileMenuWrapper > div:first-child {
-    --glass-strong: 0.38;
-    --glass-faint: 0.15;
+    --glass-strong: 0.48;   /* блик ярче, чем у остальных (0.24) */
+    --glass-faint: 0.2;
+    background: var(--menu-glass-bg) !important;
+    -webkit-backdrop-filter: blur(var(--menu-glass-blur)) saturate(1.6) !important;
+    backdrop-filter: blur(var(--menu-glass-blur)) saturate(1.6) !important;
 }
 
 [data-theme="light"] #menuPill,
 [data-theme="light"] #profileMenuWrapper > div:first-child {
-    --glass-strong: 0.28;
-    --glass-faint: 0.1;
+    --glass-strong: 0.32;
+    --glass-faint: 0.12;
 }
