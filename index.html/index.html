@@ -14,8 +14,6 @@
     </script>
     <script>
         (function() {
-            // Тема: выбор пользователя (appThemeChoice) важнее темы Telegram.
-            // Нет выбора -> старый ключ darkVariant -> тема Telegram (tinted-тёмная = Тёмная, остальное = Ночная)
             (function() {
                 var theme = localStorage.getItem('appThemeChoice');
                 if (theme !== 'night' && theme !== 'tinted') {

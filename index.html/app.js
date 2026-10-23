@@ -543,15 +543,15 @@ function withLock(fn) {
     };
 }
 let profileLongPressFired = false;
-let lastProfileTapAt = 0;              // двойной тап по профилю в меню -> настройки
+let lastProfileTapAt = 0;
 const PROFILE_DOUBLE_TAP_MS = 350;
 let cart = {};
 let currentOpenOrder = null;
 let writeReviewEntryPage = 'reviews';
 let appliedPromo = null;
 let pendingOrderNumber = null;
-let reviewsListCache = null;       // только в памяти, не в localStorage — сбрасывается при каждом новом открытии приложения
-let reviewsFetchPromise = null;    // чтобы не запускать параллельно два одинаковых запроса
+let reviewsListCache = null;
+let reviewsFetchPromise = null;
 let isPromoMode = false;
 let checkoutData = { paymentMethod: "", senderName: "", email: "", telegramUsername: "" };
 let userWalletBalance = 0;
@@ -567,7 +567,6 @@ let savedReviewsScrollY = 0;
 let savedOrdersScrollY = 0;  
  const bankLetters = { mts: 'M', tbank: 'T', vtb: 'W', sber: 'S', ozon: 'O', alfa: 'A' };
 
-// Номер заказа вида Буква-Цифра-Буква-Цифра (G7V5, O1O2)
 function generateOrderNumber() {
 const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', D = '0123456789';
 const r = s => s[Math.floor(Math.random() * s.length)];
@@ -591,7 +590,6 @@ try {
 } catch (e) {}
 }
 
-// Список товаров корзины в сокращённом виде (для Оформления и Оплаты)
 function buildCartItemsListHtml() {
 const allProducts = games.flatMap(g => g.getProducts());
 const items = Object.entries(cart).map(([id, qty]) => {
@@ -931,7 +929,6 @@ function changeQty(pid, delta) {
     saveCartToLocalStorage();
 }
 
-    // === Быстрое изменение количества при удержании (+/-) ===
 let holdTimeout = null;
 let holdInterval = null;
 
@@ -1040,8 +1037,6 @@ function renderCartPage() {
             <div class="cart-quantity"><button class="cart-qty-btn" data-dec="${id}"><svg class="icon icon-cart-qty-minus icon--accent"><use href="#icon-minus"></use></svg></button><span class="cart-qty-value">${qty}</span><button class="cart-qty-btn" data-inc="${id}" style="${prod?.maxQty && qty >= prod.maxQty ? 'opacity:0.4;pointer-events:none;' : ''}"><svg class="icon icon-cart-qty-plus icon--accent"><use href="#icon-plus"></use></svg></button></div>
         </div>`);
     }
-    // Одна карточка — как раньше (карточка + боттом кард).
-    // Две и больше — одна общая карточка с разделителями и одна общая боттом кард «Способ получения».
     const buildCartDeliveryHtml = (delivery, service) => `<div class="cart-item-delivery"><div class="cart-item-delivery-row"><span class="cart-item-delivery-label">Способ получения</span><span class="cart-item-delivery-value">${escapeHtml(delivery)}</span></div><div class="cart-item-delivery-row"><span class="cart-item-delivery-label">Выбранный сервис</span><span class="cart-item-delivery-value">${escapeHtml(service)}</span></div></div>`;
     let html = '';
     if (cartRows.length === 1) {
@@ -1303,7 +1298,6 @@ async function sendOrderToServer(order) {
     } catch (error) { return false; }
 }
 
-// ===== Страница «Купить» (быстрый выбор сервис → категория → товар) =====
 let buySel = { gameId: null, category: null, productId: null };
 
 function ensureBuyPage() {
@@ -1327,7 +1321,6 @@ function getBuyCategories(g) {
     return [...new Set(g.getProducts().map(p => p.category))];
 }
 
-// приводит выбор к допустимому: категория по умолчанию — первая, товар — первый в категории
 function normalizeBuySel() {
     const g = games.find(x => x.id === buySel.gameId);
     if (!g) return null;
@@ -1360,7 +1353,6 @@ function openBuyPage(gameId, productId) {
     if (chosen) { buySel.category = chosen.category; buySel.productId = chosen.id; }
     normalizeBuySel();
     ensureBuyPage();
-    // с экрана товаров «назад» возвращает на этот же экран
     if (document.getElementById("game-page")?.classList.contains("active-page") && currentGame) {
         navigationHistory.push("game");
     }
@@ -1385,7 +1377,6 @@ function renderBuyPage() {
         originalPrice: prod.price
     }], 'order-item-row', 'order-item-name', 'order-item-price') : '';
 
-    // разметка карточки и боттом кард — как на странице «Оформление»
     container.innerHTML = `
             <div style="position:relative;margin-bottom:14px;">
                 <div class="content-card" style="position:relative;z-index:2;margin-bottom:0;border-radius:34px;">
@@ -1448,9 +1439,6 @@ function renderBuyPage() {
     renderCheckoutBlock();
 }
 
-// «Быстрая покупка»: товар оформляется напрямую, корзина пользователя не затрагивается.
-// На время оформления/оплаты корзина подменяется выбранным товаром, настоящая хранится в резерве
-// и возвращается при выходе с Оформления/Оплаты (или после заказа).
 let buyCartBackup = null;
 
 function startBuyCheckout(pid) {
@@ -2488,7 +2476,6 @@ switch (order.status_code) {
             showPage("order-detail", true);
 
     if (!reviewsListCache) {
-        // данные ещё нигде не грузились — подгружаем и дорисовываем блок как только придёт ответ
         getReviewsData()
             .then(allReviews => {
                 const review = allReviews.find(rv => String(rv.order_id) === String(order.id));
@@ -3108,7 +3095,7 @@ window.addEventListener('orientationchange', () => {
 
     function refreshMenuSliderOnResize() {
     const wrapper = document.getElementById("bottomMenuWrapper");
-    if (!wrapper || wrapper.offsetParent === null) return; // меню скрыто клавиатурой — не пересчитываем
+    if (!wrapper || wrapper.offsetParent === null) return;
     const pageId = getCurrentActiveMenuPage();
     if (pageId) updateMenuSlider(pageId);
 }
@@ -3125,7 +3112,7 @@ window.addEventListener('orientationchange', () => {
 
     document.addEventListener('focusout', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-        setTimeout(refreshMenuSliderOnResize, 150); // пересчитать позицию после закрытия клавиатуры
+        setTimeout(refreshMenuSliderOnResize, 150);
     }
 });
 
@@ -3265,7 +3252,6 @@ function attachReviewOrderBadgeHandlers(scopeEl) {
 
             let found = orders.find(o => String(o.order_number) === orderNum);
 
-            // сразу точечный запрос по номеру, без загрузки всего списка заказов — так быстрее
             if (!found) {
                 try {
                     const r = await fetch('https://placedgames.up.railway.app/api/refresh-order', {
@@ -3948,7 +3934,6 @@ setTimeout(() => {
 }, 0);
 }
 
-// Темы: 'night' — Ночная, 'tinted' — Тёмная
 function themeIconRotationDeg(theme) {
     return theme === 'tinted' ? 180 : 0;
 }
@@ -3957,7 +3942,6 @@ function themeTitleFor(theme) {
     return theme === 'tinted' ? 'Тёмная' : 'Ночная';
 }
 
-// Язык приложения. Пока переключение на English выключено — поставь true, когда появится перевод
 const LANGUAGE_SWITCH_ENABLED = false;
 
 function getAppLanguage() {
@@ -4148,7 +4132,6 @@ function renderSettingsPage() {
     }, 0);
 }
 
-    // Текст подзаголовка меняется здесь один раз для всех разделов справки
 const HELP_SUBTITLE_TEXT = "Справочная информация страницы";
 
 const helpSectionsData = [
@@ -4501,8 +4484,6 @@ if (navigationHistory.length > 0) {
     }
 }
 
-// Определяем тему по теме Telegram (только если пользователь ещё сам не выбирал):
-// тёмная «tinted» (синеватый фон) -> 'tinted', ночная (нейтральный чёрный фон) и светлая -> 'night'
 function detectTelegramTheme() {
     try {
         const tg = window.Telegram?.WebApp;
@@ -4515,11 +4496,10 @@ function detectTelegramTheme() {
     } catch (e) { return 'night'; }
 }
 
-// Выбор пользователя хранится в appThemeChoice и важнее темы Telegram
 function getAppTheme() {
     const c = localStorage.getItem('appThemeChoice');
     if (c === 'night' || c === 'tinted') return c;
-    const legacy = localStorage.getItem('darkVariant'); // старый ключ
+    const legacy = localStorage.getItem('darkVariant');
     if (legacy) return legacy === 'tinted' ? 'tinted' : 'night';
     return detectTelegramTheme();
 }
@@ -4677,8 +4657,6 @@ function applyTheme(theme, persist) {
         const tg = window.Telegram.WebApp;
                     tg.ready();
         tg.expand();
-        // Telegram бросает WebAppPopupOpened, если открыть алерт/попап при уже открытом —
-        // повторные нажатия (например, на инфо в профиле) просто игнорируются, пока окно не закрыто
         try {
             let tgPopupOpen = false;
             let tgPopupTimer = null;
@@ -4688,7 +4666,6 @@ function applyTheme(theme, persist) {
                 tg[name] = function(...args) {
                     const cb = args[cbIndex];
                     if (tgPopupOpen) {
-                        // колбэк (например, у showAlert он снимает блокировку showAppAlert) вызываем без кнопки
                         if (typeof cb === 'function') { try { cb(); } catch (e) {} }
                         return;
                     }
@@ -4708,7 +4685,6 @@ function applyTheme(theme, persist) {
                     }
                 };
             };
-            // showAlert и showConfirm внутри Telegram вызывают showPopup, поэтому защищаем только его
             guardPopup('showPopup', 1);
         } catch (e) {}
         try {
