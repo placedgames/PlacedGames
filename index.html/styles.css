@@ -17,10 +17,10 @@
 
 :root {
     --app-bg: #141415;
-    --card-bg: #232326;
+    --card-bg: #242427;
     --col-bg: #161617;
     --slider-bg: #1c1c1e;
-    --header-btn-bg: #242427;
+    --header-btn-bg: #252528;
     --text-primary: #ffffff;
     --text-secondary: #9e9e9e;
     --text-muted: #cbcdcd;
@@ -2356,9 +2356,9 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
 /* ---------- 3. Нижнее меню: стекло, светлее и меньше окрашивается фоном ---------- */
 /* Меняй значения здесь — остальные элементы не затронуты */
 :root {
-    --menu-glass-bg: rgba(44, 44, 49, 0.74);   /* светлее и плотнее; меньше последнее число = прозрачнее */
-    --menu-glass-blur: 24px;                    /* размытие фона под меню */
-    --menu-glass-saturate: 0.85;                /* 1 = цвета как есть, меньше 1 = приглушает цвет под меню */
+    --menu-glass-bg: rgba(44, 44, 49, 0.8);   /* светлее и плотнее; меньше последнее число = прозрачнее */
+    --menu-glass-blur: 30px;                    /* размытие фона под меню */
+    --menu-glass-saturate: 0.8;                /* 1 = цвета как есть, меньше 1 = приглушает цвет под меню */
 }
 
 [data-theme="light"] {
@@ -2371,7 +2371,7 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
 
 #menuPill,
 #profileMenuWrapper > div:first-child {
-    --glass-rgb: 150, 152, 160;   /* светлее серый для блика меню */
+    --glass-rgb: 140, 142, 150;   /* светлее серый для блика меню */
     --glass-strong: 0.6;
     --glass-faint: 0.26;
     background: var(--menu-glass-bg) !important;
