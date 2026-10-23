@@ -2415,9 +2415,13 @@ svg.product-info-icon {
    по всему периметру (без масок, без блика по углам).
    ===================================================================== */
 :root {
-    --border-fade-color: var(--col-border-color);  /* цвет затухания (по умолчанию = цвет обводки) */
+    --border-fade-color: rgba(32, 32, 35, 1);       /* цвет затухания, НОЧНАЯ тема */
     --border-fade-blur: 2px;                        /* глубина затухания */
     --border-fade-spread: 1px;                      /* плотный край до начала затухания */
+}
+
+html[data-dark="tinted"] {
+    --border-fade-color: #252E39;                   /* цвет затухания, ТЁМНАЯ (tinted) тема */
 }
 
 .order-items-card,
