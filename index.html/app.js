@@ -514,7 +514,7 @@ const navOptionsHtml =
         `<option value="${p.id}" ${p.id === currentPageId ? 'selected' : ''}>${p.title}</option>`
     ).join('');
 
-const headerThemeDeg = themeIconRotationDeg(localStorage.getItem('appTheme') || 'dark');
+const headerThemeDeg = themeIconRotationDeg(getAppTheme());
 
 return `<div class="page-header-sticky">
 <div class="page-header-inner">
@@ -543,6 +543,8 @@ function withLock(fn) {
     };
 }
 let profileLongPressFired = false;
+let lastProfileTapAt = 0;              // двойной тап по профилю в меню -> настройки
+const PROFILE_DOUBLE_TAP_MS = 350;
 let cart = {};
 let currentOpenOrder = null;
 let writeReviewEntryPage = 'reviews';
@@ -3946,8 +3948,28 @@ setTimeout(() => {
 }, 0);
 }
 
+// Темы: 'night' — Ночная, 'tinted' — Тёмная
 function themeIconRotationDeg(theme) {
-    return theme === 'light' ? 180 : 0;
+    return theme === 'tinted' ? 180 : 0;
+}
+
+function themeTitleFor(theme) {
+    return theme === 'tinted' ? 'Тёмная' : 'Ночная';
+}
+
+// Язык приложения. Пока переключение на English выключено — поставь true, когда появится перевод
+const LANGUAGE_SWITCH_ENABLED = false;
+
+function getAppLanguage() {
+    if (!LANGUAGE_SWITCH_ENABLED) return 'ru';
+    return localStorage.getItem('appLanguage') === 'en' ? 'en' : 'ru';
+}
+
+function toggleAppLanguage() {
+    hapticLight();
+    if (!LANGUAGE_SWITCH_ENABLED) return;
+    localStorage.setItem('appLanguage', getAppLanguage() === 'ru' ? 'en' : 'ru');
+    renderSettingsPage();
 }
 
 function updateThemeIconRotations(theme) {
@@ -3960,9 +3982,8 @@ function updateThemeIconRotations(theme) {
 
 function toggleAppTheme() {
     hapticLight();
-    const current = localStorage.getItem('appTheme') || 'dark';
-    const newTheme = current === 'dark' ? 'light' : 'dark';
-    applyTheme(newTheme);
+    const newTheme = getAppTheme() === 'night' ? 'tinted' : 'night';
+    applyTheme(newTheme, true);
     updateThemeIconRotations(newTheme);
 }
 
@@ -3998,9 +4019,11 @@ function renderSettingsPage() {
     const container = document.getElementById("settingsContent");
     if (!container) return;
 
-    const currentTheme = localStorage.getItem('appTheme') || 'dark';
-    const themeTitle = currentTheme === 'dark' ? 'Тёмная' : 'Светлая';
+    const currentTheme = getAppTheme();
+    const themeTitle = themeTitleFor(currentTheme);
     const themeDeg = themeIconRotationDeg(currentTheme);
+    const languageCode = getAppLanguage();
+    const languageTitle = languageCode === 'en' ? 'English' : 'Русский';
 
     const vibrationOn = isVibrationEnabled();
 
@@ -4008,7 +4031,6 @@ function renderSettingsPage() {
     const formatTitle = currentFormat === 'fullscreen' ? 'Fullscreen' : 'Fullsize';
 
     const bottomOffset = getBottomMenuOffset();
-    const darkVariant = getDarkVariant();
 
     container.innerHTML = `
                     <div class="referral-wrapper">
@@ -4020,19 +4042,19 @@ function renderSettingsPage() {
                 <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;">
                     <div class="settings-row">
                         <div style="padding-left:2px;min-width:0;">
-                                                            <div id="settingsThemeTitleText" style="font-size:19px;font-weight:550;color:var(--text-primary);">${themeTitle}</div>
+                            <div id="settingsThemeTitleText" style="font-size:19px;font-weight:550;color:var(--text-primary);">${themeTitle}</div>
                             <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Тема приложения</div>
                         </div>
-                        <button id="settingsThemeBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">
+                        <button id="settingsThemeBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">
                             <svg class="icon theme-icon-rotatable" style="width:22px;height:22px;color:#4cb4e9;transform:rotate(${themeDeg}deg);transition:transform 0.3s ease;"><use href="#icon-theme"></use></svg>
                         </button>
                     </div>
                     <div class="settings-row">
                         <div style="padding-left:2px;min-width:0;">
-                            <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${darkVariant === 'tinted' ? 'Tinted' : 'Обычная'}</div>
-                            <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Цвет тёмной темы</div>
+                            <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${languageTitle}</div>
+                            <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Язык приложения</div>
                         </div>
-                        <button id="settingsDarkVariantBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${darkVariant === 'tinted' ? 'T/N' : 'D/D'}</button>
+                        <button id="settingsLanguageBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${languageCode === 'en' ? 'EN' : 'RU'}</button>
                     </div>
                     <div class="settings-row">
                         <div style="padding-left:2px;min-width:0;">
@@ -4086,15 +4108,10 @@ function renderSettingsPage() {
     setTimeout(() => {
                     document.getElementById('settingsThemeBtn')?.addEventListener('click', () => {
             toggleAppTheme();
-            const newTheme = localStorage.getItem('appTheme') || 'dark';
             const titleEl = document.getElementById('settingsThemeTitleText');
-            if (titleEl) titleEl.textContent = newTheme === 'dark' ? 'Тёмная' : 'Светлая';
+            if (titleEl) titleEl.textContent = themeTitleFor(getAppTheme());
         });
-        document.getElementById('settingsDarkVariantBtn')?.addEventListener('click', () => {
-            hapticLight();
-            applyDarkVariant(getDarkVariant() === 'tinted' ? 'default' : 'tinted');
-            renderSettingsPage();
-        });
+        document.getElementById('settingsLanguageBtn')?.addEventListener('click', toggleAppLanguage);
         document.getElementById('settingsVibrationBtn')?.addEventListener('click', () => {
             const next = !isVibrationEnabled();
             localStorage.setItem('vibrationEnabled', next ? 'true' : 'false');
@@ -4484,27 +4501,36 @@ if (navigationHistory.length > 0) {
     }
 }
 
-// Цвет тёмной темы: 'default' — обычная, 'tinted' — tinted (меняется только в настройках)
-function getDarkVariant() {
-    return localStorage.getItem('darkVariant') === 'tinted' ? 'tinted' : 'default';
+// Определяем тему по теме Telegram (только если пользователь ещё сам не выбирал):
+// тёмная «tinted» (синеватый фон) -> 'tinted', ночная (нейтральный чёрный фон) и светлая -> 'night'
+function detectTelegramTheme() {
+    try {
+        const tg = window.Telegram?.WebApp;
+        if (!tg || tg.colorScheme !== 'dark') return 'night';
+        const m = /^#?([0-9a-f]{6})$/i.exec((tg.themeParams && tg.themeParams.bg_color) || '');
+        if (!m) return 'night';
+        const n = parseInt(m[1], 16);
+        const r = (n >> 16) & 255, b = n & 255;
+        return (b - r >= 10) ? 'tinted' : 'night';
+    } catch (e) { return 'night'; }
 }
 
-function applyDarkVariant(variant) {
-    localStorage.setItem('darkVariant', variant);
-    if (variant === 'tinted') document.documentElement.setAttribute('data-dark', 'tinted');
-    else document.documentElement.removeAttribute('data-dark');
-    applyTheme(localStorage.getItem('appTheme') || 'dark');
+// Выбор пользователя хранится в appThemeChoice и важнее темы Telegram
+function getAppTheme() {
+    const c = localStorage.getItem('appThemeChoice');
+    if (c === 'night' || c === 'tinted') return c;
+    const legacy = localStorage.getItem('darkVariant'); // старый ключ
+    if (legacy) return legacy === 'tinted' ? 'tinted' : 'night';
+    return detectTelegramTheme();
 }
 
 function getThemeBgColor(theme) {
-    if (theme === 'light') return '#EFEFF3';
-    return getDarkVariant() === 'tinted' ? '#181D23' : '#151416';
+    return theme === 'tinted' ? '#181D23' : '#151416';
 }
 
-function applyTheme(theme) {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('appTheme', theme);
-    if (getDarkVariant() === 'tinted') document.documentElement.setAttribute('data-dark', 'tinted');
+function applyTheme(theme, persist) {
+    if (persist) localStorage.setItem('appThemeChoice', theme);
+    if (theme === 'tinted') document.documentElement.setAttribute('data-dark', 'tinted');
     else document.documentElement.removeAttribute('data-dark');
 
     const tg = window.Telegram?.WebApp;
@@ -4516,8 +4542,7 @@ function applyTheme(theme) {
 }
 
     function initTheme() {
-    const saved = localStorage.getItem('appTheme') || 'dark';
-    applyTheme(saved);
+    applyTheme(getAppTheme(), false);
     applyBottomMenuOffset(getBottomMenuOffset());
 }
 
@@ -4694,7 +4719,7 @@ function applyTheme(theme) {
                 tg.requestFullscreen();
             }
         } catch (e) {}
-        try { const bg0 = getThemeBgColor(localStorage.getItem('appTheme') || 'dark'); tg.setHeaderColor(bg0); tg.setBackgroundColor(bg0); } catch (e) {}
+        try { const bg0 = getThemeBgColor(getAppTheme()); tg.setHeaderColor(bg0); tg.setBackgroundColor(bg0); } catch (e) {}
         try { if (tg.disableClosingConfirmation) tg.disableClosingConfirmation(); } catch (e) {}
         try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) {}
         initBackButtonHandler();
@@ -4727,6 +4752,16 @@ setupSearchClear('searchInput', 'searchClearBtn');
         if (btn.id === "profileMenuBtn" && profileLongPressFired) {
             profileLongPressFired = false;
             return;
+        }
+        if (btn.id === "profileMenuBtn") {
+            const nowTap = Date.now();
+            const isDoubleTap = nowTap - lastProfileTapAt < PROFILE_DOUBLE_TAP_MS;
+            lastProfileTapAt = isDoubleTap ? 0 : nowTap;
+            if (isDoubleTap) {
+                hapticMedium();
+                if (!document.getElementById('settings-page')?.classList.contains('active-page')) showPage('settings');
+                return;
+            }
         }
         hapticLight();
         if (btn.dataset.page === "catalog" && currentGame && !isBuyPageActive()) {
@@ -4801,9 +4836,8 @@ Promise.resolve(refreshCurrentPage()).finally(hideTopLoader);
     } else if (isTheme) {
         toggleAppTheme();
         if (document.getElementById('settings-page')?.classList.contains('active-page')) {
-            const newTheme = localStorage.getItem('appTheme') || 'dark';
             const titleEl = document.getElementById('settingsThemeTitleText');
-            if (titleEl) titleEl.textContent = newTheme === 'dark' ? 'Тёмная' : 'Светлая';
+            if (titleEl) titleEl.textContent = themeTitleFor(getAppTheme());
         }
     }
 });

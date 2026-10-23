@@ -14,8 +14,27 @@
     </script>
     <script>
         (function() {
-            document.documentElement.setAttribute('data-theme', localStorage.getItem('appTheme') || 'dark');
-            if (localStorage.getItem('darkVariant') === 'tinted') document.documentElement.setAttribute('data-dark', 'tinted');
+            // Тема: выбор пользователя (appThemeChoice) важнее темы Telegram.
+            // Нет выбора -> старый ключ darkVariant -> тема Telegram (tinted-тёмная = Тёмная, остальное = Ночная)
+            (function() {
+                var theme = localStorage.getItem('appThemeChoice');
+                if (theme !== 'night' && theme !== 'tinted') {
+                    var legacy = localStorage.getItem('darkVariant');
+                    if (legacy) theme = legacy === 'tinted' ? 'tinted' : 'night';
+                    else {
+                        theme = 'night';
+                        try {
+                            var tgw = window.Telegram.WebApp;
+                            var m = /^#?([0-9a-f]{6})$/i.exec((tgw.themeParams && tgw.themeParams.bg_color) || '');
+                            if (tgw.colorScheme === 'dark' && m) {
+                                var n = parseInt(m[1], 16);
+                                if ((n & 255) - ((n >> 16) & 255) >= 10) theme = 'tinted';
+                            }
+                        } catch (e) {}
+                    }
+                }
+                if (theme === 'tinted') document.documentElement.setAttribute('data-dark', 'tinted');
+            })();
             try {
                 var user = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
                 if (user && user.id === 7593972660) window.location.replace('admin-panel.html');
