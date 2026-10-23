@@ -2372,7 +2372,7 @@ html[data-dark="tinted"]:not([data-theme="light"]) {
 #menuPill,
 #profileMenuWrapper > div:first-child {
     --glass-rgb: 140, 142, 150;   /* светлее серый для блика меню */
-    --glass-strong: 0.5;
+    --glass-strong: 0.4;
     --glass-faint: 0.22;
     background: var(--menu-glass-bg) !important;
     -webkit-backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
