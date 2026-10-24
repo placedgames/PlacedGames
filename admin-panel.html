@@ -3246,7 +3246,7 @@ body { overflow-x: hidden; }
       try {
         const url = typeof input === 'string' ? input : input.url;
         const token = sessionStorage.getItem('adminSessionToken');
-        if (token && url && url.indexOf('placedgames.up.railway.app') !== -1) {
+        if (token && url && url.indexOf('placedgames-7qkp.onrender.com') !== -1) {
           init = init || {};
           const headers = new Headers(init.headers || {});
           if (!headers.has('Authorization')) headers.set('Authorization', `Bearer ${token}`);
@@ -3264,7 +3264,7 @@ body { overflow-x: hidden; }
     }
     const tg = window.Telegram.WebApp;
     try {
-      const res = await fetch('https://placedgames.up.railway.app/api/admin/verify-telegram', {
+      const res = await fetch('https://placedgames-7qkp.onrender.com/api/admin/verify-telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ initData: tg.initData })
@@ -3310,7 +3310,7 @@ body { overflow-x: hidden; }
     setInterval(pollImportRequests, 5000);
     pollImportRequests();
 
-    const API = 'https://placedgames.up.railway.app';
+    const API = 'https://placedgames-7qkp.onrender.com';
     const $ = (id) => document.getElementById(id);
 
     function getAdminToken() {

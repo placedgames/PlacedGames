@@ -3,7 +3,7 @@
         window.fetch = function(input, init) {
             try {
                 const url = typeof input === 'string' ? input : input.url;
-                if (url && url.indexOf('placedgames.up.railway.app') !== -1) {
+                if (url && url.indexOf('placedgames-7qkp.onrender.com') !== -1) {
                     const initData = window.Telegram?.WebApp?.initData || '';
                     init = init || {};
                     const headers = new Headers(init.headers || {});
@@ -427,7 +427,7 @@ function showAppAlert(message) {
 
 async function isOrderLimitReached() {
     try {
-        const r = await fetch('https://placedgames.up.railway.app/api/check-rate-limit');
+        const r = await fetch('https://placedgames-7qkp.onrender.com/api/check-rate-limit');
         if (!r.ok) return false;
         const data = await r.json();
         return !!data.limited;
@@ -1295,7 +1295,7 @@ async function finalizeOrderAfterSuccess() {
 
 async function sendOrderToServer(order) {
     try {
-        const response = await fetch('https://placedgames.up.railway.app/api/order', {
+        const response = await fetch('https://placedgames-7qkp.onrender.com/api/order', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(order)
@@ -1507,7 +1507,7 @@ function renderCheckoutBlock() {
                         if (!code) return;
                         const tgU = window.Telegram?.WebApp?.initDataUnsafe?.user;
                         try {
-                            const r = await fetch('https://placedgames.up.railway.app/api/check-promo', {
+                            const r = await fetch('https://placedgames-7qkp.onrender.com/api/check-promo', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ code, userId: String(tgU?.id || '') })
@@ -1579,7 +1579,7 @@ function renderCheckoutBlock() {
                         }
                         try {
                             await runWithLoader(async () => {
-                                    const r = await fetch('https://placedgames.up.railway.app/api/settings');
+                                    const r = await fetch('https://placedgames-7qkp.onrender.com/api/settings');
                                     const s = await r.json();
                                     const status = s.bot_status || 'open';
                                     if (status === 'closed') {
@@ -1709,7 +1709,7 @@ async function renderCheckoutForm() {
                     if (!code) return;
                     const tgU = window.Telegram?.WebApp?.initDataUnsafe?.user;
                     try {
-                        const r = await fetch('https://placedgames.up.railway.app/api/check-promo', {
+                        const r = await fetch('https://placedgames-7qkp.onrender.com/api/check-promo', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ code, userId: String(tgU?.id || '') })
@@ -2011,7 +2011,7 @@ async function loadUserOrders() {
         const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
         if (!tgUser?.id) return;
         const r = await fetch(
-            `https://placedgames.up.railway.app/api/user-orders?userId=${tgUser.id}`);
+            `https://placedgames-7qkp.onrender.com/api/user-orders?userId=${tgUser.id}`);
         if (r.ok) orders = await r.json();
     } catch (e) { }
 }
@@ -2027,12 +2027,12 @@ async function showProfileInfoAlert() {
 
     try {
         const [infoRes, ordersRes, balanceRes, referralRes] = await Promise.all([
-                fetch(`https://placedgames.up.railway.app/api/user-info?userId=${tgUser.id}`).then(r => r.ok ?
+                fetch(`https://placedgames-7qkp.onrender.com/api/user-info?userId=${tgUser.id}`).then(r => r.ok ?
                     r.json() : null),
-                fetch(`https://placedgames.up.railway.app/api/user-orders?userId=${tgUser.id}`).then(r => r
+                fetch(`https://placedgames-7qkp.onrender.com/api/user-orders?userId=${tgUser.id}`).then(r => r
                     .json()),
-                fetch(`https://placedgames.up.railway.app/api/user-balance?userId=${tgUser.id}`).then(r => r.json()).catch(() => ({ balance: 0 })),
-                fetch(`https://placedgames.up.railway.app/api/referral-stats?userId=${tgUser.id}`).then(r => r.json()).catch(() => ({ invited: 0 }))
+                fetch(`https://placedgames-7qkp.onrender.com/api/user-balance?userId=${tgUser.id}`).then(r => r.json()).catch(() => ({ balance: 0 })),
+                fetch(`https://placedgames-7qkp.onrender.com/api/referral-stats?userId=${tgUser.id}`).then(r => r.json()).catch(() => ({ invited: 0 }))
         ]);
 
         if (infoRes?.first_seen) {
@@ -2080,7 +2080,7 @@ async function fetchUserWalletBalance() {
         const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
         if (!tgUser?.id) { userWalletBalance = 0; return; }
         const r = await fetch(
-            `https://placedgames.up.railway.app/api/user-balance?userId=${tgUser.id}`);
+            `https://placedgames-7qkp.onrender.com/api/user-balance?userId=${tgUser.id}`);
         const data = await r.json();
         userWalletBalance = data.balance || 0;
     } catch (e) { userWalletBalance = 0; }
@@ -2568,7 +2568,7 @@ function showOrderDetail(order, isOwner = true) {
                                                 hapticMedium();
                                                 try {
                                                     const response = await fetch(
-                                                        'https://placedgames.up.railway.app/api/submit-code', {
+                                                        'https://placedgames-7qkp.onrender.com/api/submit-code', {
                                                             method: 'POST',
                                                             headers: { 'Content-Type': 'application/json' },
                                                             body: JSON.stringify({ orderId: order
@@ -2607,7 +2607,7 @@ async function renderReviewsFixedAction() {
     if (userId) {
         try {
             const [ordersRes, reviewsRes] = await Promise.all([
-                    fetch(`https://placedgames.up.railway.app/api/user-orders?userId=${userId}`).then(r => r.json()),
+                    fetch(`https://placedgames-7qkp.onrender.com/api/user-orders?userId=${userId}`).then(r => r.json()),
                     getReviewsData(true)
             ]);
             const completedOrders = ordersRes.filter(o => o.status_code === 'done' || o.status_code === 'completed');
@@ -2709,7 +2709,7 @@ function renderWriteReviewPage() {
 
     try {
         return Promise.all([
-                fetch(`https://placedgames.up.railway.app/api/user-orders?userId=${userId}`).then(r => r.json()),
+                fetch(`https://placedgames-7qkp.onrender.com/api/user-orders?userId=${userId}`).then(r => r.json()),
                 getReviewsData()
         ]).then(([ordersRes, reviewsRes]) => {
                 const allCompleted = ordersRes.filter(o =>
@@ -2868,7 +2868,7 @@ function renderWriteReviewPage() {
 
                                 try {
                                     const response = await fetch(
-                                        'https://placedgames.up.railway.app/api/reviews', {
+                                        'https://placedgames-7qkp.onrender.com/api/reviews', {
                                             method: 'POST',
                                             headers: {
                                                 'Content-Type': 'application/json'
@@ -3263,7 +3263,7 @@ function attachReviewOrderBadgeHandlers(scopeEl) {
 
                     if (!found && orderId) {
                         try {
-                            const r = await fetch('https://placedgames.up.railway.app/api/refresh-order', {
+                            const r = await fetch('https://placedgames-7qkp.onrender.com/api/refresh-order', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ orderId: Number(orderId) })
@@ -3374,7 +3374,7 @@ function countReviewsByRating(list) {
 async function getReviewsData(forceRefresh = false) {
     if (reviewsListCache && !forceRefresh) return reviewsListCache;
     if (reviewsFetchPromise && !forceRefresh) return reviewsFetchPromise;
-    reviewsFetchPromise = fetch('https://placedgames.up.railway.app/api/reviews')
+    reviewsFetchPromise = fetch('https://placedgames-7qkp.onrender.com/api/reviews')
     .then(r => r.json())
     .then(list => {
             reviewsListCache = list;
@@ -3450,12 +3450,12 @@ async function renderProfilePage() {
     let referralStats = { invited: 0, invited24h: 0, earned: 0, earned24h: 0 };
     const walletPromise = fetchUserWalletBalance();
     const referralPromise = tgUser?.id
-    ? fetch(`https://placedgames.up.railway.app/api/referral-stats?userId=${tgUser.id}`)
+    ? fetch(`https://placedgames-7qkp.onrender.com/api/referral-stats?userId=${tgUser.id}`)
     .then(r => r.json())
     .catch(() => referralStats)
     : Promise.resolve(referralStats);
     const refCodePromise = tgUser?.id
-    ? fetch('https://placedgames.up.railway.app/api/referral-code')
+    ? fetch('https://placedgames-7qkp.onrender.com/api/referral-code')
     .then(r => r.json())
     .then(d => (d && d.refCode) ? d.refCode : null)
     .catch(() => null)
@@ -3708,7 +3708,7 @@ async function renderWalletPage() {
     let transactions = [];
     if (tgUser?.id) {
         try {
-            const r = await fetch(`https://placedgames.up.railway.app/api/wallet-transactions?userId=${tgUser.id}&limit=5`);
+            const r = await fetch(`https://placedgames-7qkp.onrender.com/api/wallet-transactions?userId=${tgUser.id}&limit=5`);
             transactions = await r.json();
         } catch (e) {}
     }
@@ -3816,7 +3816,7 @@ async function renderWalletPage() {
                     hapticLight();
                     this.textContent = "Загрузка...";
                     try {
-                        const r = await fetch(`https://placedgames.up.railway.app/api/wallet-transactions?userId=${tgUser.id}&limit=1000`);
+                        const r = await fetch(`https://placedgames-7qkp.onrender.com/api/wallet-transactions?userId=${tgUser.id}&limit=1000`);
                         const allTx = await r.json();
                         const wrap = document.getElementById("walletTxListWrap");
                         if (wrap) wrap.innerHTML = buildWalletTxListHtml(allTx, false);
@@ -3837,17 +3837,17 @@ async function renderReferralsPage() {
     let referralList = [];
 
     const referralPromise = tgUser?.id
-    ? fetch(`https://placedgames.up.railway.app/api/referral-stats?userId=${tgUser.id}`)
+    ? fetch(`https://placedgames-7qkp.onrender.com/api/referral-stats?userId=${tgUser.id}`)
     .then(r => r.json()).catch(() => referralStats)
     : Promise.resolve(referralStats);
 
     const listPromise = tgUser?.id
-    ? fetch(`https://placedgames.up.railway.app/api/referral-list?userId=${tgUser.id}&limit=5`)
+    ? fetch(`https://placedgames-7qkp.onrender.com/api/referral-list?userId=${tgUser.id}&limit=5`)
     .then(r => r.json()).catch(() => [])
     : Promise.resolve([]);
 
     const refCodePromise = tgUser?.id
-    ? fetch('https://placedgames.up.railway.app/api/referral-code')
+    ? fetch('https://placedgames-7qkp.onrender.com/api/referral-code')
     .then(r => r.json())
     .then(d => (d && d.refCode) ? d.refCode : null)
     .catch(() => null)
@@ -3949,7 +3949,7 @@ async function renderReferralsPage() {
                     hapticLight();
                     this.textContent = "Загрузка...";
                     try {
-                        const r = await fetch(`https://placedgames.up.railway.app/api/referral-list?userId=${tgUser.id}&limit=1000`);
+                        const r = await fetch(`https://placedgames-7qkp.onrender.com/api/referral-list?userId=${tgUser.id}&limit=1000`);
                         let allList = await r.json();
                         allList = (allList || []).slice().sort((a, b) => (b.earned || 0) - (a.earned || 0));
                         const wrap = document.getElementById("referralsListWrap");
@@ -4587,7 +4587,7 @@ async function initApp() {
     if (tgU?.id) {
         try {
             const r = await fetch(
-                `https://placedgames.up.railway.app/api/user-status?userId=${tgU.id}`);
+                `https://placedgames-7qkp.onrender.com/api/user-status?userId=${tgU.id}`);
             const data = await r.json();
             if (data.status === 'blocked') {
                 document.body.innerHTML = `
@@ -4643,7 +4643,7 @@ async function initApp() {
     }
 
     if (tgU?.id) {
-        fetch('https://placedgames.up.railway.app/api/track-user', {
+        fetch('https://placedgames-7qkp.onrender.com/api/track-user', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -4669,7 +4669,7 @@ async function initApp() {
                     navigationHistory.push('orders');
                     setTimeout(() => showOrderDetail(found, isOwner), 0);
                 } else {
-                    fetch('https://placedgames.up.railway.app/api/refresh-order', {
+                    fetch('https://placedgames-7qkp.onrender.com/api/refresh-order', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ orderNumber: orderNum })
@@ -4894,7 +4894,7 @@ async function refreshCurrentPage() {
     try {
         switch (pageId) {
         case 'catalog':
-            await fetch('https://placedgames.up.railway.app/api/products')
+            await fetch('https://placedgames-7qkp.onrender.com/api/products')
             .then(r => r.json())
             .then(() => renderCatalog())
             .catch(() => renderCatalog());
@@ -4923,7 +4923,7 @@ async function refreshCurrentPage() {
             break;
         case 'order-detail':
             if (currentOpenOrder) {
-                await fetch('https://placedgames.up.railway.app/api/refresh-order', {
+                await fetch('https://placedgames-7qkp.onrender.com/api/refresh-order', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orderId: currentOpenOrder.id })

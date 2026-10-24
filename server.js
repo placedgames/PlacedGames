@@ -33,7 +33,7 @@ const PREVIEW_IMAGE_URL = 'https://i.postimg.cc/K8hvrmSb/6777DAC7-A893-410E-8BB3
 const INVISIBLE_LINK_START = `<a href="${PREVIEW_START_URL}">&#8205;</a>`;
 const INVISIBLE_LINK = `<a href="${PREVIEW_IMAGE_URL}">&#8205;</a>`;
 
-const APP_URL = 'https://placedgames.up.railway.app/';
+const APP_URL = 'https://placedgames-7qkp.onrender.com/';
 const ORDERS_PAGE_URL = `${APP_URL}#orders`;
 const REVIEWS_PAGE_URL = `${APP_URL}#reviews`;
 
@@ -47,8 +47,8 @@ const NO_FORWARD = { protect_content: true };
 console.log('Запуск сервера...');
 
 const allowedOrigins = [
-    'https://placedgames.up.railway.app',
-    'https://placedgames.up.railway.app',
+    'https://placedgames-7qkp.onrender.com',
+    'https://placedgames-7qkp.onrender.com',
     'http://localhost:3000',
     'http://localhost:5500'
 ];
