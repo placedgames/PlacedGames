@@ -2410,19 +2410,56 @@ html[data-dark="tinted"] {
     box-shadow: inset 0 0 var(--border-fade-blur) var(--border-fade-spread) var(--border-fade-color);
 }
 
+/* ===== Обводки кнопок (liquid glass) ===== */
+
+/* --- цвета по типам кнопок --- */
 :root {
-    --lg-rgb: 76, 180, 233;
-    --lg-strong: 0.4;
-    --lg-faint: 0.14;
-    --lg2-rgb: 126, 203, 255;
-    --lg2-a: 0.5;
+    /* голубые (сплошные): обводка чуть светлее кнопки */
+    --lg-rgb: 150, 218, 255;
+    --lg-strong: 0.55;
+    --lg-faint: 0.2;
+    --lg2-rgb: 190, 232, 255;
+    --lg2-a: 0.35;
 }
 
 html[data-dark="tinted"] {
-    --lg-rgb: 96, 172, 226;
-    --lg2-rgb: 140, 200, 250;
+    --lg-rgb: 150, 218, 255;
+    --lg2-rgb: 190, 232, 255;
 }
 
+/* сине-прозрачные: один общий цвет, темнее */
+.promo-btn,
+.promo-action-btn.apply-btn,
+.counter-btn,
+.cart-qty-btn,
+.review-order-badge {
+    --lg-rgb: 40, 112, 160;
+    --lg-strong: 0.75;
+    --lg-faint: 0.3;
+    --lg2-rgb: 40, 112, 160;
+    --lg2-a: 0.4;
+}
+
+/* красные: темнее */
+.promo-action-btn.back-btn,
+.review-rating-badge.badge-bad {
+    --lg-rgb: 170, 38, 38;
+    --lg-strong: 0.75;
+    --lg-faint: 0.3;
+    --lg2-rgb: 170, 38, 38;
+    --lg2-a: 0.4;
+}
+
+/* зелёные: темнее */
+.review-rating-badge.badge-good {
+    --lg-rgb: 20, 128, 60;
+    --lg-strong: 0.75;
+    --lg-faint: 0.3;
+    --lg2-rgb: 20, 128, 60;
+    --lg2-a: 0.4;
+}
+
+/* --- общая основа --- */
 .checkout-button,
 .promo-btn,
 .promo-action-btn,
@@ -2432,9 +2469,11 @@ html[data-dark="tinted"] {
 .review-order-badge,
 .review-rating-badge {
     position: relative;
-    border-color: transparent !important;
 }
 
+/* Слои обводки лежат ВНУТРИ кнопки (inset: 0), поэтому размер кнопки не меняется
+   и углы стыкуются. У бейджей есть собственная рамка 1px — для них слой
+   сдвигается ровно на её толщину (-1px), чтобы тоже совпасть с краем. */
 .checkout-button::before,
 .promo-btn::before,
 .promo-action-btn::before,
@@ -2445,10 +2484,11 @@ html[data-dark="tinted"] {
 .review-rating-badge::before {
     content: "";
     position: absolute;
-    inset: -1px;
+    inset: 0;
     padding: var(--glass-w);
     border-radius: inherit;
     pointer-events: none;
+    box-sizing: border-box;
     background:
     radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
     rgba(var(--lg-rgb), var(--lg-strong)) 0%,
@@ -2479,7 +2519,7 @@ html[data-dark="tinted"] {
 .review-rating-badge::after {
     content: "";
     position: absolute;
-    inset: -1px;
+    inset: 0;
     border-radius: inherit;
     pointer-events: none;
     box-shadow: inset 0 0 var(--glass2-blur) var(--glass2-spread) rgba(var(--lg2-rgb), var(--lg2-a));
@@ -2499,28 +2539,12 @@ html[data-dark="tinted"] {
     rgba(0, 0, 0, 0.4) 0%, transparent 100%);
 }
 
-.promo-action-btn.back-btn {
-    --lg-rgb: 239, 68, 68;
-    --lg-strong: 0.42;
-    --lg-faint: 0.15;
-    --lg2-rgb: 255, 128, 128;
-    --lg2-a: 0.5;
-}
-
-.review-rating-badge.badge-good {
-    --lg-rgb: 34, 197, 94;
-    --lg-strong: 0.42;
-    --lg-faint: 0.15;
-    --lg2-rgb: 128, 255, 176;
-    --lg2-a: 0.5;
-}
-
-.review-rating-badge.badge-bad {
-    --lg-rgb: 239, 68, 68;
-    --lg-strong: 0.42;
-    --lg-faint: 0.15;
-    --lg2-rgb: 255, 128, 128;
-    --lg2-a: 0.5;
+/* бейджи отзывов: у них своя рамка 1px (transparent), слой обводки перекрывает её */
+.review-order-badge::before,
+.review-order-badge::after,
+.review-rating-badge::before,
+.review-rating-badge::after {
+    inset: -1px;
 }
 
 .review-rating-badge.badge-good,
