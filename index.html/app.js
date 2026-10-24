@@ -1,28 +1,28 @@
 (function() {
-    const origFetch = window.fetch.bind(window);
-    window.fetch = function(input, init) {
-        try {
-            const url = typeof input === 'string' ? input : input.url;
-            if (url && url.indexOf('placedgames.up.railway.app') !== -1) {
-                const initData = window.Telegram?.WebApp?.initData || '';
-                init = init || {};
-                const headers = new Headers(init.headers || {});
-                if (initData) headers.set('X-Tg-Init-Data', initData);
-                init.headers = headers;
-            }
-        } catch (e) {}
-        return origFetch(input, init);
-    };
+        const origFetch = window.fetch.bind(window);
+        window.fetch = function(input, init) {
+            try {
+                const url = typeof input === 'string' ? input : input.url;
+                if (url && url.indexOf('placedgames.up.railway.app') !== -1) {
+                    const initData = window.Telegram?.WebApp?.initData || '';
+                    init = init || {};
+                    const headers = new Headers(init.headers || {});
+                    if (initData) headers.set('X-Tg-Init-Data', initData);
+                    init.headers = headers;
+                }
+            } catch (e) {}
+            return origFetch(input, init);
+        };
 })();
 
 window.__lastError = null;
 window.addEventListener('error', (e) => {
-    window.__lastError = e.message + ' | ' + (e.filename || '') + ':' + (e.lineno || '');
-    showCrashRecoveryUI(e.message);
+        window.__lastError = e.message + ' | ' + (e.filename || '') + ':' + (e.lineno || '');
+        showCrashRecoveryUI(e.message);
 });
 window.addEventListener('unhandledrejection', (e) => {
-    window.__lastError = String(e.reason);
-    showCrashRecoveryUI(String(e.reason));
+        window.__lastError = String(e.reason);
+        showCrashRecoveryUI(String(e.reason));
 });
 
 function showCrashRecoveryUI(errText) {
@@ -30,7 +30,7 @@ function showCrashRecoveryUI(errText) {
     const overlay = document.createElement('div');
     overlay.id = 'crashRecoveryOverlay';
     overlay.style.cssText =
-        'position:fixed;inset:0;background:var(--app-bg);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;color:white;font-family:system-ui;';
+    'position:fixed;inset:0;background:var(--app-bg);z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;text-align:center;color:white;font-family:system-ui;';
     overlay.innerHTML = `
         <div style="font-size:20px;font-weight:600;margin-bottom:10px;">Что-то пошло не так</div>
         <div style="font-size:14px;color:#9e9e9e;margin-bottom:20px;word-break:break-all;">${escapeHtml(errText || '')}</div>
@@ -40,21 +40,21 @@ function showCrashRecoveryUI(errText) {
 }
 
 (async function() {
-    if (!window.Telegram?.WebApp?.initData) {
-        document.body.innerHTML = '';
-        return;
-    }
-    try {
-        const tg = window.Telegram?.WebApp;
-        const photoUrl = tg?.initDataUnsafe?.user?.photo_url;
-        if (photoUrl) {
-            const img = new Image();
-            img.src = photoUrl;
+        if (!window.Telegram?.WebApp?.initData) {
+            document.body.innerHTML = '';
+            return;
         }
-    } catch (e) {}
+        try {
+            const tg = window.Telegram?.WebApp;
+            const photoUrl = tg?.initDataUnsafe?.user?.photo_url;
+            if (photoUrl) {
+                const img = new Image();
+                img.src = photoUrl;
+            }
+        } catch (e) {}
 })();
 
-    window.__imgCache = window.__imgCache || {};
+window.__imgCache = window.__imgCache || {};
 
 function getCachedAvatarDataUrl(userId) {
     if (!userId) return null;
@@ -64,33 +64,33 @@ function getCachedAvatarDataUrl(userId) {
 function cacheAvatarFromUrl(userId, url) {
     if (!userId || !url) return;
     fetch(url).then(r => r.blob()).then(blob => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            try { localStorage.setItem('avatarCache_' + userId, reader.result); } catch (e) {}
-        };
-        reader.readAsDataURL(blob);
+            const reader = new FileReader();
+            reader.onload = () => {
+                try { localStorage.setItem('avatarCache_' + userId, reader.result); } catch (e) {}
+            };
+            reader.readAsDataURL(blob);
     }).catch(() => {});
 }
 
 function preloadImages(urls, concurrency = 6) {
-const queue = urls.filter(src => src && !window.__imgCache[src]);
-let index = 0;
+    const queue = urls.filter(src => src && !window.__imgCache[src]);
+    let index = 0;
 
-function loadNext() {
-    if (index >= queue.length) return;
-    const src = queue[index++];
-    window.__imgCache[src] = true;
+    function loadNext() {
+        if (index >= queue.length) return;
+        const src = queue[index++];
+        window.__imgCache[src] = true;
 
-    const img = new Image();
-    img.onload = loadNext;
-    img.onerror = () => {
-        delete window.__imgCache[src];
-        setTimeout(loadNext, 1000);
-    };
-    img.src = src;
-}
+        const img = new Image();
+        img.onload = loadNext;
+        img.onerror = () => {
+            delete window.__imgCache[src];
+            setTimeout(loadNext, 1000);
+        };
+        img.src = src;
+    }
 
-for (let i = 0; i < concurrency; i++) loadNext();
+    for (let i = 0; i < concurrency; i++) loadNext();
 }
 
 function getAllProductImageUrls() {
@@ -113,35 +113,35 @@ function attachImageAutoRetry(img) {
     img.dataset.retryCount = '0';
 
     img.addEventListener('error', function onImgError() {
-        const attempts = parseInt(img.dataset.retryCount || '0', 10);
-        if (attempts >= IMG_RETRY_MAX) return;
+            const attempts = parseInt(img.dataset.retryCount || '0', 10);
+            if (attempts >= IMG_RETRY_MAX) return;
 
-        img.dataset.retryCount = String(attempts + 1);
-        const baseSrc = img.dataset.originalSrc || img.src.split('?__retry=')[0];
-        img.dataset.originalSrc = baseSrc;
+            img.dataset.retryCount = String(attempts + 1);
+            const baseSrc = img.dataset.originalSrc || img.src.split('?__retry=')[0];
+            img.dataset.originalSrc = baseSrc;
 
-        setTimeout(() => {
-            img.src = baseSrc + (baseSrc.includes('?') ? '&' : '?') + '__retry=' + Date.now();
-        }, IMG_RETRY_DELAY * (attempts + 1));
+            setTimeout(() => {
+                    img.src = baseSrc + (baseSrc.includes('?') ? '&' : '?') + '__retry=' + Date.now();
+                }, IMG_RETRY_DELAY * (attempts + 1));
     });
 }
 
 function setAvatarWithRetry(imgEl, url, attempt = 0) {
-if (!imgEl || !url) return;
-const MAX_ATTEMPTS = 8;
-const DELAY = 2000;
+    if (!imgEl || !url) return;
+    const MAX_ATTEMPTS = 8;
+    const DELAY = 2000;
 
-const tryLoad = new Image();
-tryLoad.onload = () => {
-    imgEl.src = url;
-};
-tryLoad.onerror = () => {
-    if (attempt >= MAX_ATTEMPTS) return;
-    setTimeout(() => {
-        setAvatarWithRetry(imgEl, url + (url.includes('?') ? '&' : '?') + '__retry=' + Date.now(), attempt + 1);
-    }, DELAY);
-};
-tryLoad.src = url;
+    const tryLoad = new Image();
+    tryLoad.onload = () => {
+        imgEl.src = url;
+    };
+    tryLoad.onerror = () => {
+        if (attempt >= MAX_ATTEMPTS) return;
+        setTimeout(() => {
+                setAvatarWithRetry(imgEl, url + (url.includes('?') ? '&' : '?') + '__retry=' + Date.now(), attempt + 1);
+            }, DELAY);
+    };
+    tryLoad.src = url;
 }
 
 function scanAndAttachImages(root) {
@@ -151,16 +151,16 @@ function scanAndAttachImages(root) {
 scanAndAttachImages(document);
 
 const imageObserver = new MutationObserver((mutations) => {
-    mutations.forEach(mutation => {
-        mutation.addedNodes.forEach(node => {
-            if (node.nodeType !== 1) return;
-            if (node.tagName === 'IMG') {
-                attachImageAutoRetry(node);
-            } else if (node.querySelectorAll) {
-                scanAndAttachImages(node);
-            }
+        mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                        if (node.nodeType !== 1) return;
+                        if (node.tagName === 'IMG') {
+                            attachImageAutoRetry(node);
+                        } else if (node.querySelectorAll) {
+                            scanAndAttachImages(node);
+                        }
+                });
         });
-    });
 });
 imageObserver.observe(document.body, { childList: true, subtree: true });
 
@@ -182,7 +182,7 @@ const paymentMethodsOptions = [
     { value: "alfa", label: "Альфа Банк" }
 ];
 
-    function isTgFullscreen() {
+function isTgFullscreen() {
     const tg = window.Telegram?.WebApp;
     if (tg && typeof tg.isFullscreen === 'boolean') return tg.isFullscreen;
     return (localStorage.getItem('appFormat') || 'fullscreen') === 'fullscreen';
@@ -218,16 +218,16 @@ function formatPrice(p) {
 }
 
 function getSatisfactionColors(rating) {
-if (rating === 'good') return { color: '#22c55e', bg: 'rgba(34, 197, 94, 0.12)', border: 'rgba(34, 197, 94, 0.04)', icon: 'icon-review-happy' };
-return { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.04)', icon: 'icon-review-sad' };
+    if (rating === 'good') return { color: '#22c55e', bg: 'rgba(34, 197, 94, 0.12)', border: 'rgba(34, 197, 94, 0.04)', icon: 'icon-review-happy' };
+    return { color: '#ef4444', bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.04)', icon: 'icon-review-sad' };
 }
 
-        function escapeHtml(str) {
+function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 }
 
-    function cleanText(str) {
+function cleanText(str) {
     if (!str) return '';
     return str.replace(/\s+/g, ' ').trim();
 }
@@ -254,20 +254,20 @@ function truncateTextToWidth(text, maxWidth, font) {
 
 function fitProductTitles(root) {
     (root || document).querySelectorAll('.product-title-row').forEach(row => {
-        const span = row.querySelector('.product-title');
-        const icon = row.querySelector('.product-info-icon');
-        if (!span || !icon) return;
-        if (!span.dataset.fullText) span.dataset.fullText = span.textContent;
-        const fullText = span.dataset.fullText;
-        const rowWidth = row.clientWidth;
-        if (!rowWidth) return;
-        const iconWidth = icon.getBoundingClientRect().width || 15;
-        const gap = 5;
-        const availableWidth = rowWidth - iconWidth - gap;
-        if (availableWidth <= 0) return;
-        const cs = getComputedStyle(span);
-        const font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-        span.textContent = truncateTextToWidth(fullText, availableWidth, font);
+            const span = row.querySelector('.product-title');
+            const icon = row.querySelector('.product-info-icon');
+            if (!span || !icon) return;
+            if (!span.dataset.fullText) span.dataset.fullText = span.textContent;
+            const fullText = span.dataset.fullText;
+            const rowWidth = row.clientWidth;
+            if (!rowWidth) return;
+            const iconWidth = icon.getBoundingClientRect().width || 15;
+            const gap = 5;
+            const availableWidth = rowWidth - iconWidth - gap;
+            if (availableWidth <= 0) return;
+            const cs = getComputedStyle(span);
+            const font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+            span.textContent = truncateTextToWidth(fullText, availableWidth, font);
     });
 }
 
@@ -287,31 +287,31 @@ function showProductInfoPopup(productId) {
     if (prod.bundleItems && prod.bundleItems.length > 0) {
         msg += `Содержимое набора:\n` + prod.bundleItems.map(i => `- ${i}`).join('\n') + `\n`;
     }
-            msg += `Стоимость: ${formatPrice(prod.price)}\nКатегория: ${prod.label || prod.category}`;
+    msg += `Стоимость: ${formatPrice(prod.price)}\nКатегория: ${prod.label || prod.category}`;
 
     if (window.Telegram?.WebApp?.showPopup) {
         window.Telegram.WebApp.showPopup({
-            message: msg,
-            buttons: [
-                cart[productId]
+                message: msg,
+                buttons: [
+                    cart[productId]
                     ? { id: 'remove', type: 'destructive', text: 'Удалить' }
                     : { id: 'add', type: 'default', text: 'В корзину' },
-                { id: 'buy', type: 'default', text: 'Покупка' }
-            ]
-        }, (buttonId) => {
-            if (buttonId === 'buy') {
-                hapticLight();
-                const g = games.find(g => g.getProducts().some(p => p.id == productId));
-                if (g) openBuyPage(g.id, prod.id);
-            } else if (buttonId === 'add') {
-                hapticLight();
-                handleCartAction(productId, true);
-            } else if (buttonId === 'remove') {
-                hapticMedium();
-                delete cart[productId];
-                saveCartToLocalStorage();
-                updateSingleCard(productId);
-            }
+                    { id: 'buy', type: 'default', text: 'Покупка' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'buy') {
+                    hapticLight();
+                    const g = games.find(g => g.getProducts().some(p => p.id == productId));
+                    if (g) openBuyPage(g.id, prod.id);
+                } else if (buttonId === 'add') {
+                    hapticLight();
+                    handleCartAction(productId, true);
+                } else if (buttonId === 'remove') {
+                    hapticMedium();
+                    delete cart[productId];
+                    saveCartToLocalStorage();
+                    updateSingleCard(productId);
+                }
         });
     } else {
         showAppAlert(msg);
@@ -326,27 +326,27 @@ function showServiceInfoPopup(gameId) {
 
     if (window.Telegram?.WebApp?.showPopup) {
         window.Telegram.WebApp.showPopup({
-            message: msg,
-            buttons: [
-                { id: 'goto', type: 'default', text: 'К товарам' },
-                { id: 'buy', type: 'default', text: 'Покупка' }
-            ]
-        }, (buttonId) => {
-            if (buttonId === 'buy') {
-                hapticLight();
-                openBuyPage(g.id);
-            } else if (buttonId === 'goto') {
-                hapticLight();
-                if (g.enabled === false) {
-                    showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
-                    return;
+                message: msg,
+                buttons: [
+                    { id: 'goto', type: 'default', text: 'К товарам' },
+                    { id: 'buy', type: 'default', text: 'Покупка' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'buy') {
+                    hapticLight();
+                    openBuyPage(g.id);
+                } else if (buttonId === 'goto') {
+                    hapticLight();
+                    if (g.enabled === false) {
+                        showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
+                        return;
+                    }
+                    currentGame = g;
+                    savedGameScrollY = 0;
+                    gameCategoryFilter = "Все категории";
+                    gameSearchQuery = "";
+                    showPage("game");
                 }
-                currentGame = g;
-                savedGameScrollY = 0;
-                gameCategoryFilter = "Все категории";
-                gameSearchQuery = "";
-                showPage("game");
-            }
         });
     } else {
         showAppAlert(msg);
@@ -354,28 +354,28 @@ function showServiceInfoPopup(gameId) {
 }
 
 function buildItemPriceHtml(price, originalPrice, priceClass) {
-const hasDiscount = originalPrice && originalPrice !== price;
-return `<span class="${priceClass}" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+    const hasDiscount = originalPrice && originalPrice !== price;
+    return `<span class="${priceClass}" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
     ${hasDiscount ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(originalPrice)}</span>` : ''}
     ${formatPrice(price)}
 </span>`;
 }
 
 function buildCollapsedItemsHtml(items, rowClass, nameClass, priceClass) {
-if (!items || !items.length) return '';
-const sorted = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty));
-if (sorted.length <= 2) {
-    return sorted.map(i => `
+    if (!items || !items.length) return '';
+    const sorted = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty));
+    if (sorted.length <= 2) {
+        return sorted.map(i => `
         <div class="${rowClass}">
             <span class="${nameClass}">${escapeHtml(i.name)}${i.qty > 1 ? `, ${i.qty} шт.` : ''}</span>
             ${buildItemPriceHtml(i.price * i.qty, i.originalPrice ? i.originalPrice * i.qty : null, priceClass)}
         </div>`).join('');
-}
-const first = sorted[0];
-const rest = sorted.slice(1);
-const restSum = rest.reduce((s, i) => s + i.price * i.qty, 0);
-const restOriginalSum = rest.reduce((s, i) => s + (i.originalPrice ? i.originalPrice * i.qty : i.price * i.qty), 0);
-return `
+    }
+    const first = sorted[0];
+    const rest = sorted.slice(1);
+    const restSum = rest.reduce((s, i) => s + i.price * i.qty, 0);
+    const restOriginalSum = rest.reduce((s, i) => s + (i.originalPrice ? i.originalPrice * i.qty : i.price * i.qty), 0);
+    return `
     <div class="${rowClass}">
         <span class="${nameClass}">${escapeHtml(first.name)}${first.qty > 1 ? `, ${first.qty} шт.` : ''}</span>
         ${buildItemPriceHtml(first.price * first.qty, first.originalPrice ? first.originalPrice * first.qty : null, priceClass)}
@@ -386,7 +386,7 @@ return `
     </div>`;
 }
 
-    function isVibrationEnabled() {
+function isVibrationEnabled() {
     return localStorage.getItem('vibrationEnabled') !== 'false';
 }
 
@@ -408,43 +408,43 @@ function hapticMedium() {
     if (navigator.vibrate) navigator.vibrate(60);
 }
 
-    function showAppAlert(message) {
-if (window.__alertOpen) return;
-window.__alertOpen = true;
-const release = () => { window.__alertOpen = false; };
+function showAppAlert(message) {
+    if (window.__alertOpen) return;
+    window.__alertOpen = true;
+    const release = () => { window.__alertOpen = false; };
 
-if (window.Telegram?.WebApp?.showAlert) {
-    try {
-        window.Telegram.WebApp.showAlert(message, release);
-    } catch (e) {
+    if (window.Telegram?.WebApp?.showAlert) {
+        try {
+            window.Telegram.WebApp.showAlert(message, release);
+        } catch (e) {
+            release();
+        }
+    } else {
+        window.alert(message);
         release();
     }
-} else {
-    window.alert(message);
-    release();
-}
 }
 
-    async function isOrderLimitReached() {
-        try {
-            const r = await fetch('https://placedgames.up.railway.app/api/check-rate-limit');
-            if (!r.ok) return false;
-            const data = await r.json();
-            return !!data.limited;
-        } catch (e) { return false; }
-    }
+async function isOrderLimitReached() {
+    try {
+        const r = await fetch('https://placedgames.up.railway.app/api/check-rate-limit');
+        if (!r.ok) return false;
+        const data = await r.json();
+        return !!data.limited;
+    } catch (e) { return false; }
+}
 
-    function showOrderLimitAlert() {
-        const msg = 'К сожалению, оформить заказ временно не получится, у вас более 2-х невыполненных заказов. Попробуйте позже.';
-        if (window.Telegram?.WebApp?.showPopup) {
-            window.Telegram.WebApp.showPopup({
+function showOrderLimitAlert() {
+    const msg = 'К сожалению, оформить заказ временно не получится, у вас более 2-х невыполненных заказов. Попробуйте позже.';
+    if (window.Telegram?.WebApp?.showPopup) {
+        window.Telegram.WebApp.showPopup({
                 message: msg,
                 buttons: [{ id: 'close', type: 'close' }]
-            });
-        } else {
-            showAppAlert(msg);
-        }
+        });
+    } else {
+        showAppAlert(msg);
     }
+}
 
 const fieldInfoTexts = {
     email: 'Пожалуйста укажите почту от вашего аккаунта в игре, если ваш аккаунт не привязан к Supercell ID, то мы не сможем выполнить ваш заказ.',
@@ -455,7 +455,7 @@ const fieldInfoTexts = {
     bank: 'Убедитесь что отправляете перевод именно на указанный в графе банк, в противном случае ваш заказ может быть отменён.'
 };
 
-    function showFieldInfoAlert(type) {
+function showFieldInfoAlert(type) {
     hapticLight();
     const text = fieldInfoTexts[type];
     if (text) showAppAlert(text);
@@ -464,17 +464,17 @@ const fieldInfoTexts = {
 function showReferralCopiedAlert(link) {
     if (window.Telegram?.WebApp?.showPopup) {
         window.Telegram.WebApp.showPopup({
-            message: 'Реф. ссылка скопирована.\n\nПоделитесь ссылкой с друзьями или другими пользователями.',
-            buttons: [
-                { id: 'share', type: 'default', text: 'Поделиться ссылкой' }
-            ]
-        }, (buttonId) => {
-            if (buttonId === 'share') {
-                hapticLight();
-                const shareText = 'Присоединяйся к Placed Games.';
-                const shareUrl = `https://t.me/share/url?url=${encodeURIComponent('https://' + link)}&text=${encodeURIComponent(shareText)}`;
-                window.open(shareUrl, '_blank');
-            }
+                message: 'Реф. ссылка скопирована.\n\nПоделитесь ссылкой с друзьями или другими пользователями.',
+                buttons: [
+                    { id: 'share', type: 'default', text: 'Поделиться ссылкой' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'share') {
+                    hapticLight();
+                    const shareText = 'Присоединяйся к Placed Games.';
+                    const shareUrl = `https://t.me/share/url?url=${encodeURIComponent('https://' + link)}&text=${encodeURIComponent(shareText)}`;
+                    window.open(shareUrl, '_blank');
+                }
         });
     }
 }
@@ -494,29 +494,29 @@ function getCardNumberFromValue(value) {
     return cardNumbers[bank] || "";
 }
 
-    function renderPageHeader(title, currentPageId) {
-const navPages = [
-{ id: 'catalog', title: 'Каталог' },
-{ id: 'cart', title: 'Корзина' },
-{ id: 'orders', title: 'Заказы' },
-{ id: 'profile', title: 'Профиль' },
-{ id: 'reviews', title: 'Отзывы' },
-{ id: 'wallet', title: 'Кошелёк' },
-{ id: 'help', title: 'Справка' },
-{ id: 'referrals', title: 'Рефералы' },
-{ id: 'settings', title: 'Настройки' },
-];
+function renderPageHeader(title, currentPageId) {
+    const navPages = [
+        { id: 'catalog', title: 'Каталог' },
+        { id: 'cart', title: 'Корзина' },
+        { id: 'orders', title: 'Заказы' },
+        { id: 'profile', title: 'Профиль' },
+        { id: 'reviews', title: 'Отзывы' },
+        { id: 'wallet', title: 'Кошелёк' },
+        { id: 'help', title: 'Справка' },
+        { id: 'referrals', title: 'Рефералы' },
+        { id: 'settings', title: 'Настройки' },
+    ];
 
-        const isKnownPage = navPages.some(p => p.id === currentPageId);
-const navOptionsHtml =
+    const isKnownPage = navPages.some(p => p.id === currentPageId);
+    const navOptionsHtml =
     `<option value="" disabled ${!isKnownPage ? 'selected' : ''}>Выберите страницу</option>` +
     navPages.map(p =>
         `<option value="${p.id}" ${p.id === currentPageId ? 'selected' : ''}>${p.title}</option>`
     ).join('');
 
-const headerThemeDeg = themeIconRotationDeg(getAppTheme());
+    const headerThemeDeg = themeIconRotationDeg(getAppTheme());
 
-return `<div class="page-header-sticky">
+    return `<div class="page-header-sticky">
 <div class="page-header-inner">
     <div class="page-header-title-btn" style="cursor:pointer;position:relative;overflow:hidden;">
         <div class="page-header-icon-wrap">
@@ -533,7 +533,7 @@ return `<div class="page-header-sticky">
 </div>`;
 }
 
-    let uiActionLock = false;
+let uiActionLock = false;
 function withLock(fn) {
     return function(...args) {
         if (uiActionLock) return;
@@ -544,7 +544,7 @@ function withLock(fn) {
 }
 let profileLongPressFired = false;
 let lastProfileTapAt = 0;
-const PROFILE_DOUBLE_TAP_MS = 350;
+const PROFILE_DOUBLE_TAP_MS = 450;
 let cart = {};
 let currentOpenOrder = null;
 let writeReviewEntryPage = 'reviews';
@@ -564,117 +564,123 @@ let navigationHistory = [];
 let currentGame = null;
 let savedGameScrollY = 0;
 let savedReviewsScrollY = 0;
-let savedOrdersScrollY = 0;  
- const bankLetters = { mts: 'M', tbank: 'T', vtb: 'W', sber: 'S', ozon: 'O', alfa: 'A' };
+let savedOrdersScrollY = 0;
+let userRefCode = null;
+const bankLetters = { mts: 'M', tbank: 'T', vtb: 'W', sber: 'S', ozon: 'O', alfa: 'A' };
 
 function generateOrderNumber() {
-const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', D = '0123456789';
-const r = s => s[Math.floor(Math.random() * s.length)];
-return r(L) + r(D) + r(L) + r(D);
+    const L = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const D = '0123456789';
+    const r = s => s[Math.floor(Math.random() * s.length)];
+    return r(L) + r(D) + r(L) + r(D) + r(L) + r(D);
+}
+
+function displayOrderNumber(n) {
+    return String(n || '').slice(0, 4);
 }
 
 function savePaymentSession() {
-try {
-    localStorage.setItem('paymentSession', JSON.stringify({ orderNumber: pendingOrderNumber, promo: appliedPromo }));
-} catch (e) {}
+    try {
+        localStorage.setItem('paymentSession', JSON.stringify({ orderNumber: pendingOrderNumber, promo: appliedPromo }));
+    } catch (e) {}
 }
 
 function restorePaymentSession() {
-if (localStorage.getItem('lastPage') !== 'payment') return;
-try {
-    const s = JSON.parse(localStorage.getItem('paymentSession') || 'null');
-    if (s && s.orderNumber) {
-        pendingOrderNumber = s.orderNumber;
-        appliedPromo = s.promo || null;
-    }
-} catch (e) {}
+    if (localStorage.getItem('lastPage') !== 'payment') return;
+    try {
+        const s = JSON.parse(localStorage.getItem('paymentSession') || 'null');
+        if (s && s.orderNumber) {
+            pendingOrderNumber = s.orderNumber;
+            appliedPromo = s.promo || null;
+        }
+    } catch (e) {}
 }
 
 function buildCartItemsListHtml() {
-const allProducts = games.flatMap(g => g.getProducts());
-const items = Object.entries(cart).map(([id, qty]) => {
-    const prod = allProducts.find(p => p.id == id);
-    if (!prod) return null;
-    const lineTotal = appliedPromo
-        ? Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100))
-        : prod.price * qty;
-    return { id, name: prod.name, qty, price: lineTotal / qty, originalPrice: prod.price };
-}).filter(Boolean);
-return buildCollapsedItemsHtml(items, 'order-item-row', 'order-item-name', 'order-item-price');
+    const allProducts = games.flatMap(g => g.getProducts());
+    const items = Object.entries(cart).map(([id, qty]) => {
+            const prod = allProducts.find(p => p.id == id);
+            if (!prod) return null;
+            const lineTotal = appliedPromo
+            ? Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100))
+            : prod.price * qty;
+            return { id, name: prod.name, qty, price: lineTotal / qty, originalPrice: prod.price };
+    }).filter(Boolean);
+    return buildCollapsedItemsHtml(items, 'order-item-row', 'order-item-name', 'order-item-price');
 }
 
 const games = [{
-    id: 'brawlstars',
-    name: 'Brawl Stars',
-    developer: 'Supercell',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/BrawlStars.JPEG',
-    minPrice: 95,
-    oldMinPrice: 99,
-    deliveryText: 'вход в аккаунт',
-    warnText: 'Перед оформлением заказа, пожалуйста, проверьте наличие данной акции в вашем аккаунте\n\nВ противном случае срок возврата денежных средств составляет от 2 до 30 дней!',
-    instructionText: 'Инструкция для Brawl Stars:\n1. ...\n2. ...',
-    enabled: true,
-    getProducts: () => window.brawlProducts || []
-}, {
-    id: 'clashroyale',
-    name: 'Clash Royale',
-    developer: 'Supercell',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/ClashRoyale.JPEG',
-    minPrice: 95,
-    oldMinPrice: 99,
-    deliveryText: 'вход в аккаунт',
-    warnText: 'Перед оформлением заказа проверьте наличие акции в аккаунте Clash Royale.',
-    instructionText: 'Инструкция для Brawl Stars:\n1. ...\n2. ...',
-    enabled: true,
-    getProducts: () => window.crProducts || []
-}, {
-    id: 'pubg',
-    name: 'Pubg Mobile',
-    developer: 'Tencent Mobile International Limited',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/Pubg.JPEG',
-    minPrice: 42,
-    oldMinPrice: 44,
-    deliveryText: 'вход в аккаунт',
-    warnText: 'Для пополнения робуксов потребуется вход в ваш аккаунт Roblox.',
-    instructionText: 'Инструкция для Brawl Stars:\n1. ...\n2. ...',
-    enabled: true,
-    getProducts: () => window.robloxProducts || []
-}, {
-    id: 'telegram',
-    name: 'Telegram',
-    developer: 'Telegram',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/Telegram.JPEG',
-    minPrice: 22,
-    oldMinPrice: 24,
-    deliveryText: 'подарком',
-    warnText: 'Для отправки подарка укажите ваш юзернейм в Telegram.',
-    instructionText: 'Информация о товаре:\n\nПосле подтверждения оплаты товар будет отправлен на указанный вами «username».\n\nОжидание выполнения заказа занимает от 5 до 20 минут.',
-    enabled: true,
-    getProducts: () => window.tgProducts || []
-}, {
-    id: 'roblox',
-    name: 'Roblox',
-    developer: 'Roblox Corporation',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/Roblox.JPEG',
-    minPrice: 42,
-    oldMinPrice: 44,
-    deliveryText: 'вход в аккаунт',
-    warnText: 'Для пополнения робуксов потребуется вход в ваш аккаунт Roblox.',
-    instructionText: 'Инструкция для Roblox:\n1. ...\n2. ...',
-    enabled: false,
-    getProducts: () => window.robloxProducts || []
-}, {
-    id: 'appstore',
-    name: 'App Store',
-    developer: 'Apple',
-    image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/AppStore.JPEG',
-    minPrice: 22,
-    oldMinPrice: 24,
-    deliveryText: 'подарочная карта',
-    warnText: 'Для отправки подарка укажите ваш юзернейм в Telegram.',
-    instructionText: 'Информация о товаре:\n\nПосле подтверждения оплаты товар будет отправлен на указанный вами «username».\n\nОжидание выполнения заказа занимает от 5 до 20 минут.',
-    enabled: true,
-    getProducts: () => window.asProducts || []
+        id: 'brawlstars',
+        name: 'Brawl Stars',
+        developer: 'Supercell',
+        image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/BrawlStars.JPEG',
+        minPrice: 95,
+        oldMinPrice: 99,
+        deliveryText: 'вход в аккаунт',
+        warnText: 'Перед оформлением заказа, пожалуйста, проверьте наличие данной акции в вашем аккаунте\n\nВ противном случае срок возврата денежных средств составляет от 2 до 30 дней!',
+        instructionText: 'Инструкция для Brawl Stars:\n1. ...\n2. ...',
+        enabled: true,
+        getProducts: () => window.brawlProducts || []
+    }, {
+        id: 'clashroyale',
+        name: 'Clash Royale',
+        developer: 'Supercell',
+        image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/ClashRoyale.JPEG',
+        minPrice: 95,
+        oldMinPrice: 99,
+        deliveryText: 'вход в аккаунт',
+        warnText: 'Перед оформлением заказа проверьте наличие акции в аккаунте Clash Royale.',
+        instructionText: 'Инструкция для Brawl Stars:\n1. ...\n2. ...',
+        enabled: true,
+        getProducts: () => window.crProducts || []
+    }, {
+        id: 'pubg',
+        name: 'Pubg Mobile',
+        developer: 'Tencent Mobile International Limited',
+        image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/Pubg.JPEG',
+        minPrice: 42,
+        oldMinPrice: 44,
+        deliveryText: 'вход в аккаунт',
+        warnText: 'Для пополнения робуксов потребуется вход в ваш аккаунт Roblox.',
+        instructionText: 'Инструкция для Brawl Stars:\n1. ...\n2. ...',
+        enabled: true,
+        getProducts: () => window.robloxProducts || []
+    }, {
+        id: 'telegram',
+        name: 'Telegram',
+        developer: 'Telegram',
+        image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/Telegram.JPEG',
+        minPrice: 22,
+        oldMinPrice: 24,
+        deliveryText: 'подарком',
+        warnText: 'Для отправки подарка укажите ваш юзернейм в Telegram.',
+        instructionText: 'Информация о товаре:\n\nПосле подтверждения оплаты товар будет отправлен на указанный вами «username».\n\nОжидание выполнения заказа занимает от 5 до 20 минут.',
+        enabled: true,
+        getProducts: () => window.tgProducts || []
+    }, {
+        id: 'roblox',
+        name: 'Roblox',
+        developer: 'Roblox Corporation',
+        image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/Roblox.JPEG',
+        minPrice: 42,
+        oldMinPrice: 44,
+        deliveryText: 'вход в аккаунт',
+        warnText: 'Для пополнения робуксов потребуется вход в ваш аккаунт Roblox.',
+        instructionText: 'Инструкция для Roblox:\n1. ...\n2. ...',
+        enabled: false,
+        getProducts: () => window.robloxProducts || []
+    }, {
+        id: 'appstore',
+        name: 'App Store',
+        developer: 'Apple',
+        image: 'https://cdn.jsdelivr.net/gh/placedgames/media@main/logo/AppStore.JPEG',
+        minPrice: 22,
+        oldMinPrice: 24,
+        deliveryText: 'подарочная карта',
+        warnText: 'Для отправки подарка укажите ваш юзернейм в Telegram.',
+        instructionText: 'Информация о товаре:\n\nПосле подтверждения оплаты товар будет отправлен на указанный вами «username».\n\nОжидание выполнения заказа занимает от 5 до 20 минут.',
+        enabled: true,
+        getProducts: () => window.asProducts || []
 }];
 
 preloadImages(getAllProductImageUrls());
@@ -713,14 +719,14 @@ function loadCartFromLocalStorage() {
     }
 }
 
-    function canAddToCart(productId) {
+function canAddToCart(productId) {
     const newGame = games.find(g => g.getProducts().some(p => p.id === productId));
     const product = newGame?.getProducts().find(p => p.id == productId);
     if (!product) return { allowed: false, reason: "Товар не найден" };
     if (newGame && newGame.enabled === false) {
         return { allowed: false, reason: "Покупка товаров в данном сервисе временно недоступна, попробуйте позже" };
     }
-    
+
     const cartItems = Object.keys(cart);
     if (cartItems.length > 0) {
         const firstId = cartItems[0];
@@ -734,12 +740,12 @@ function loadCartFromLocalStorage() {
     if (!cart[productId] && uniqueCount >= 6) {
         return { allowed: false, reason: "В корзину можно добавить не более 6 различных товаров" };
     }
-     
+
     const currentQty = cart[productId] || 0;
-const maxAllowedQty = product.maxQty;
-if (maxAllowedQty && currentQty >= maxAllowedQty) {
-return { allowed: false, reason: `Максимум ${maxAllowedQty} шт.` };
-}
+    const maxAllowedQty = product.maxQty;
+    if (maxAllowedQty && currentQty >= maxAllowedQty) {
+        return { allowed: false, reason: `Максимум ${maxAllowedQty} шт.` };
+    }
 
     if (product.conflictGroup && product.conflictGroup.length > 0) {
         const conflicts = product.conflictGroup.filter(id => id !== productId && cart[id]);
@@ -796,19 +802,19 @@ function confirmSwapConflict(newProductId, oldProductId) {
     }
 }
 
-    function showConflictSwapConfirm(newProductId, oldProductId, message) {
+function showConflictSwapConfirm(newProductId, oldProductId, message) {
     if (window.Telegram?.WebApp?.showPopup) {
         window.Telegram.WebApp.showPopup({
-            message: message,
-            buttons: [
-                { id: 'swap', type: 'destructive', text: 'Удалить' },
-                { id: 'close', type: 'close' }
-            ]
-        }, (buttonId) => {
-            if (buttonId === 'swap') {
-                hapticMedium();
-                confirmSwapConflict(newProductId, oldProductId);
-            }
+                message: message,
+                buttons: [
+                    { id: 'swap', type: 'destructive', text: 'Удалить' },
+                    { id: 'close', type: 'close' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'swap') {
+                    hapticMedium();
+                    confirmSwapConflict(newProductId, oldProductId);
+                }
         });
     } else if (window.confirm(message)) {
         confirmSwapConflict(newProductId, oldProductId);
@@ -827,22 +833,22 @@ function reloadProductsScript(onDone) {
     document.head.appendChild(script);
 }
 
-    function clearAppCache() {
-window.__imgCache = {};
-location.reload();
+function clearAppCache() {
+    window.__imgCache = {};
+    location.reload();
 }
 
 function applyAppFormat(format) {
-localStorage.setItem('appFormat', format);
-const tg = window.Telegram?.WebApp;
-if (!tg) return;
-try {
-    if (format === 'fullscreen') {
-        tg.requestFullscreen();
-    } else {
-        if (tg.exitFullscreen) tg.exitFullscreen();
-    }
-} catch (e) {}
+    localStorage.setItem('appFormat', format);
+    const tg = window.Telegram?.WebApp;
+    if (!tg) return;
+    try {
+        if (format === 'fullscreen') {
+            tg.requestFullscreen();
+        } else {
+            if (tg.exitFullscreen) tg.exitFullscreen();
+        }
+    } catch (e) {}
 }
 
 function hasAnyProductsLoaded() {
@@ -850,19 +856,19 @@ function hasAnyProductsLoaded() {
     return arrays.some(a => Array.isArray(a) && a.length > 0);
 }
 
-    function showMixCartConfirm(productId, message) {
+function showMixCartConfirm(productId, message) {
     if (window.Telegram?.WebApp?.showPopup) {
         window.Telegram.WebApp.showPopup({
-            message: message,
-            buttons: [
-                { id: 'clear', type: 'destructive', text: 'Очистить' },
-                { id: 'close', type: 'close' }
-            ]
-        }, (buttonId) => {
-            if (buttonId === 'clear') {
-                hapticMedium();
-                confirmClearAndAdd(productId);
-            }
+                message: message,
+                buttons: [
+                    { id: 'clear', type: 'destructive', text: 'Очистить' },
+                    { id: 'close', type: 'close' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'clear') {
+                    hapticMedium();
+                    confirmClearAndAdd(productId);
+                }
         });
     } else if (window.confirm(message)) {
         confirmClearAndAdd(productId);
@@ -870,11 +876,11 @@ function hasAnyProductsLoaded() {
 }
 
 function renderCartButtonHtml(productId) {
-const qty = cart[productId] || 0;
-if (qty > 0) {
-    const prod = games.flatMap(g => g.getProducts()).find(p => p.id == productId);
-    const maxQty = prod?.maxQty;
-    const atLimit = maxQty && qty >= maxQty;
+    const qty = cart[productId] || 0;
+    if (qty > 0) {
+        const prod = games.flatMap(g => g.getProducts()).find(p => p.id == productId);
+        const maxQty = prod?.maxQty;
+        const atLimit = maxQty && qty >= maxQty;
         const plusOpacity = atLimit ? 'opacity:0.4;pointer-events:none;' : '';
         return `<div class="card-action-btn counter-btn">
                 <span class="counter-minus" data-id="${productId}"><svg class="icon icon-counter-minus icon--accent"><use href="#icon-minus"></use></svg></span>
@@ -902,7 +908,7 @@ function handleCartAction(pid, isIncrement) {
     if (document.getElementById("catalog-page").classList.contains("active-page")) { updateSingleCard(pid); }
     if (document.getElementById("game-page").classList.contains("active-page")) { updateSingleCard(pid); }
     if (document.getElementById("cart-page").classList.contains("active-page")) { renderCartPage(); } else if (document
-            .getElementById("checkout-page").classList.contains("active-page")) { renderCheckoutForm(); } else {
+        .getElementById("checkout-page").classList.contains("active-page")) { renderCheckoutForm(); } else {
         document.getElementById("cartCheckoutFixed").style.display = "none";
     }
     saveCartToLocalStorage();
@@ -939,28 +945,28 @@ function stopHold() {
     holdInterval = null;
 }
 
-    function holdIncrementCart(pid) {
-const check = canAddToCart(pid);
-if (!check.allowed) { stopHold(); return; }
-cart[pid] = (cart[pid] || 0) + 1;
-updateSingleCard(pid);
-renderCartPage();
-saveCartToLocalStorage();
+function holdIncrementCart(pid) {
+    const check = canAddToCart(pid);
+    if (!check.allowed) { stopHold(); return; }
+    cart[pid] = (cart[pid] || 0) + 1;
+    updateSingleCard(pid);
+    renderCartPage();
+    saveCartToLocalStorage();
 }
 
 function holdDecrementCart(pid) {
-const qty = cart[pid] || 0;
-if (qty <= 1) { stopHold(); return; }
-cart[pid] = qty - 1;
-updateSingleCard(pid);
-renderCartPage();
-saveCartToLocalStorage();
+    const qty = cart[pid] || 0;
+    if (qty <= 1) { stopHold(); return; }
+    cart[pid] = qty - 1;
+    updateSingleCard(pid);
+    renderCartPage();
+    saveCartToLocalStorage();
 }
 
 function holdIncrementCard(pid) {
-const check = canAddToCart(pid);
-if (!check.allowed) { stopHold(); return; }
-handleCartAction(pid, true);
+    const check = canAddToCart(pid);
+    if (!check.allowed) { stopHold(); return; }
+    handleCartAction(pid, true);
 }
 
 function holdIncrementCard(pid) {
@@ -978,27 +984,27 @@ function holdDecrementCard(pid) {
 }
 
 document.addEventListener('pointerdown', function(e) {
-    const incCartBtn = e.target.closest('[data-inc]');
-    const decCartBtn = e.target.closest('[data-dec]');
-    const counterPlus = e.target.closest('.counter-plus');
-    const counterMinus = e.target.closest('.counter-minus');
+        const incCartBtn = e.target.closest('[data-inc]');
+        const decCartBtn = e.target.closest('[data-dec]');
+        const counterPlus = e.target.closest('.counter-plus');
+        const counterMinus = e.target.closest('.counter-minus');
 
-    let action = null;
-    if (incCartBtn) action = () => holdIncrementCart(incCartBtn.dataset.inc);
-    else if (decCartBtn) action = () => holdDecrementCart(decCartBtn.dataset.dec);
-    else if (counterPlus) action = () => holdIncrementCard(counterPlus.dataset.id);
-    else if (counterMinus) action = () => holdDecrementCard(counterMinus.dataset.id);
+        let action = null;
+        if (incCartBtn) action = () => holdIncrementCart(incCartBtn.dataset.inc);
+        else if (decCartBtn) action = () => holdDecrementCart(decCartBtn.dataset.dec);
+        else if (counterPlus) action = () => holdIncrementCard(counterPlus.dataset.id);
+        else if (counterMinus) action = () => holdDecrementCard(counterMinus.dataset.id);
 
-    if (!action) return;
+        if (!action) return;
 
-    stopHold();
-    holdTimeout = setTimeout(() => {
-        holdInterval = setInterval(action, 120);
-    }, 400);
+        stopHold();
+        holdTimeout = setTimeout(() => {
+                holdInterval = setInterval(action, 120);
+            }, 400);
 });
 
 ['pointerup', 'pointerleave', 'pointercancel'].forEach(evt => {
-    document.addEventListener(evt, stopHold);
+        document.addEventListener(evt, stopHold);
 });
 
 function renderCartPage() {
@@ -1007,22 +1013,22 @@ function renderCartPage() {
     const items = Object.entries(cart);
     if (!items.length) {
         container.innerHTML =
-            `<div class="empty-state-icon"><svg class="icon icon-empty-cart icon--muted"><use href="#icon-cart"></use></svg><div class="empty-title">Корзина товаров пуста</div><button class="empty-catalog-btn" id="emptyCartToCatalog">Перейти в каталог</button></div>`;
+        `<div class="empty-state-icon"><svg class="icon icon-empty-cart icon--muted"><use href="#icon-cart"></use></svg><div class="empty-title">Корзина товаров пуста</div><button class="empty-catalog-btn" id="emptyCartToCatalog">Перейти в каталог</button></div>`;
         document.getElementById("cartCheckoutFixed").style.display = "none";
         isPromoMode = false;
         appliedPromo = null;
         localStorage.removeItem('cart');
         setTimeout(() => {
-            const btn = document.getElementById("emptyCartToCatalog");
-            if (btn) btn.addEventListener("click", () => showPage("catalog"));
-        }, 0);
+                const btn = document.getElementById("emptyCartToCatalog");
+                if (btn) btn.addEventListener("click", () => showPage("catalog"));
+            }, 0);
         return;
     }
     const cartRows = [];
     const cartDeliveries = [];
     const cartServices = [];
     for (let [id, qty] of items) {
-                    const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
+        const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
         if (!prod) continue;
         cartDeliveries.push(games.find(g => g.getProducts().some(p => p.id == id))?.deliveryText || 'вход в аккаунт');
         cartServices.push(games.find(g => g.getProducts().some(p => p.id == id))?.name || prod.category || '—');
@@ -1048,58 +1054,58 @@ function renderCartPage() {
     }
     container.innerHTML = html;
     document.querySelectorAll("[data-dec]").forEach(btn => {
-        btn.addEventListener("click", () => changeQty(btn.dataset.dec, -1));
+            btn.addEventListener("click", () => changeQty(btn.dataset.dec, -1));
     });
     document.querySelectorAll("[data-inc]").forEach(btn => {
-        btn.addEventListener("click", () => changeQty(btn.dataset.inc, 1));
+            btn.addEventListener("click", () => changeQty(btn.dataset.inc, 1));
     });
     if (document.getElementById("cart-page").classList.contains("active-page")) { renderCheckoutBlock(); }
-            document.querySelectorAll(".instruction-icon, .warn-icon").forEach(icon => {
-        icon.addEventListener("click", () => {
-            hapticLight();
-            const id = icon.dataset.id;
-            const type = icon.dataset.type;
-            const game = games.find(g => g.getProducts().some(p => p.id == id));
-            if (type === "warn") {
-                showAppAlert(game?.warnText || 'Внимание!');
-            } else {
-                const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
-                if (!prod) { showAppAlert('Информация недоступна'); return; }
-                let msg = `Информация о товаре:\n\nТовар: ${prod.name}\n`;
-                if (prod.bundleItems && prod.bundleItems.length > 0) {
-                    msg += `Содержимое набора:\n` + prod.bundleItems.map(i => `- ${i}`).join('\n') + `\n`;
-                }
-                msg += `Стоимость: ${formatPrice(prod.price)}\nКатегория: ${prod.label || prod.category}`;
-
-                if (window.Telegram?.WebApp?.showPopup) {
-                    window.Telegram.WebApp.showPopup({
-                        message: msg,
-                        buttons: [
-                            { id: 'delete', type: 'destructive', text: 'Удалить' },
-                            { id: 'close', type: 'close' }
-                        ]
-                    }, (buttonId) => {
-                        if (buttonId === 'delete') {
-                            hapticMedium();
-                            delete cart[id];
-                            saveCartToLocalStorage();
-                            updateSingleCard(id);
-                            renderCartPage();
+    document.querySelectorAll(".instruction-icon, .warn-icon").forEach(icon => {
+            icon.addEventListener("click", () => {
+                    hapticLight();
+                    const id = icon.dataset.id;
+                    const type = icon.dataset.type;
+                    const game = games.find(g => g.getProducts().some(p => p.id == id));
+                    if (type === "warn") {
+                        showAppAlert(game?.warnText || 'Внимание!');
+                    } else {
+                        const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
+                        if (!prod) { showAppAlert('Информация недоступна'); return; }
+                        let msg = `Информация о товаре:\n\nТовар: ${prod.name}\n`;
+                        if (prod.bundleItems && prod.bundleItems.length > 0) {
+                            msg += `Содержимое набора:\n` + prod.bundleItems.map(i => `- ${i}`).join('\n') + `\n`;
                         }
-                    });
-                } else {
-                    showAppAlert(msg);
-                }
-            }
-        });
+                        msg += `Стоимость: ${formatPrice(prod.price)}\nКатегория: ${prod.label || prod.category}`;
+
+                        if (window.Telegram?.WebApp?.showPopup) {
+                            window.Telegram.WebApp.showPopup({
+                                    message: msg,
+                                    buttons: [
+                                        { id: 'delete', type: 'destructive', text: 'Удалить' },
+                                        { id: 'close', type: 'close' }
+                                    ]
+                                }, (buttonId) => {
+                                    if (buttonId === 'delete') {
+                                        hapticMedium();
+                                        delete cart[id];
+                                        saveCartToLocalStorage();
+                                        updateSingleCard(id);
+                                        renderCartPage();
+                                    }
+                            });
+                        } else {
+                            showAppAlert(msg);
+                        }
+                    }
+            });
     });
 }
 
 function updateAllCards() {
     document.querySelectorAll('.product-card').forEach(card => {
-        const cardId = card.dataset.id;
-        const btnContainer = card.querySelector('.card-info > div:last-child');
-        if (btnContainer) { btnContainer.outerHTML = renderCartButtonHtml(cardId); }
+            const cardId = card.dataset.id;
+            const btnContainer = card.querySelector('.card-info > div:last-child');
+            if (btnContainer) { btnContainer.outerHTML = renderCartButtonHtml(cardId); }
     });
     attachCardEvents();
 }
@@ -1112,7 +1118,7 @@ function updateSingleCard(productId) {
         attachCardEvents(); }
 }
 
-    function renderCatalog() {
+function renderCatalog() {
     const grid = document.getElementById("catalogGrid");
     if (!grid) return;
     grid.style.display = "";
@@ -1126,7 +1132,7 @@ function updateSingleCard(productId) {
         catalogSelect.innerHTML = options.map(o =>
             `<option value="${escapeHtml(o)}" ${catalogServiceFilter === o ? 'selected' : ''}>${escapeHtml(o)}</option>`
         ).join("");
-                    catalogSelect.onchange = function() {
+        catalogSelect.onchange = function() {
             hapticLight();
             const selected = this.value;
             if (selected === "Все сервисы") {
@@ -1149,7 +1155,7 @@ function updateSingleCard(productId) {
             showPage("game");
         };
     }
-                                            grid.innerHTML = filteredGames.map(game => `
+    grid.innerHTML = filteredGames.map(game => `
             <div class="product-card" data-game-id="${game.id}">
                 <div class="card-img-carousel">
                     <div class="card-img-track">
@@ -1170,87 +1176,87 @@ function updateSingleCard(productId) {
             </div>
                     `).join("");
 
-            requestAnimationFrame(() => fitProductTitles(grid));
+    requestAnimationFrame(() => fitProductTitles(grid));
 
-            document.querySelectorAll("[data-open-game]").forEach(btn => {
- btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            hapticLight();
-            const gameId = btn.dataset.openGame;
-            const g = games.find(g => g.id === gameId);
-            if (g && g.enabled === false) {
-                showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
-                return;
-            }
-                            currentGame = g;
-            savedGameScrollY = 0;
-            gameCategoryFilter = "Все категории";
-            gameSearchQuery = "";
-            showPage("game");
-        });
+    document.querySelectorAll("[data-open-game]").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    hapticLight();
+                    const gameId = btn.dataset.openGame;
+                    const g = games.find(g => g.id === gameId);
+                    if (g && g.enabled === false) {
+                        showAppAlert("Покупка товаров в данном сервисе временно недоступна, попробуйте позже");
+                        return;
+                    }
+                    currentGame = g;
+                    savedGameScrollY = 0;
+                    gameCategoryFilter = "Все категории";
+                    gameSearchQuery = "";
+                    showPage("game");
+            });
     });
 
     document.querySelectorAll("[data-info-service]").forEach(btn => {
-        btn.addEventListener("pointerdown", (e) => e.stopPropagation());
-        btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            hapticLight();
-            showServiceInfoPopup(btn.dataset.infoService);
-        });
+            btn.addEventListener("pointerdown", (e) => e.stopPropagation());
+            btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    hapticLight();
+                    showServiceInfoPopup(btn.dataset.infoService);
+            });
     });
 }
 
 function attachCardEvents() {
     document.querySelectorAll('.product-card').forEach(card => {
-        const cardId = card.dataset.id;
-        const actionBtn = card.querySelector('.card-action-btn');
-        if (!actionBtn) return;
-        if (actionBtn.classList.contains('cart-add-btn')) {
-            actionBtn.replaceWith(actionBtn.cloneNode(true));
-            const newBtn = card.querySelector('.cart-add-btn');
-            newBtn?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                handleCartAction(cardId, true);
-                hapticLight();
-            });
-        } else if (actionBtn.classList.contains('counter-btn')) {
-            const minus = actionBtn.querySelector('.counter-minus');
-            const plus = actionBtn.querySelector('.counter-plus');
-            minus?.replaceWith(minus.cloneNode(true));
-            plus?.replaceWith(plus.cloneNode(true));
-            const newMinus = actionBtn.querySelector('.counter-minus');
-            const newPlus = actionBtn.querySelector('.counter-plus');
-            newMinus?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                hapticLight();
-                handleCartAction(cardId, false);
-            });
-            newPlus?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                hapticLight();
-                handleCartAction(cardId, true);
-            });
-        }
+            const cardId = card.dataset.id;
+            const actionBtn = card.querySelector('.card-action-btn');
+            if (!actionBtn) return;
+            if (actionBtn.classList.contains('cart-add-btn')) {
+                actionBtn.replaceWith(actionBtn.cloneNode(true));
+                const newBtn = card.querySelector('.cart-add-btn');
+                newBtn?.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        handleCartAction(cardId, true);
+                        hapticLight();
+                });
+            } else if (actionBtn.classList.contains('counter-btn')) {
+                const minus = actionBtn.querySelector('.counter-minus');
+                const plus = actionBtn.querySelector('.counter-plus');
+                minus?.replaceWith(minus.cloneNode(true));
+                plus?.replaceWith(plus.cloneNode(true));
+                const newMinus = actionBtn.querySelector('.counter-minus');
+                const newPlus = actionBtn.querySelector('.counter-plus');
+                newMinus?.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        hapticLight();
+                        handleCartAction(cardId, false);
+                });
+                newPlus?.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        hapticLight();
+                        handleCartAction(cardId, true);
+                });
+            }
     });
 }
 
-    function buildOrderObject(paymentMethodLabel) {
+function buildOrderObject(paymentMethodLabel) {
     let tgUser = null;
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) tgUser = window.Telegram.WebApp.initDataUnsafe.user;
     const cartItems = Object.entries(cart);
     const orderItems = cartItems.map(([id, qty]) => {
-        const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
-        const lineTotal = appliedPromo
+            const prod = games.flatMap(g => g.getProducts()).find(p => p.id == id);
+            const lineTotal = appliedPromo
             ? Math.round(prod.price * qty * (1 - appliedPromo.discountPercent / 100))
             : prod.price * qty;
-        return { id: id, name: prod.name, qty, price: lineTotal / qty, originalPrice: prod.price };
+            return { id: id, name: prod.name, qty, price: lineTotal / qty, originalPrice: prod.price };
     });
     const total = orderItems.reduce((s, i) => s + Math.round(i.price * i.qty), 0);
     const gameNameValue = (() => {
-        const ids = Object.keys(cart);
-        if (!ids.length) return '';
-        const g = games.find(g => g.getProducts().some(p => p.id == ids[0]));
-        return g?.name || '';
+            const ids = Object.keys(cart);
+            if (!ids.length) return '';
+            const g = games.find(g => g.getProducts().some(p => p.id == ids[0]));
+            return g?.name || '';
     })();
     const isTelegramOrderForBuild = gameNameValue.trim().toLowerCase() === 'telegram';
     return {
@@ -1290,9 +1296,9 @@ async function finalizeOrderAfterSuccess() {
 async function sendOrderToServer(order) {
     try {
         const response = await fetch('https://placedgames.up.railway.app/api/order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(order)
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(order)
         });
         return response.ok;
     } catch (error) { return false; }
@@ -1371,11 +1377,11 @@ function renderBuyPage() {
     const prod = getBuyProduct();
 
     const itemsHtml = prod ? buildCollapsedItemsHtml([{
-        name: prod.name,
-        qty: 1,
-        price: appliedPromo ? Math.round(prod.price * (1 - appliedPromo.discountPercent / 100)) : prod.price,
-        originalPrice: prod.price
-    }], 'order-item-row', 'order-item-name', 'order-item-price') : '';
+                name: prod.name,
+                qty: 1,
+                price: appliedPromo ? Math.round(prod.price * (1 - appliedPromo.discountPercent / 100)) : prod.price,
+                originalPrice: prod.price
+        }], 'order-item-row', 'order-item-name', 'order-item-price') : '';
 
     container.innerHTML = `
             <div style="position:relative;margin-bottom:14px;">
@@ -1476,144 +1482,144 @@ function renderCheckoutBlock() {
     }
     fixedBlock.style.display = "block";
     const rawTotal = items.reduce((s, [id, qty]) => s + (games.flatMap(g => g.getProducts()).find(p => p.id == id)
-        .price * qty), 0);
+            .price * qty), 0);
     const discountedTotal = appliedPromo
-        ? items.reduce((s, [id, qty]) => s + Math.round(games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty * (1 - appliedPromo.discountPercent / 100)), 0)
-        : rawTotal;
+    ? items.reduce((s, [id, qty]) => s + Math.round(games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty * (1 - appliedPromo.discountPercent / 100)), 0)
+    : rawTotal;
     if (isPromoMode) {
         fixedBlock.innerHTML =
-            `<div class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="total-row"><span class="promo-label">Введите промокод на скидку</span></div><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;"><input type="text" class="promo-input" id="promoInput" placeholder="Введите промокод" value="${appliedPromo ? appliedPromo.code : ''}" oninput="this.value=this.value.toUpperCase()" style="flex: 1; min-width: 0; box-sizing: border-box;"><button class="promo-action-btn back-btn" id="promoBackBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-back icon--danger"><use href="#icon-cancel"></use></svg></button><button class="promo-action-btn apply-btn" id="promoApplyBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-apply icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
+        `<div class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="total-row"><span class="promo-label">Введите промокод на скидку</span></div><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;"><input type="text" class="promo-input" id="promoInput" placeholder="Введите промокод" value="${appliedPromo ? appliedPromo.code : ''}" oninput="this.value=this.value.toUpperCase()" style="flex: 1; min-width: 0; box-sizing: border-box;"><button class="promo-action-btn back-btn" id="promoBackBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-back icon--danger"><use href="#icon-cancel"></use></svg></button><button class="promo-action-btn apply-btn" id="promoApplyBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-apply icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
         setTimeout(() => {
-            const promoInput = document.getElementById("promoInput");
-            const backBtn = document.getElementById("promoBackBtn");
-            const applyBtn = document.getElementById("promoApplyBtn");
-            if (promoInput) promoInput.focus();
-            if (backBtn) backBtn.addEventListener("click", withLock(() => {
-                hapticLight();
-                if (appliedPromo) appliedPromo = null;
-                isPromoMode = false;
-                renderCheckoutBlock();
-                refreshAfterPromo();
-            }));
-            if (applyBtn) applyBtn.addEventListener("click", async () => {
-                hapticLight();
-                const code = promoInput?.value.trim().toUpperCase();
-                if (!code) return;
-                const tgU = window.Telegram?.WebApp?.initDataUnsafe?.user;
-                try {
-                    const r = await fetch('https://placedgames.up.railway.app/api/check-promo', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ code, userId: String(tgU?.id || '') })
-                    });
-                    const data = await r.json();
-                    if (data.valid) {
-                        appliedPromo = { code, discountPercent: data.discount };
-                        isPromoMode = false;
-                        renderCheckoutBlock();
-                        refreshAfterPromo();
-                    } else {
-                        if (data.reason === 'not_found') {
-                            showAppAlert('Промокод не найден');
-                        } else if (data.reason === 'already_used') {
-                            showAppAlert('Данный промокод уже был использован ранее');
-                        } else if (data.reason === 'expired') {
-                            showAppAlert('Срок действия промокода истёк');
-                        } else if (data.reason === 'limit_reached') {
-                            showAppAlert('Промокод больше не доступен — лимит активаций исчерпан');
-                        } else if (data.reason === 'not_for_you') {
-                            showAppAlert('Этот промокод предназначен для другого пользователя');
-                        } else if (data.reason === 'first_order_only') {
-                            showAppAlert('Данный промокод доступен только на первый заказ');
+                const promoInput = document.getElementById("promoInput");
+                const backBtn = document.getElementById("promoBackBtn");
+                const applyBtn = document.getElementById("promoApplyBtn");
+                if (promoInput) promoInput.focus();
+                if (backBtn) backBtn.addEventListener("click", withLock(() => {
+                            hapticLight();
+                            if (appliedPromo) appliedPromo = null;
+                            isPromoMode = false;
+                            renderCheckoutBlock();
+                            refreshAfterPromo();
+                }));
+                if (applyBtn) applyBtn.addEventListener("click", async () => {
+                        hapticLight();
+                        const code = promoInput?.value.trim().toUpperCase();
+                        if (!code) return;
+                        const tgU = window.Telegram?.WebApp?.initDataUnsafe?.user;
+                        try {
+                            const r = await fetch('https://placedgames.up.railway.app/api/check-promo', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ code, userId: String(tgU?.id || '') })
+                            });
+                            const data = await r.json();
+                            if (data.valid) {
+                                appliedPromo = { code, discountPercent: data.discount };
+                                isPromoMode = false;
+                                renderCheckoutBlock();
+                                refreshAfterPromo();
+                            } else {
+                                if (data.reason === 'not_found') {
+                                    showAppAlert('Промокод не найден');
+                                } else if (data.reason === 'already_used') {
+                                    showAppAlert('Данный промокод уже был использован ранее');
+                                } else if (data.reason === 'expired') {
+                                    showAppAlert('Срок действия промокода истёк');
+                                } else if (data.reason === 'limit_reached') {
+                                    showAppAlert('Промокод больше не доступен — лимит активаций исчерпан');
+                                } else if (data.reason === 'not_for_you') {
+                                    showAppAlert('Этот промокод предназначен для другого пользователя');
+                                } else if (data.reason === 'first_order_only') {
+                                    showAppAlert('Данный промокод доступен только на первый заказ');
+                                }
+                                if (promoInput) {
+                                    promoInput.value = appliedPromo ? appliedPromo.code : '';
+                                }
+                            }
+                        } catch (e) {
+                            showAppAlert('Ошибка проверки промокода');
                         }
-                        if (promoInput) {
-                            promoInput.value = appliedPromo ? appliedPromo.code : '';
-                        }
-                    }
-                } catch (e) {
-                    showAppAlert('Ошибка проверки промокода');
-                }
-            });
-            if (promoInput) promoInput.addEventListener("keypress", (e) => {
-                if (e.key === "Enter") applyBtn?.click();
-            });
-        }, 0);
+                });
+                if (promoInput) promoInput.addEventListener("keypress", (e) => {
+                        if (e.key === "Enter") applyBtn?.click();
+                });
+            }, 0);
     } else {
         fixedBlock.innerHTML =
-            `<div class="checkout-card checkout-card-outline"><div class="total-row"><span class="total-label">Общая стоимость:</span><span class="total-price-wrapper">${appliedPromo ? `<span class="total-old-price">${formatPrice(rawTotal)}</span>` : ''}<span class="total-price">${formatPrice(discountedTotal)}</span></span></div><div class="checkout-buttons-row"><button class="checkout-button" id="checkoutBtn">Перейти к оформлению</button><button class="promo-btn" id="openPromoBtn"><svg class="icon icon-promo-open icon--accent"><use href="#icon-promo"></use></svg></button></div></div>`;
+        `<div class="checkout-card checkout-card-outline"><div class="total-row"><span class="total-label">Общая стоимость:</span><span class="total-price-wrapper">${appliedPromo ? `<span class="total-old-price">${formatPrice(rawTotal)}</span>` : ''}<span class="total-price">${formatPrice(discountedTotal)}</span></span></div><div class="checkout-buttons-row"><button class="checkout-button" id="checkoutBtn">Перейти к оформлению</button><button class="promo-btn" id="openPromoBtn"><svg class="icon icon-promo-open icon--accent"><use href="#icon-promo"></use></svg></button></div></div>`;
         setTimeout(() => {
-                            document.getElementById("checkoutBtn")?.addEventListener("click", async (e) => {
-if (isSubmitting) return;
-const fromBuyPage = isBuyPageActive();
-if (fromBuyPage && !buySel.productId) return;
-isSubmitting = true;
-    const btn = e.currentTarget;
-if (btn) {
-            btn.style.pointerEvents = "none";
-    btn.style.display = "flex";
-    btn.style.alignItems = "center";
-    btn.style.justifyContent = "center";
-    btn.innerHTML = '<span class="btn-dots"><span></span><span></span><span></span></span>';
-       }
-hapticMedium();
-const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-if (!tgUser || !tgUser.id) {
-    showAppAlert(
-        'Оформить заказ можно только через Telegram-бота\n\nПожалуйста, откройте приложение через @PlacedGamesBot'
-    );
-    isSubmitting = false;
-    if (btn) {
-                    btn.style.pointerEvents = "";
-        btn.style.display = "";
-        btn.style.alignItems = "";
-        btn.style.justifyContent = "";
-        btn.textContent = 'Перейти к оформлению';
- }
-    return;
-}
-try {
-    await runWithLoader(async () => {
-        const r = await fetch('https://placedgames.up.railway.app/api/settings');
-        const s = await r.json();
-        const status = s.bot_status || 'open';
-        if (status === 'closed') {
-            showAppAlert('Оформить заказ временно не получится, попробуйте позже');
-            throw new Error('blocked');
-        }
-        if (status === 'maintenance') {
-            showAppAlert('Оформить заказ временно не получится, проводятся технические работы');
-            throw new Error('blocked');
-        }
-        if (status === 'auto') {
-            const mskHour = (new Date().getUTCHours() + 3) % 24;
-            if (mskHour >= 0 && mskHour < 10) {
-                showAppAlert(
-                    'Оформить заказ временно не получится, возвращайтесь в 10:00 по московскому времени'
-                );
-                throw new Error('blocked');
-            }
-        }
-    }, 350);
-    if (fromBuyPage) startBuyCheckout(buySel.productId);
-    showPage("checkout");
-    } catch (e) {
-} finally {
-    isSubmitting = false;
-    if (btn) {
-                    btn.style.pointerEvents = "";
-        btn.style.display = "";
-        btn.style.alignItems = "";
-        btn.style.justifyContent = "";
-        btn.textContent = 'Перейти к оформлению';
-    }
-}
-            });
-            document.getElementById("openPromoBtn")?.addEventListener("click", () => {
-                hapticLight();
-                isPromoMode = true;
-                renderCheckoutBlock();
-            });
-        }, 0);
+                document.getElementById("checkoutBtn")?.addEventListener("click", async (e) => {
+                        if (isSubmitting) return;
+                        const fromBuyPage = isBuyPageActive();
+                        if (fromBuyPage && !buySel.productId) return;
+                        isSubmitting = true;
+                        const btn = e.currentTarget;
+                        if (btn) {
+                            btn.style.pointerEvents = "none";
+                            btn.style.display = "flex";
+                            btn.style.alignItems = "center";
+                            btn.style.justifyContent = "center";
+                            btn.innerHTML = '<span class="btn-dots"><span></span><span></span><span></span></span>';
+                        }
+                        hapticMedium();
+                        const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+                        if (!tgUser || !tgUser.id) {
+                            showAppAlert(
+                                'Оформить заказ можно только через Telegram-бота\n\nПожалуйста, откройте приложение через @PlacedGamesBot'
+                            );
+                            isSubmitting = false;
+                            if (btn) {
+                                btn.style.pointerEvents = "";
+                                btn.style.display = "";
+                                btn.style.alignItems = "";
+                                btn.style.justifyContent = "";
+                                btn.textContent = 'Перейти к оформлению';
+                            }
+                            return;
+                        }
+                        try {
+                            await runWithLoader(async () => {
+                                    const r = await fetch('https://placedgames.up.railway.app/api/settings');
+                                    const s = await r.json();
+                                    const status = s.bot_status || 'open';
+                                    if (status === 'closed') {
+                                        showAppAlert('Оформить заказ временно не получится, попробуйте позже');
+                                        throw new Error('blocked');
+                                    }
+                                    if (status === 'maintenance') {
+                                        showAppAlert('Оформить заказ временно не получится, проводятся технические работы');
+                                        throw new Error('blocked');
+                                    }
+                                    if (status === 'auto') {
+                                        const mskHour = (new Date().getUTCHours() + 3) % 24;
+                                        if (mskHour >= 0 && mskHour < 10) {
+                                            showAppAlert(
+                                                'Оформить заказ временно не получится, возвращайтесь в 10:00 по московскому времени'
+                                            );
+                                            throw new Error('blocked');
+                                        }
+                                    }
+                                }, 350);
+                            if (fromBuyPage) startBuyCheckout(buySel.productId);
+                            showPage("checkout");
+                        } catch (e) {
+                        } finally {
+                            isSubmitting = false;
+                            if (btn) {
+                                btn.style.pointerEvents = "";
+                                btn.style.display = "";
+                                btn.style.alignItems = "";
+                                btn.style.justifyContent = "";
+                                btn.textContent = 'Перейти к оформлению';
+                            }
+                        }
+                });
+                document.getElementById("openPromoBtn")?.addEventListener("click", () => {
+                        hapticLight();
+                        isPromoMode = true;
+                        renderCheckoutBlock();
+                });
+            }, 0);
     }
 }
 
@@ -1629,19 +1635,19 @@ async function renderCheckoutForm() {
         container.innerHTML = '<div class="empty-state">Корзина пуста</div>';
         return;
     }
-            rawTotal = items.reduce((s, [id, qty]) => s + (games.flatMap(g => g.getProducts()).find(p => p.id == id)
-        .price * qty), 0);
+    rawTotal = items.reduce((s, [id, qty]) => s + (games.flatMap(g => g.getProducts()).find(p => p.id == id)
+            .price * qty), 0);
     discountedTotal = appliedPromo
-        ? items.reduce((s, [id, qty]) => s + Math.round(games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty * (1 - appliedPromo.discountPercent / 100)), 0)
-        : rawTotal;
+    ? items.reduce((s, [id, qty]) => s + Math.round(games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty * (1 - appliedPromo.discountPercent / 100)), 0)
+    : rawTotal;
 
-            const itemsListHtml = buildCartItemsListHtml();
+    const itemsListHtml = buildCartItemsListHtml();
 
     const cartGameId = (() => {
-        const ids = Object.keys(cart);
-        if (!ids.length) return null;
-        const g = games.find(g => g.getProducts().some(p => p.id == ids[0]));
-        return g?.id || null;
+            const ids = Object.keys(cart);
+            if (!ids.length) return null;
+            const g = games.find(g => g.getProducts().some(p => p.id == ids[0]));
+            return g?.id || null;
     })();
     const isTelegramOrder = cartGameId === 'telegram';
 
@@ -1675,209 +1681,209 @@ async function renderCheckoutForm() {
                 </div>
             </div>`;
 
-            const fixedBlock = document.getElementById("cartCheckoutFixed");
+    const fixedBlock = document.getElementById("cartCheckoutFixed");
     fixedBlock.style.display = "block";
     const initialPayBtnText = (checkoutData.paymentMethod === "wallet" && discountedTotal <= userWalletBalance) ?
-        "Оформить заказ" :
-        "Перейти к оплате";
+    "Оформить заказ" :
+    "Перейти к оплате";
     if (isPromoMode) {
         fixedBlock.innerHTML =
-            `<div class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="total-row"><span class="promo-label">Введите промокод на скидку</span></div><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;"><input type="text" class="promo-input" id="checkoutPromoInput" placeholder="Введите промокод" value="${appliedPromo ? appliedPromo.code : ''}" oninput="this.value=this.value.toUpperCase()" style="flex: 1; min-width: 0; box-sizing: border-box;"><button class="promo-action-btn back-btn" id="checkoutPromoBackBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-back icon--danger"><use href="#icon-cancel"></use></svg></button><button class="promo-action-btn apply-btn" id="checkoutPromoApplyBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-apply icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
+        `<div class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="total-row"><span class="promo-label">Введите промокод на скидку</span></div><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%; box-sizing: border-box;"><input type="text" class="promo-input" id="checkoutPromoInput" placeholder="Введите промокод" value="${appliedPromo ? appliedPromo.code : ''}" oninput="this.value=this.value.toUpperCase()" style="flex: 1; min-width: 0; box-sizing: border-box;"><button class="promo-action-btn back-btn" id="checkoutPromoBackBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-back icon--danger"><use href="#icon-cancel"></use></svg></button><button class="promo-action-btn apply-btn" id="checkoutPromoApplyBtn" style="flex-shrink: 0;"><svg class="icon icon-promo-apply icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
     } else {
         fixedBlock.innerHTML =
-            `<div class="checkout-card checkout-card-outline"><div class="total-row"><span class="total-label">Общая стоимость:</span><span class="total-price-wrapper">${appliedPromo ? `<span class="total-old-price">${formatPrice(rawTotal)}</span>` : ''}<span class="total-price">${formatPrice(discountedTotal)}</span></span></div><div class="checkout-buttons-row"><button class="checkout-button" id="payBtn">${initialPayBtnText}</button><button class="promo-btn" id="openCheckoutPromoBtn"><svg class="icon icon-promo-open icon--accent"><use href="#icon-promo"></use></svg></button></div></div>`;
+        `<div class="checkout-card checkout-card-outline"><div class="total-row"><span class="total-label">Общая стоимость:</span><span class="total-price-wrapper">${appliedPromo ? `<span class="total-old-price">${formatPrice(rawTotal)}</span>` : ''}<span class="total-price">${formatPrice(discountedTotal)}</span></span></div><div class="checkout-buttons-row"><button class="checkout-button" id="payBtn">${initialPayBtnText}</button><button class="promo-btn" id="openCheckoutPromoBtn"><svg class="icon icon-promo-open icon--accent"><use href="#icon-promo"></use></svg></button></div></div>`;
     }
     setTimeout(() => {
-        const promoInput = document.getElementById("checkoutPromoInput");
-        const promoBackBtn = document.getElementById("checkoutPromoBackBtn");
-        const promoApplyBtn = document.getElementById("checkoutPromoApplyBtn");
-        if (promoInput) promoInput.focus();
-        promoBackBtn?.addEventListener("click", withLock(() => {
-            hapticLight();
-            isPromoMode = false;
-            renderCheckoutForm();
-        }));
-        promoApplyBtn?.addEventListener("click", async () => {
-            hapticLight();
-            const code = promoInput?.value.trim().toUpperCase();
-            if (!code) return;
-            const tgU = window.Telegram?.WebApp?.initDataUnsafe?.user;
-            try {
-                const r = await fetch('https://placedgames.up.railway.app/api/check-promo', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code, userId: String(tgU?.id || '') })
-                });
-                const data = await r.json();
-                if (data.valid) {
-                    appliedPromo = { code, discountPercent: data.discount };
-                    isPromoMode = false;
-                    renderCheckoutForm();
-                } else {
-                    if (data.reason === 'not_found') showAppAlert('Промокод не найден');
-                    else if (data.reason === 'already_used') showAppAlert('Данный промокод уже был использован ранее');
-                    else if (data.reason === 'expired') showAppAlert('Срок действия промокода истёк');
-                    else if (data.reason === 'limit_reached') showAppAlert('Промокод больше не доступен — лимит активаций исчерпан');
-                    else if (data.reason === 'not_for_you') showAppAlert('Этот промокод предназначен для другого пользователя');
-                    else if (data.reason === 'first_order_only') showAppAlert('Данный промокод доступен только на первый заказ');
-                    if (promoInput) promoInput.value = appliedPromo ? appliedPromo.code : '';
-                }
-            } catch (e) {
-                showAppAlert('Ошибка проверки промокода');
-            }
-        });
-        promoInput?.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") promoApplyBtn?.click();
-        });
-
-        const paymentSelect = document.getElementById("paymentMethodSelect");
-
-        function updatePayBtnLabel() {
-            const payBtn = document.getElementById("payBtn");
-            if (!payBtn) return;
-            payBtn.textContent = (checkoutData.paymentMethod === "wallet" && discountedTotal <=
-                userWalletBalance) ? "Оформить заказ" : "Перейти к оплате";
-        }
-        paymentSelect?.addEventListener("change", function() {
-            checkoutData.paymentMethod = this.value;
-            this.classList.remove("error");
-            localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
-            updatePayBtnLabel();
-        });
-        document.getElementById("openCheckoutPromoBtn")?.addEventListener("click", () => {
-            hapticLight();
-            isPromoMode = true;
-            renderCheckoutForm();
-        });
-        document.getElementById("emailFieldInfoBtn")?.addEventListener("click", () => {
-            showFieldInfoAlert(isTelegramOrder ? "recipientTelegram" : "email");
-        });
-        document.getElementById("senderFieldInfoBtn")?.addEventListener("click", () => {
-            showFieldInfoAlert("sender");
-        });
-        document.getElementById("payBtn")?.addEventListener("click", async () => {
-            hapticMedium();
-            let hasError = false;
-            const senderInput = document.getElementById("senderNameInput");
-            const emailInput = document.getElementById("emailInput");
-            if (!checkoutData.paymentMethod) {
-                paymentSelect.classList.add("error");
-                hasError = true;
-            }
-            if (!senderInput.value.trim()) {
-                senderInput.classList.add("error");
-                hasError = true;
-            } else {
-                senderInput.classList.remove("error");
-                checkoutData.senderName = senderInput.value.trim();
-            }
-            if (!emailInput.value.trim()) {
-                emailInput.classList.add("error");
-                hasError = true;
-            } else {
-                emailInput.classList.remove("error");
-                if (isTelegramOrder) { checkoutData.telegramUsername = emailInput.value.trim(); }
-                else { checkoutData.email = emailInput.value.trim(); }
-            }
-            if (hasError) return;
-
-                            if (checkoutData.paymentMethod === "wallet") {
-                    if (await isOrderLimitReached()) { showOrderLimitAlert(); return; }
-                if (discountedTotal > userWalletBalance) {
-                    if (window.Telegram?.WebApp?.showPopup) {
-                        window.Telegram.WebApp.showPopup({
-                            message: 'На вашем кошельке недостаточно средств, пожалуйста выберите другой способ оплаты',
-                            buttons: [
-                                { id: 'topup', type: 'default', text: 'Пополнить' },
-                                 { id: 'close', type: 'close' }
-                            ]
-                        }, (buttonId) => {
-                            if (buttonId === 'topup') {
-                                hapticLight();
-                                showAppAlert('В данный момент пополнить кошелёк нельзя, попробуйте позже');
-                            }
+            const promoInput = document.getElementById("checkoutPromoInput");
+            const promoBackBtn = document.getElementById("checkoutPromoBackBtn");
+            const promoApplyBtn = document.getElementById("checkoutPromoApplyBtn");
+            if (promoInput) promoInput.focus();
+            promoBackBtn?.addEventListener("click", withLock(() => {
+                        hapticLight();
+                        isPromoMode = false;
+                        renderCheckoutForm();
+            }));
+            promoApplyBtn?.addEventListener("click", async () => {
+                    hapticLight();
+                    const code = promoInput?.value.trim().toUpperCase();
+                    if (!code) return;
+                    const tgU = window.Telegram?.WebApp?.initDataUnsafe?.user;
+                    try {
+                        const r = await fetch('https://placedgames.up.railway.app/api/check-promo', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ code, userId: String(tgU?.id || '') })
                         });
-                    } else {
-                        showAppAlert('На вашем кошельке недостаточно средств, пожалуйста выберите другой способ оплаты');
+                        const data = await r.json();
+                        if (data.valid) {
+                            appliedPromo = { code, discountPercent: data.discount };
+                            isPromoMode = false;
+                            renderCheckoutForm();
+                        } else {
+                            if (data.reason === 'not_found') showAppAlert('Промокод не найден');
+                            else if (data.reason === 'already_used') showAppAlert('Данный промокод уже был использован ранее');
+                            else if (data.reason === 'expired') showAppAlert('Срок действия промокода истёк');
+                            else if (data.reason === 'limit_reached') showAppAlert('Промокод больше не доступен — лимит активаций исчерпан');
+                            else if (data.reason === 'not_for_you') showAppAlert('Этот промокод предназначен для другого пользователя');
+                            else if (data.reason === 'first_order_only') showAppAlert('Данный промокод доступен только на первый заказ');
+                            if (promoInput) promoInput.value = appliedPromo ? appliedPromo.code : '';
+                        }
+                    } catch (e) {
+                        showAppAlert('Ошибка проверки промокода');
                     }
-                    return;
-                }
-                const confirmed = await new Promise(resolve => {
-                    window.Telegram.WebApp.showPopup({
-                        message: `С вашего кошелька будет списано ${formatPrice(discountedTotal)}, для оформления заказа нажмите кнопку ниже.`,
-                        buttons: [
-                            { id: 'ok', type: 'default', text: 'Оформить заказ' }
-                        ]
-                    }, (buttonId) => resolve(buttonId === 'ok'));
-                });
-                if (!confirmed) return;
-                if (isSubmitting) return;
-                isSubmitting = true;
-                const btn = document.getElementById("payBtn");
-                if (btn) { btn.disabled = true;
-                    btn.textContent = "Обработка..."; }
-                const order = buildOrderObject("Кошелёк");
-                const success = await sendOrderToServer(order);
-                if (success) {
-                    await finalizeOrderAfterSuccess();
-                } else {
-                    showAppAlert('Ошибка оформления заказа');
-                    if (btn) { btn.disabled = false;
-                        btn.textContent = "Оформить заказ"; }
-                }
-                isSubmitting = false;
-                return;
-            }
-
-                            const recipientLine = isTelegramOrder
-                ? `Получатель: ${checkoutData.telegramUsername}`
-                : `Почта: ${checkoutData.email}`;
-            const confirmMsg =
-                `Подтверждение данных:\n\n` +
-                `${recipientLine}\n` +
-                `Способ оплаты: ${getPaymentMethodLabel(checkoutData.paymentMethod)}\n` +
-                `Данные: ${checkoutData.senderName}\n` +
-                `Общая стоимость: ${formatPrice(discountedTotal)}`;
-            const goToPay = await new Promise(resolve => {
-                if (!window.Telegram?.WebApp?.showPopup) { resolve(true); return; }
-                window.Telegram.WebApp.showPopup({
-                    message: confirmMsg.slice(0, 256),
-                                            buttons: [
-                        { id: 'pay', type: 'default', text: 'К оплате' },
-                        { id: 'close', type: 'close' }
-                    ]
-                }, (buttonId) => {
-                    if (buttonId === 'pay') hapticMedium();
-                    resolve(buttonId === 'pay');
-                });
             });
-            if (!goToPay) return;
-                if (await isOrderLimitReached()) { showOrderLimitAlert(); return; }
-            pendingOrderNumber = generateOrderNumber();
-            savePaymentSession();
-            showPage("payment");
-        });
-        document.getElementById("senderNameInput")?.addEventListener("input", function() {
-            checkoutData.senderName = this.value;
-            this.classList.remove("error");
-            localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
-        });
-        document.getElementById("emailInput")?.addEventListener("input", function() {
-            if (isTelegramOrder) {
-                checkoutData.telegramUsername = this.value;
-            } else {
-                checkoutData.email = this.value;
+            promoInput?.addEventListener("keypress", (e) => {
+                    if (e.key === "Enter") promoApplyBtn?.click();
+            });
+
+            const paymentSelect = document.getElementById("paymentMethodSelect");
+
+            function updatePayBtnLabel() {
+                const payBtn = document.getElementById("payBtn");
+                if (!payBtn) return;
+                payBtn.textContent = (checkoutData.paymentMethod === "wallet" && discountedTotal <=
+                    userWalletBalance) ? "Оформить заказ" : "Перейти к оплате";
             }
-            this.classList.remove("error");
-            localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
-        });
-    }, 0);
+            paymentSelect?.addEventListener("change", function() {
+                    checkoutData.paymentMethod = this.value;
+                    this.classList.remove("error");
+                    localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+                    updatePayBtnLabel();
+            });
+            document.getElementById("openCheckoutPromoBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    isPromoMode = true;
+                    renderCheckoutForm();
+            });
+            document.getElementById("emailFieldInfoBtn")?.addEventListener("click", () => {
+                    showFieldInfoAlert(isTelegramOrder ? "recipientTelegram" : "email");
+            });
+            document.getElementById("senderFieldInfoBtn")?.addEventListener("click", () => {
+                    showFieldInfoAlert("sender");
+            });
+            document.getElementById("payBtn")?.addEventListener("click", async () => {
+                    hapticMedium();
+                    let hasError = false;
+                    const senderInput = document.getElementById("senderNameInput");
+                    const emailInput = document.getElementById("emailInput");
+                    if (!checkoutData.paymentMethod) {
+                        paymentSelect.classList.add("error");
+                        hasError = true;
+                    }
+                    if (!senderInput.value.trim()) {
+                        senderInput.classList.add("error");
+                        hasError = true;
+                    } else {
+                        senderInput.classList.remove("error");
+                        checkoutData.senderName = senderInput.value.trim();
+                    }
+                    if (!emailInput.value.trim()) {
+                        emailInput.classList.add("error");
+                        hasError = true;
+                    } else {
+                        emailInput.classList.remove("error");
+                        if (isTelegramOrder) { checkoutData.telegramUsername = emailInput.value.trim(); }
+                        else { checkoutData.email = emailInput.value.trim(); }
+                    }
+                    if (hasError) return;
+
+                    if (checkoutData.paymentMethod === "wallet") {
+                        if (await isOrderLimitReached()) { showOrderLimitAlert(); return; }
+                        if (discountedTotal > userWalletBalance) {
+                            if (window.Telegram?.WebApp?.showPopup) {
+                                window.Telegram.WebApp.showPopup({
+                                        message: 'На вашем кошельке недостаточно средств, пожалуйста выберите другой способ оплаты',
+                                        buttons: [
+                                            { id: 'topup', type: 'default', text: 'Пополнить' },
+                                            { id: 'close', type: 'close' }
+                                        ]
+                                    }, (buttonId) => {
+                                        if (buttonId === 'topup') {
+                                            hapticLight();
+                                            showAppAlert('В данный момент пополнить кошелёк нельзя, попробуйте позже');
+                                        }
+                                });
+                            } else {
+                                showAppAlert('На вашем кошельке недостаточно средств, пожалуйста выберите другой способ оплаты');
+                            }
+                            return;
+                        }
+                        const confirmed = await new Promise(resolve => {
+                                window.Telegram.WebApp.showPopup({
+                                        message: `С вашего кошелька будет списано ${formatPrice(discountedTotal)}, для оформления заказа нажмите кнопку ниже.`,
+                                        buttons: [
+                                            { id: 'ok', type: 'default', text: 'Оформить заказ' }
+                                        ]
+                                    }, (buttonId) => resolve(buttonId === 'ok'));
+                        });
+                        if (!confirmed) return;
+                        if (isSubmitting) return;
+                        isSubmitting = true;
+                        const btn = document.getElementById("payBtn");
+                        if (btn) { btn.disabled = true;
+                            btn.textContent = "Обработка..."; }
+                        const order = buildOrderObject("Кошелёк");
+                        const success = await sendOrderToServer(order);
+                        if (success) {
+                            await finalizeOrderAfterSuccess();
+                        } else {
+                            showAppAlert('Ошибка оформления заказа');
+                            if (btn) { btn.disabled = false;
+                                btn.textContent = "Оформить заказ"; }
+                        }
+                        isSubmitting = false;
+                        return;
+                    }
+
+                    const recipientLine = isTelegramOrder
+                    ? `Получатель: ${checkoutData.telegramUsername}`
+                    : `Почта: ${checkoutData.email}`;
+                    const confirmMsg =
+                    `Подтверждение данных:\n\n` +
+                    `${recipientLine}\n` +
+                    `Способ оплаты: ${getPaymentMethodLabel(checkoutData.paymentMethod)}\n` +
+                    `Данные: ${checkoutData.senderName}\n` +
+                    `Общая стоимость: ${formatPrice(discountedTotal)}`;
+                    const goToPay = await new Promise(resolve => {
+                            if (!window.Telegram?.WebApp?.showPopup) { resolve(true); return; }
+                            window.Telegram.WebApp.showPopup({
+                                    message: confirmMsg.slice(0, 256),
+                                    buttons: [
+                                        { id: 'pay', type: 'default', text: 'К оплате' },
+                                        { id: 'close', type: 'close' }
+                                    ]
+                                }, (buttonId) => {
+                                    if (buttonId === 'pay') hapticMedium();
+                                    resolve(buttonId === 'pay');
+                            });
+                    });
+                    if (!goToPay) return;
+                    if (await isOrderLimitReached()) { showOrderLimitAlert(); return; }
+                    pendingOrderNumber = generateOrderNumber();
+                    savePaymentSession();
+                    showPage("payment");
+            });
+            document.getElementById("senderNameInput")?.addEventListener("input", function() {
+                    checkoutData.senderName = this.value;
+                    this.classList.remove("error");
+                    localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+            });
+            document.getElementById("emailInput")?.addEventListener("input", function() {
+                    if (isTelegramOrder) {
+                        checkoutData.telegramUsername = this.value;
+                    } else {
+                        checkoutData.email = this.value;
+                    }
+                    this.classList.remove("error");
+                    localStorage.setItem('checkoutData', JSON.stringify(checkoutData));
+            });
+        }, 0);
 
     await walletBalancePromise;
     const paymentSelectEl = document.getElementById("paymentMethodSelect");
     if (paymentSelectEl) {
         Array.from(paymentSelectEl.options).forEach(opt => {
-            if (opt.value === "wallet") opt.textContent = `Кошелёк (${formatPrice(userWalletBalance)})`;
+                if (opt.value === "wallet") opt.textContent = `Кошелёк (${formatPrice(userWalletBalance)})`;
         });
     }
     const payBtnEl = document.getElementById("payBtn");
@@ -1897,13 +1903,13 @@ function renderPaymentPage() {
     let rawTotal = 0;
 
     const items = Object.entries(cart);
-            rawTotal = items.reduce((s, [id, qty]) => s + (games.flatMap(g => g.getProducts()).find(p => p.id == id)
-        .price * qty), 0);
+    rawTotal = items.reduce((s, [id, qty]) => s + (games.flatMap(g => g.getProducts()).find(p => p.id == id)
+            .price * qty), 0);
     discountedTotal = appliedPromo
-        ? items.reduce((s, [id, qty]) => s + Math.round(games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty * (1 - appliedPromo.discountPercent / 100)), 0)
-        : rawTotal;
+    ? items.reduce((s, [id, qty]) => s + Math.round(games.flatMap(g => g.getProducts()).find(p => p.id == id).price * qty * (1 - appliedPromo.discountPercent / 100)), 0)
+    : rawTotal;
 
-            const itemsListHtml = buildCartItemsListHtml();
+    const itemsListHtml = buildCartItemsListHtml();
 
     container.innerHTML = `
             <div style="position:relative;margin-bottom:14px;">
@@ -1938,66 +1944,66 @@ function renderPaymentPage() {
     const fixedBlock = document.getElementById("cartCheckoutFixed");
     fixedBlock.style.display = "block";
     fixedBlock.innerHTML =
-        `<div class="checkout-card checkout-card-outline"><div class="total-row"><span class="total-label">Общая стоимость:</span><span class="total-price-wrapper">${appliedPromo ? `<span class="total-old-price">${formatPrice(rawTotal)}</span>` : ''}<span class="total-price">${formatPrice(discountedTotal)}</span></span></div><div class="checkout-buttons-row"><button class="checkout-button" id="paidBtn">Оформить заказ</button><button class="promo-btn" id="helpBtn2"><svg class="icon icon-payment-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
+    `<div class="checkout-card checkout-card-outline"><div class="total-row"><span class="total-label">Общая стоимость:</span><span class="total-price-wrapper">${appliedPromo ? `<span class="total-old-price">${formatPrice(rawTotal)}</span>` : ''}<span class="total-price">${formatPrice(discountedTotal)}</span></span></div><div class="checkout-buttons-row"><button class="checkout-button" id="paidBtn">Оформить заказ</button><button class="promo-btn" id="helpBtn2"><svg class="icon icon-payment-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
     setTimeout(() => {
-        const copyBtn = document.getElementById("copyCardBtn");
-        copyBtn?.addEventListener("click", async () => {
-            if (navigator.clipboard) {
-                copyBtn.style.transform = "scale(0.85)";
-                await navigator.clipboard.writeText(cardNum.replace(/\s/g, ""));
-                setTimeout(() => {
-                    copyBtn.style.transform = "scale(1)";
-                }, 150);
-                hapticLight();
-            }
-        });
-                    document.getElementById("helpBtn2")?.addEventListener("click", () => {
-            hapticLight();
-            window.open("https://t.me/PlacedSupport", "_blank");
-        });
-        document.getElementById("paymentAmountInfoBtn")?.addEventListener("click", () => {
-showFieldInfoAlert("paymentAmount");
-});
-        document.getElementById("bankInfoBtn")?.addEventListener("click", () => {
-            showFieldInfoAlert("bank");
-        });
-                    document.getElementById("paidBtn")?.addEventListener("click", async () => {
-            hapticMedium();
-            const confirmed = await new Promise(resolve => {
-                window.Telegram.WebApp.showPopup({
-                    message: 'Подтверждение оформления:\n\nЕсли вы отправили перевод, нажмите кнопку «Оформить».',
-                    buttons: [
-                        { id: 'ok', type: 'default', text: 'Оформить' },
-                         { id: 'close', type: 'close' }
-                    ]
-                }, (buttonId) => {
-                    resolve(buttonId === 'ok');
-                });
+            const copyBtn = document.getElementById("copyCardBtn");
+            copyBtn?.addEventListener("click", async () => {
+                    if (navigator.clipboard) {
+                        copyBtn.style.transform = "scale(0.85)";
+                        await navigator.clipboard.writeText(cardNum.replace(/\s/g, ""));
+                        setTimeout(() => {
+                                copyBtn.style.transform = "scale(1)";
+                            }, 150);
+                        hapticLight();
+                    }
             });
-            if (!confirmed) return;
-            if (isSubmitting) return;
-            isSubmitting = true;
-            const btn = document.getElementById("paidBtn");
-            if (btn) { btn.disabled = true;
-                btn.textContent = "Обработка..."; }
-            hapticMedium();
-            let tgUser = null;
-            if (window.Telegram?.WebApp?.initDataUnsafe?.user) tgUser = window.Telegram.WebApp.initDataUnsafe
-                .user;
+            document.getElementById("helpBtn2")?.addEventListener("click", () => {
+                    hapticLight();
+                    window.open("https://t.me/PlacedSupport", "_blank");
+            });
+            document.getElementById("paymentAmountInfoBtn")?.addEventListener("click", () => {
+                    showFieldInfoAlert("paymentAmount");
+            });
+            document.getElementById("bankInfoBtn")?.addEventListener("click", () => {
+                    showFieldInfoAlert("bank");
+            });
+            document.getElementById("paidBtn")?.addEventListener("click", async () => {
+                    hapticMedium();
+                    const confirmed = await new Promise(resolve => {
+                            window.Telegram.WebApp.showPopup({
+                                    message: 'Подтверждение оформления:\n\nЕсли вы отправили перевод, нажмите кнопку «Оформить».',
+                                    buttons: [
+                                        { id: 'ok', type: 'default', text: 'Оформить' },
+                                        { id: 'close', type: 'close' }
+                                    ]
+                                }, (buttonId) => {
+                                    resolve(buttonId === 'ok');
+                            });
+                    });
+                    if (!confirmed) return;
+                    if (isSubmitting) return;
+                    isSubmitting = true;
+                    const btn = document.getElementById("paidBtn");
+                    if (btn) { btn.disabled = true;
+                        btn.textContent = "Обработка..."; }
+                    hapticMedium();
+                    let tgUser = null;
+                    if (window.Telegram?.WebApp?.initDataUnsafe?.user) tgUser = window.Telegram.WebApp.initDataUnsafe
+                    .user;
 
-            const order = buildOrderObject(getPaymentMethodLabel(checkoutData.paymentMethod));
+                    const order = buildOrderObject(getPaymentMethodLabel(checkoutData.paymentMethod));
 
-            const success = await sendOrderToServer(order);
-                            if (success) {
-                await finalizeOrderAfterSuccess();
-            } else {
-                showAppAlert('Ошибка оформления заказа, проверьте данные и промокод');
-            }
-            if (btn) { btn.disabled = false;
-                btn.textContent = "Оформить заказ"; }
-            isSubmitting = false;
-        });
-    }, 0);
+                    const success = await sendOrderToServer(order);
+                    if (success) {
+                        await finalizeOrderAfterSuccess();
+                    } else {
+                        showAppAlert('Ошибка оформления заказа, проверьте данные и промокод');
+                    }
+                    if (btn) { btn.disabled = false;
+                        btn.textContent = "Оформить заказ"; }
+                    isSubmitting = false;
+            });
+        }, 0);
 }
 
 async function loadUserOrders() {
@@ -2010,7 +2016,7 @@ async function loadUserOrders() {
     } catch (e) { }
 }
 
-    async function showProfileInfoAlert() {
+async function showProfileInfoAlert() {
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     if (!tgUser?.id) { showAppAlert('Информация недоступна'); return; }
 
@@ -2021,12 +2027,12 @@ async function loadUserOrders() {
 
     try {
         const [infoRes, ordersRes, balanceRes, referralRes] = await Promise.all([
-            fetch(`https://placedgames.up.railway.app/api/user-info?userId=${tgUser.id}`).then(r => r.ok ?
-                r.json() : null),
-            fetch(`https://placedgames.up.railway.app/api/user-orders?userId=${tgUser.id}`).then(r => r
-                .json()),
-            fetch(`https://placedgames.up.railway.app/api/user-balance?userId=${tgUser.id}`).then(r => r.json()).catch(() => ({ balance: 0 })),
-            fetch(`https://placedgames.up.railway.app/api/referral-stats?userId=${tgUser.id}`).then(r => r.json()).catch(() => ({ invited: 0 }))
+                fetch(`https://placedgames.up.railway.app/api/user-info?userId=${tgUser.id}`).then(r => r.ok ?
+                    r.json() : null),
+                fetch(`https://placedgames.up.railway.app/api/user-orders?userId=${tgUser.id}`).then(r => r
+                    .json()),
+                fetch(`https://placedgames.up.railway.app/api/user-balance?userId=${tgUser.id}`).then(r => r.json()).catch(() => ({ balance: 0 })),
+                fetch(`https://placedgames.up.railway.app/api/referral-stats?userId=${tgUser.id}`).then(r => r.json()).catch(() => ({ invited: 0 }))
         ]);
 
         if (infoRes?.first_seen) {
@@ -2035,34 +2041,34 @@ async function loadUserOrders() {
 
         ordersCount = ordersRes.length;
         totalSpent = ordersRes
-            .filter(o => o.status_code === 'completed' || o.status_code === 'done')
-            .reduce((sum, o) => sum + (o.total || 0), 0);
+        .filter(o => o.status_code === 'completed' || o.status_code === 'done')
+        .reduce((sum, o) => sum + (o.total || 0), 0);
         userWalletBalance = balanceRes?.balance || 0;
         referralsCount = referralRes?.invited || 0;
     } catch (e) {}
 
     const message =
-        `Информация о пользователе:\n\n` +
-        `Имя: ${tgUser.first_name || 'Пользователь'}\n` +
-        `ID: ${tgUser.id}\n` +
-        `Регистрация: ${firstSeen}\n` +
-        `Баланс кошелька: ${formatPrice(userWalletBalance)}\n` +
-        `Процент кэшбэка: 2%\n` +
-        `Рефералов: ${referralsCount}\n` +
-        `Всего заказов: ${ordersCount}\n` +
-        `Объем покупок: ${formatPrice(totalSpent)}`;
+    `Информация о пользователе:\n\n` +
+    `Имя: ${tgUser.first_name || 'Пользователь'}\n` +
+    `ID: ${tgUser.id}\n` +
+    `Регистрация: ${firstSeen}\n` +
+    `Баланс кошелька: ${formatPrice(userWalletBalance)}\n` +
+    `Процент кэшбэка: 2%\n` +
+    `Рефералов: ${referralsCount}\n` +
+    `Всего заказов: ${ordersCount}\n` +
+    `Объем покупок: ${formatPrice(totalSpent)}`;
 
-            if (window.Telegram?.WebApp?.showPopup) {
-                    window.Telegram.WebApp.showPopup({
-            message: message,
-            buttons: [
-                { id: 'open_settings', type: 'default', text: 'Открыть настройки' }
-            ]
-        }, (buttonId) => {
-            if (buttonId === 'open_settings') {
-                hapticLight();
-                showPage('settings');
-            }
+    if (window.Telegram?.WebApp?.showPopup) {
+        window.Telegram.WebApp.showPopup({
+                message: message,
+                buttons: [
+                    { id: 'open_settings', type: 'default', text: 'Открыть настройки' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'open_settings') {
+                    hapticLight();
+                    showPage('settings');
+                }
         });
     } else {
         showAppAlert(message);
@@ -2081,83 +2087,83 @@ async function fetchUserWalletBalance() {
 }
 
 function getStatusTextClass(statusCode) {
-const map = {
-    'pending': 'status-pending-text',
-    'awaiting_code': 'status-awaiting_text',
-    'cancelled': 'status-cancelled-text',
-    'notfound': 'status-cancelled-text',
-    'processing': 'status-processing-text',
-    'in_progress': 'status-inprogress-text',
-    'completed': 'status-completed-text',
-    'done': 'status-completed-text',
-};
-return map[statusCode?.toLowerCase()] || '';
+    const map = {
+        'pending': 'status-pending-text',
+        'awaiting_code': 'status-awaiting_text',
+        'cancelled': 'status-cancelled-text',
+        'notfound': 'status-cancelled-text',
+        'processing': 'status-processing-text',
+        'in_progress': 'status-inprogress-text',
+        'completed': 'status-completed-text',
+        'done': 'status-completed-text',
+    };
+    return map[statusCode?.toLowerCase()] || '';
 }
 
 function getStatusBgClass(statusCode) {
-const map = {
-    'pending': 'status-pending-bg',
-    'awaiting_code': 'status-awaiting-bg',
-    'cancelled': 'status-cancelled-bg',
-    'notfound': 'status-cancelled-bg',
-    'processing': 'status-processing-bg',
-    'in_progress': 'status-inprogress-bg',
-    'completed': 'status-completed-bg',
-    'done': 'status-completed-bg',
-};
-return map[statusCode?.toLowerCase()] || '';
+    const map = {
+        'pending': 'status-pending-bg',
+        'awaiting_code': 'status-awaiting-bg',
+        'cancelled': 'status-cancelled-bg',
+        'notfound': 'status-cancelled-bg',
+        'processing': 'status-processing-bg',
+        'in_progress': 'status-inprogress-bg',
+        'completed': 'status-completed-bg',
+        'done': 'status-completed-bg',
+    };
+    return map[statusCode?.toLowerCase()] || '';
 }
 
 function getStatusDisplayText(statusCode, originalStatus) {
-const map = {
-    'pending': 'Ожидает проверки',
-    'awaiting_code': 'Ожидание кода',
-    'cancelled': 'Отменен',
-    'notfound': 'Заказ отменён',
-    'processing': 'Ожидает выполнения',
-    'in_progress': 'Выполняется',  
-    'completed': 'Заказ выполнен',
-    'done': 'Заказ выполнен',
-};
-return map[statusCode?.toLowerCase()] || originalStatus || 'Ожидает проверки';
+    const map = {
+        'pending': 'Ожидает проверки',
+        'awaiting_code': 'Ожидание кода',
+        'cancelled': 'Отменен',
+        'notfound': 'Заказ отменён',
+        'processing': 'Ожидает выполнения',
+        'in_progress': 'Выполняется',
+        'completed': 'Заказ выполнен',
+        'done': 'Заказ выполнен',
+    };
+    return map[statusCode?.toLowerCase()] || originalStatus || 'Ожидает проверки';
 }
 
 function getOrderServiceName(order) {
-if (order.game_name) return order.game_name;
-if (order.order_game_name) return order.order_game_name;
-let items = [];
-try { items = JSON.parse(order.items || order.order_items || '[]'); } catch (e) {}
-if (!items.length) return '—';
-const game = games.find(g => g.getProducts().some(p => p.name === items[0].name));
-return game?.name || '—';
+    if (order.game_name) return order.game_name;
+    if (order.order_game_name) return order.order_game_name;
+    let items = [];
+    try { items = JSON.parse(order.items || order.order_items || '[]'); } catch (e) {}
+    if (!items.length) return '—';
+    const game = games.find(g => g.getProducts().some(p => p.name === items[0].name));
+    return game?.name || '—';
 }
 
 function showOrderStatusInfo(order) {
-if (!order) return;
-const statusDisplay = getStatusDisplayText(order.status_code, order.status);
-const serviceName = getOrderServiceName(order);
-const message =
+    if (!order) return;
+    const statusDisplay = getStatusDisplayText(order.status_code, order.status);
+    const serviceName = getOrderServiceName(order);
+    const message =
     `Информация о заказе:\n\n` +
-    `Номер заказа: #${order.order_number}\n` +
+    `Номер заказа: #${displayOrderNumber(order.order_number)}\n` +
     `Сервис: ${serviceName}\n` +
     `Дата: ${order.date} ${order.time || ''}\n` +
     `Статус: ${statusDisplay}\n` +
     `Сумма заказа: ${formatPrice(order.total)}`;
 
-            if (window.Telegram?.WebApp?.showPopup) {
+    if (window.Telegram?.WebApp?.showPopup) {
         window.Telegram.WebApp.showPopup({
-            message: message,
-            buttons: [
-                { id: 'goto_order', type: 'default', text: 'К заказу' },
-                { id: 'close', type: 'close' }
-            ]
-        }, (buttonId) => {
-                            if (buttonId === 'goto_order') {
-                hapticLight();
-                savedOrdersScrollY = window.scrollY;
-                navigationHistory.push('orders');
-                showOrderDetail(order, true);
-            }
+                message: message,
+                buttons: [
+                    { id: 'goto_order', type: 'default', text: 'К заказу' },
+                    { id: 'close', type: 'close' }
+                ]
+            }, (buttonId) => {
+                if (buttonId === 'goto_order') {
+                    hapticLight();
+                    savedOrdersScrollY = window.scrollY;
+                    navigationHistory.push('orders');
+                    showOrderDetail(order, true);
+                }
         });
     } else {
         showAppAlert(message);
@@ -2165,51 +2171,51 @@ const message =
 }
 
 const ORDER_STATUS_FILTERS = [
-{ label: 'Выполненные', codes: ['completed', 'done'] },
-{ label: 'Не выполненные', codes: ['pending', 'awaiting_code', 'processing', 'in_progress', 'cancelled', 'notfound'] },
+    { label: 'Выполненные', codes: ['completed', 'done'] },
+    { label: 'Не выполненные', codes: ['pending', 'awaiting_code', 'processing', 'in_progress', 'cancelled', 'notfound'] },
 ];
 
-    function renderOrdersPage() {
+function renderOrdersPage() {
     const container = document.getElementById("ordersList");
     if (!container) return Promise.resolve();
     return loadUserOrders().then(() => {
-        if (!orders.length) {
-            container.innerHTML =
+            if (!orders.length) {
+                container.innerHTML =
                 `<div class="empty-state-icon"><svg class="icon icon-empty-orders icon--muted"><use href="#icon-orders"></use></svg><div class="empty-title">Заказов ещё нет</div><button class="empty-catalog-btn" id="emptyOrdersToCatalog">Перейти в каталог</button></div>`;
-            setTimeout(() => {
-                document.getElementById("emptyOrdersToCatalog")?.addEventListener("click", () =>
-                    showPage("catalog"));
-            }, 0);
-            return;
-        }
+                setTimeout(() => {
+                        document.getElementById("emptyOrdersToCatalog")?.addEventListener("click", () =>
+                            showPage("catalog"));
+                    }, 0);
+                return;
+            }
 
-        const statusSelect = document.getElementById('orderStatusSelect');
-        if (statusSelect) {
-            const counts = {};
-            ORDER_STATUS_FILTERS.forEach(f => {
-                counts[f.label] = orders.filter(o => f.codes.includes(String(o.status_code).trim()
-                    .toLowerCase())).length;
-            });
-            const optionLabels = ['Все заказы', ...ORDER_STATUS_FILTERS.map(f => f.label)];
-            statusSelect.innerHTML = optionLabels.map(label => {
-                const count = label === 'Все заказы' ? orders.length : counts[label];
-                return `<option value="${escapeHtml(label)}" ${orderStatusFilter === label ? 'selected' : ''}>${escapeHtml(label)}${label === 'Все заказы' ? ` (${count})` : ''}</option>`;
-             }).join('');
-            statusSelect.onchange = () => {
-                hapticLight();
-                orderStatusFilter = statusSelect.value;
-                applyOrdersFilters();
-            };
-        }
+            const statusSelect = document.getElementById('orderStatusSelect');
+            if (statusSelect) {
+                const counts = {};
+                ORDER_STATUS_FILTERS.forEach(f => {
+                        counts[f.label] = orders.filter(o => f.codes.includes(String(o.status_code).trim()
+                                .toLowerCase())).length;
+                });
+                const optionLabels = ['Все заказы', ...ORDER_STATUS_FILTERS.map(f => f.label)];
+                statusSelect.innerHTML = optionLabels.map(label => {
+                        const count = label === 'Все заказы' ? orders.length : counts[label];
+                        return `<option value="${escapeHtml(label)}" ${orderStatusFilter === label ? 'selected' : ''}>${escapeHtml(label)}${label === 'Все заказы' ? ` (${count})` : ''}</option>`;
+                }).join('');
+                statusSelect.onchange = () => {
+                    hapticLight();
+                    orderStatusFilter = statusSelect.value;
+                    applyOrdersFilters();
+                };
+            }
 
-                    const searchInput = document.getElementById('orderSearchInput');
-        if (searchInput) {
-            searchInput.oninput = () => applyOrdersFilters();
-        }
+            const searchInput = document.getElementById('orderSearchInput');
+            if (searchInput) {
+                searchInput.oninput = () => applyOrdersFilters();
+            }
 
-        setupSearchClear('orderSearchInput', 'orderSearchClearBtn');
+            setupSearchClear('orderSearchInput', 'orderSearchClearBtn');
 
-        applyOrdersFilters();
+            applyOrdersFilters();
     });
 }
 
@@ -2218,7 +2224,7 @@ function applyOrdersFilters() {
     if (!container) return;
 
     const searchVal = document.getElementById('orderSearchInput')?.value.trim().toLowerCase()
-        .replace(/^#/, '') || '';
+    .replace(/^#/, '') || '';
 
     let filtered = orders;
 
@@ -2226,7 +2232,7 @@ function applyOrdersFilters() {
         const statusFilter = ORDER_STATUS_FILTERS.find(f => f.label === orderStatusFilter);
         if (statusFilter) {
             filtered = filtered.filter(o => statusFilter.codes.includes(String(o.status_code).trim()
-                .toLowerCase()));
+                    .toLowerCase()));
         }
     }
 
@@ -2237,7 +2243,7 @@ function applyOrdersFilters() {
     renderOrdersList(filtered);
 }
 
-    function computeOrderRawTotal(items) {
+function computeOrderRawTotal(items) {
     return items.reduce((s, i) => s + (i.originalPrice != null ? i.originalPrice : i.price) * i.qty, 0);
 }
 
@@ -2251,22 +2257,22 @@ function renderOrdersList(list) {
     }
 
     container.innerHTML = list.map((o) => {
-        let items = [];
-        try { items = JSON.parse(o.items || '[]'); } catch (e) {}
-        const statusDisplay = getStatusDisplayText(o.status_code, o.status);
-        const status = String(o.status_code).trim().toLowerCase();
-        const textClass = getStatusTextClass(status);
-                    const bgClass = getStatusBgClass(status);
+            let items = [];
+            try { items = JSON.parse(o.items || '[]'); } catch (e) {}
+            const statusDisplay = getStatusDisplayText(o.status_code, o.status);
+            const status = String(o.status_code).trim().toLowerCase();
+            const textClass = getStatusTextClass(status);
+            const bgClass = getStatusBgClass(status);
 
-        const itemsHtml = buildCollapsedItemsHtml(items, 'order-item-row', 'order-item-name', 'order-item-price');
+            const itemsHtml = buildCollapsedItemsHtml(items, 'order-item-row', 'order-item-name', 'order-item-price');
 
-        const rawTotal = computeOrderRawTotal(items);
-        const showOldTotal = o.promo_discount && rawTotal !== o.total;
+            const rawTotal = computeOrderRawTotal(items);
+            const showOldTotal = o.promo_discount && rawTotal !== o.total;
 
-        return `<div class="order-wrapper" data-order-id="${o.id}">
+            return `<div class="order-wrapper" data-order-id="${o.id}">
                     <div class="order-main-card">
                         <div class="order-header">
-                            <span class="order-id">Заказ #${o.order_number}</span>
+                            <span class="order-id">Заказ #${displayOrderNumber(o.order_number)}</span>
                             <div class="order-header-right">
                                 <span class="order-card-status ${textClass} ${bgClass}">${statusDisplay}</span>
                             </div>
@@ -2284,54 +2290,54 @@ function renderOrdersList(list) {
                 </div>`;
     }).join('');
 
-            container.querySelectorAll(".order-wrapper").forEach(wrapper => {
-        const order = orders.find(o => o.id == wrapper.dataset.orderId);
-        wrapper.querySelector(".order-main-card")?.addEventListener("click", (e) => {
-            if (e.target.closest('.order-refresh-btn')) return;
-            if (order) {
-                hapticLight();
-                savedOrdersScrollY = window.scrollY;
-                navigationHistory.push('orders');
-                showOrderDetail(order, true);
-            }
-        });
+    container.querySelectorAll(".order-wrapper").forEach(wrapper => {
+            const order = orders.find(o => o.id == wrapper.dataset.orderId);
+            wrapper.querySelector(".order-main-card")?.addEventListener("click", (e) => {
+                    if (e.target.closest('.order-refresh-btn')) return;
+                    if (order) {
+                        hapticLight();
+                        savedOrdersScrollY = window.scrollY;
+                        navigationHistory.push('orders');
+                        showOrderDetail(order, true);
+                    }
+            });
     });
 
     container.querySelectorAll(".order-status-info-icon").forEach(icon => {
-        icon.addEventListener("click", (e) => {
-            e.stopPropagation();
-            hapticLight();
-            const orderId = icon.dataset.statusInfo;
-            const order = orders.find(o => o.id == orderId);
-            showOrderStatusInfo(order);
-        });
+            icon.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    hapticLight();
+                    const orderId = icon.dataset.statusInfo;
+                    const order = orders.find(o => o.id == orderId);
+                    showOrderStatusInfo(order);
+            });
     });
 }
 
-    function buildOrderReviewBlockHtml(order, review) {
+function buildOrderReviewBlockHtml(order, review) {
     const avatar = review.photo_url ?
-        `<img style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" src="${escapeHtml(review.photo_url)}" alt="avatar">` :
-        `<div class="review-avatar">👤</div>`;
+    `<img style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" src="${escapeHtml(review.photo_url)}" alt="avatar">` :
+    `<div class="review-avatar">👤</div>`;
     const dt = review.created_at ? new Date(review.created_at) : null;
     const dateStr = dt ?
-        `${dt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} ${dt.toLocaleDateString('ru-RU',{year:'2-digit',month:'2-digit',day:'2-digit'})}` :
-        '';
+    `${dt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} ${dt.toLocaleDateString('ru-RU',{year:'2-digit',month:'2-digit',day:'2-digit'})}` :
+    '';
 
     const reviewRating = review.rating || (review.satisfied ? 'good' : 'bad');
     const rc = getSatisfactionColors(reviewRating);
     const orderBadge = review.order_number ?
-        `<div class="review-badge-stack">
+    `<div class="review-badge-stack">
             <span class="review-order-badge-wrap">
                 <span class="review-order-badge-backdrop"></span>
-                <span class="review-order-badge" data-order-num="${review.order_number}">#${review.order_number}</span>
+                <span class="review-order-badge" data-order-id="${review.order_id ?? ''}" data-order-num="${displayOrderNumber(review.order_number)}">#${displayOrderNumber(review.order_number)}</span>
             </span>
             <span class="review-rating-badge" style="background:${rc.bg};color:${rc.color};border-color:${rc.border};">
         <svg width="21" height="21" viewBox="0 0 512 512"><use href="#${rc.icon}"></use></svg>
     </span>
         </div>` :
-        '';
+    '';
 
-            let orderItems = [];
+    let orderItems = [];
     try { orderItems = JSON.parse(order.items || '[]'); } catch (e) {}
     const itemsHtml = buildCollapsedItemsHtml(orderItems, 'review-item-row', 'review-item-name', 'review-item-price');
 
@@ -2369,12 +2375,12 @@ function showOrderDetail(order, isOwner = true) {
     const email = isOwner ? (order.email || '—') : '***';
     const verCode = isOwner ? order.verification_code : null;
 
-            const itemsHtml = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty)).map(i => {
-        return `<div class="order-item-row">
+    const itemsHtml = items.slice().sort((a, b) => (a.price * a.qty) - (b.price * b.qty)).map(i => {
+            return `<div class="order-item-row">
                     <span class="order-item-name">${escapeHtml(i.name)}${i.qty > 1 ? `, ${i.qty} шт.` : ''}</span>
                     <span class="order-item-price" style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
-                        ${i.originalPrice && i.originalPrice !== i.price 
-                            ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(i.originalPrice * i.qty)}</span>` 
+                        ${i.originalPrice && i.originalPrice !== i.price
+                            ? `<span style="color:var(--text-price-old);text-decoration:line-through;font-size:14px;">${formatPrice(i.originalPrice * i.qty)}</span>`
                             : ''}
                         ${formatPrice(i.price * i.qty)}
                     </span>
@@ -2382,40 +2388,40 @@ function showOrderDetail(order, isOwner = true) {
     }).join('');
 
     const orderGameFallback = order.game_name || (() => {
-        let items = [];
-        try { items = JSON.parse(order.items || '[]'); } catch (e) {}
-        if (!items.length) return '';
-        return games.find(g => g.getProducts().some(p => p.name === items[0].name))?.name || '';
+            let items = [];
+            try { items = JSON.parse(order.items || '[]'); } catch (e) {}
+            if (!items.length) return '';
+            return games.find(g => g.getProducts().some(p => p.name === items[0].name))?.name || '';
     })();
     const isTelegramOrder = orderGameFallback.trim().toLowerCase() === 'telegram';
     const isAwaitingCode = order.status_code === 'awaiting_code';
     const statusDisplay = getStatusDisplayText(order.status_code, order.status);
     const statusColor = (() => {
-switch (order.status_code) {
-    case 'pending':
-        return '#4cb4e9';
-    case 'awaiting_code':
-        return '#eab308';
-    case 'cancelled':
-        return '#ef4444';
-    case 'notfound':
-        return '#ef4444';
-    case 'processing':
-        return '#4cb4e9';
-    case 'in_progress':
-        return '#eab308';
-    case 'completed':
-        return '#22c55e';
-    case 'done':
-        return '#22c55e';
-    default:
-        return '#4cb4e9';
-}
-})();
+            switch (order.status_code) {
+            case 'pending':
+                return '#4cb4e9';
+            case 'awaiting_code':
+                return '#eab308';
+            case 'cancelled':
+                return '#ef4444';
+            case 'notfound':
+                return '#ef4444';
+            case 'processing':
+                return '#4cb4e9';
+            case 'in_progress':
+                return '#eab308';
+            case 'completed':
+                return '#22c55e';
+            case 'done':
+                return '#22c55e';
+            default:
+                return '#4cb4e9';
+            }
+    })();
 
-            const reviewForOrder = reviewsListCache
-        ? reviewsListCache.find(rv => String(rv.order_id) === String(order.id))
-        : null;
+    const reviewForOrder = reviewsListCache
+    ? reviewsListCache.find(rv => String(rv.order_id) === String(order.id))
+    : null;
     const orderReviewHtml = reviewForOrder ? buildOrderReviewBlockHtml(order, reviewForOrder) : '';
 
     container.innerHTML = `
@@ -2473,20 +2479,20 @@ switch (order.status_code) {
             </div>
             <div id="orderReviewBlock">${orderReviewHtml}</div>
         `;
-            showPage("order-detail", true);
+    showPage("order-detail", true);
 
     if (!reviewsListCache) {
         getReviewsData()
-            .then(allReviews => {
+        .then(allReviews => {
                 const review = allReviews.find(rv => String(rv.order_id) === String(order.id));
                 const reviewBlock = document.getElementById('orderReviewBlock');
                 if (!reviewBlock) return;
                 reviewBlock.innerHTML = review ? buildOrderReviewBlockHtml(order, review) : '';
-            })
-            .catch(() => {});
+        })
+        .catch(() => {});
     }
     const titleSpan = document.querySelector('#order-detail-page .page-header-title-btn span');
-    if (titleSpan) titleSpan.textContent = `Заказ #${order.order_number}`;
+    if (titleSpan) titleSpan.textContent = `Заказ #${displayOrderNumber(order.order_number)}`;
 
     const fixedBlock = document.getElementById("cartCheckoutFixed");
     if (fixedBlock) {
@@ -2498,11 +2504,11 @@ switch (order.status_code) {
         } else if (isAwaitingCode) {
             fixedBlock.style.display = "block";
             fixedBlock.innerHTML =
-                `<div id="codeActionBlock" class="checkout-card"><div class="checkout-buttons-row"><button class="checkout-button" id="showCodeInputBtn">Указать код</button><button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn"><svg class="icon icon-order-code-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
-                    } else if (!isCompleted) {
+            `<div id="codeActionBlock" class="checkout-card"><div class="checkout-buttons-row"><button class="checkout-button" id="showCodeInputBtn">Указать код</button><button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn"><svg class="icon icon-order-code-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
+        } else if (!isCompleted) {
             fixedBlock.style.display = "none";
-                    } else {
-                            const isReviewed = (list) => list.some(rv =>
+        } else {
+            const isReviewed = (list) => list.some(rv =>
                 String(rv.user_id) === String(tgUserForReview?.id) &&
                 String(rv.order_id) === String(order.id)
             );
@@ -2511,113 +2517,113 @@ switch (order.status_code) {
                 if (!document.getElementById('order-detail-page')?.classList.contains('active-page')) return;
                 fixedBlock.style.display = "block";
                 fixedBlock.innerHTML =
-                    `<div class="checkout-card"><div class="checkout-buttons-row"><button onclick="hapticMedium();writeReviewEntryPage='order';showPage('write-review')" class="checkout-button">Оставить отзыв</button><button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn"><svg class="icon icon-order-review-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
+                `<div class="checkout-card"><div class="checkout-buttons-row"><button onclick="hapticMedium();writeReviewEntryPage='order';showPage('write-review')" class="checkout-button">Оставить отзыв</button><button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn"><svg class="icon icon-order-review-help icon--accent"><use href="#icon-support"></use></svg></button></div></div>`;
             };
             fixedBlock.style.display = "none";
             if (reviewsListCache) {
                 if (!isReviewed(reviewsListCache)) showReviewBtn();
             } else {
                 getReviewsData()
-                    .then(list => { if (!isReviewed(list)) showReviewBtn(); })
-                    .catch(() => showReviewBtn());
+                .then(list => { if (!isReviewed(list)) showReviewBtn(); })
+                .catch(() => showReviewBtn());
             }
         }
 
         setTimeout(() => {
-            const showCodeInputBtn = document.getElementById("showCodeInputBtn");
-            if (showCodeInputBtn) {
-                showCodeInputBtn.addEventListener("click", () => {
-                    hapticLight();
-                    const fixedBlock = document.getElementById("cartCheckoutFixed");
-                    if (fixedBlock) {
-                        fixedBlock.innerHTML =
-                       `<div id="codeActionBlock" class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%;"><input type="tel" id="verificationCodeInput" class="promo-input" placeholder="Введите код с почты" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" oninput="this.value=this.value.replace(/\D/g,'')" style="flex: 1; min-width: 0; box-sizing: border-box;"><button id="submitCodeBtn" class="promo-action-btn apply-btn" style="flex-shrink: 0;"><svg class="icon icon-order-code-submit icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
-                        setTimeout(() => {
-                            const inp = document.getElementById(
-                                "verificationCodeInput");
-                            if (inp) { inp.removeAttribute("readonly");
-                                inp.focus(); }
-                            document.getElementById("submitCodeBtn")?.addEventListener(
-                                "click", async () => {
-                                    const codeInput = document.getElementById(
-                                        "verificationCodeInput");
-                                    const code = codeInput?.value.trim();
-                                    if (!code) { showAppAlert(
-                                            "Пожалуйста введите код который был отправлен на указанную вами почту."); return; }
-                                                                            hapticLight();
-                                    const action = await new Promise(resolve => {
-                                        window.Telegram.WebApp.showPopup({
-                                            message: `Указанный вами код: ${code}\n\nПожалуйста, убедитесь, что код указан правильно, чтобы избежать возможной задержки в выполнении вашего заказа.`,
-                                            buttons: [
-                                                { id: 'send_code', type: 'default', text: 'Отправить' },
-                                                { id: 'edit', type: 'default', text: 'Изменить' }
-                                            ]
-                                        }, (buttonId) => resolve(buttonId));
-                                    });
-                                    if (action === 'edit') {
-                                        setTimeout(() => codeInput?.focus(), 100);
-                                        return;
-                                    }
-                                    if (action !== 'send_code') return;
-                                    hapticMedium();
-                                    try {
-                                        const response = await fetch(
-                                            'https://placedgames.up.railway.app/api/submit-code', {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ orderId: order
-                                                        .id, code: code })
-                                            });
-                                        if (response.ok) {
-                                            showAppAlert(
-                                                "Код успешно отправлен!\n\nПосле изменения статуса заказа на «Выполняется», пожалуйста не заходите в аккаунт до успешного завершения заказа."
-                                            );
-                                            order.status_code = 'processing';
-                                            order.status = 'Ожидает выполнения';
-                                            order.verification_code = code;
-                                            showOrderDetail(order, true);
-                                            renderOrdersPage();
-                                        } else showAppAlert(
-                                            "Ошибка отправки кода");
-                                    } catch (e) { showAppAlert(
-                                            "Ошибка соединения"); }
-                                });
-                        }, 50);
-                    }
-                });
-            }
-        }, 100);
+                const showCodeInputBtn = document.getElementById("showCodeInputBtn");
+                if (showCodeInputBtn) {
+                    showCodeInputBtn.addEventListener("click", () => {
+                            hapticLight();
+                            const fixedBlock = document.getElementById("cartCheckoutFixed");
+                            if (fixedBlock) {
+                                fixedBlock.innerHTML =
+                                `<div id="codeActionBlock" class="checkout-card" style="width: 100%; box-sizing: border-box;"><div class="promo-input-row" style="display: flex; gap: 10px; width: 100%;"><input type="tel" id="verificationCodeInput" class="promo-input" placeholder="Введите код с почты" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" oninput="this.value=this.value.replace(/\D/g,'')" style="flex: 1; min-width: 0; box-sizing: border-box;"><button id="submitCodeBtn" class="promo-action-btn apply-btn" style="flex-shrink: 0;"><svg class="icon icon-order-code-submit icon--accent"><use href="#icon-success"></use></svg></button></div></div>`;
+                                setTimeout(() => {
+                                        const inp = document.getElementById(
+                                            "verificationCodeInput");
+                                        if (inp) { inp.removeAttribute("readonly");
+                                            inp.focus(); }
+                                        document.getElementById("submitCodeBtn")?.addEventListener(
+                                            "click", async () => {
+                                                const codeInput = document.getElementById(
+                                                    "verificationCodeInput");
+                                                const code = codeInput?.value.trim();
+                                                if (!code) { showAppAlert(
+                                                        "Пожалуйста введите код который был отправлен на указанную вами почту."); return; }
+                                                hapticLight();
+                                                const action = await new Promise(resolve => {
+                                                        window.Telegram.WebApp.showPopup({
+                                                                message: `Указанный вами код: ${code}\n\nПожалуйста, убедитесь, что код указан правильно, чтобы избежать возможной задержки в выполнении вашего заказа.`,
+                                                                buttons: [
+                                                                    { id: 'send_code', type: 'default', text: 'Отправить' },
+                                                                    { id: 'edit', type: 'default', text: 'Изменить' }
+                                                                ]
+                                                            }, (buttonId) => resolve(buttonId));
+                                                });
+                                                if (action === 'edit') {
+                                                    setTimeout(() => codeInput?.focus(), 100);
+                                                    return;
+                                                }
+                                                if (action !== 'send_code') return;
+                                                hapticMedium();
+                                                try {
+                                                    const response = await fetch(
+                                                        'https://placedgames.up.railway.app/api/submit-code', {
+                                                            method: 'POST',
+                                                            headers: { 'Content-Type': 'application/json' },
+                                                            body: JSON.stringify({ orderId: order
+                                                                    .id, code: code })
+                                                    });
+                                                    if (response.ok) {
+                                                        showAppAlert(
+                                                            "Код успешно отправлен!\n\nПосле изменения статуса заказа на «Выполняется», пожалуйста не заходите в аккаунт до успешного завершения заказа."
+                                                        );
+                                                        order.status_code = 'processing';
+                                                        order.status = 'Ожидает выполнения';
+                                                        order.verification_code = code;
+                                                        showOrderDetail(order, true);
+                                                        renderOrdersPage();
+                                                    } else showAppAlert(
+                                                        "Ошибка отправки кода");
+                                                } catch (e) { showAppAlert(
+                                                        "Ошибка соединения"); }
+                                        });
+                                    }, 50);
+                            }
+                    });
+                }
+            }, 100);
     }
 }
-    
-    async function renderReviewsFixedAction() {
-const oldFixed = document.getElementById("reviewsFixedAction");
-if (oldFixed) oldFixed.remove();
 
-const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-const userId = tgUser?.id;
-let hasReviewableOrder = false;
+async function renderReviewsFixedAction() {
+    const oldFixed = document.getElementById("reviewsFixedAction");
+    if (oldFixed) oldFixed.remove();
 
-if (userId) {
-    try {
-        const [ordersRes, reviewsRes] = await Promise.all([
-            fetch(`https://placedgames.up.railway.app/api/user-orders?userId=${userId}`).then(r => r.json()),
-            getReviewsData(true)
-        ]);
-        const completedOrders = ordersRes.filter(o => o.status_code === 'done' || o.status_code === 'completed');
-        const reviewedOrderIds = reviewsRes
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    const userId = tgUser?.id;
+    let hasReviewableOrder = false;
+
+    if (userId) {
+        try {
+            const [ordersRes, reviewsRes] = await Promise.all([
+                    fetch(`https://placedgames.up.railway.app/api/user-orders?userId=${userId}`).then(r => r.json()),
+                    getReviewsData(true)
+            ]);
+            const completedOrders = ordersRes.filter(o => o.status_code === 'done' || o.status_code === 'completed');
+            const reviewedOrderIds = reviewsRes
             .filter(r => String(r.user_id) === String(userId))
             .map(r => String(r.order_id));
-        const unreviewedOrders = completedOrders.filter(o => !reviewedOrderIds.includes(String(o.id)));
-        hasReviewableOrder = unreviewedOrders.length > 0;
-    } catch (e) {}
-}
+            const unreviewedOrders = completedOrders.filter(o => !reviewedOrderIds.includes(String(o.id)));
+            hasReviewableOrder = unreviewedOrders.length > 0;
+        } catch (e) {}
+    }
 
-if (hasReviewableOrder) {
-    const fixedEl = document.createElement('div');
-    fixedEl.id = 'reviewsFixedAction';
-    fixedEl.className = 'reviews-fixed-action';
-    fixedEl.innerHTML = `<div class="checkout-card">
+    if (hasReviewableOrder) {
+        const fixedEl = document.createElement('div');
+        fixedEl.id = 'reviewsFixedAction';
+        fixedEl.className = 'reviews-fixed-action';
+        fixedEl.innerHTML = `<div class="checkout-card">
             <div class="checkout-buttons-row">
                 <button class="checkout-button" id="goWriteReviewBtn">Оставить отзыв</button>
                 <button onclick="hapticLight();window.open('https://t.me/PlacedSupport','_blank')" class="promo-btn">
@@ -2625,16 +2631,16 @@ if (hasReviewableOrder) {
                 </button>
             </div>
         </div>`;
-    document.body.appendChild(fixedEl);
-            document.getElementById('goWriteReviewBtn')?.addEventListener('click', () => {
-        hapticLight();
-        writeReviewEntryPage = 'reviews';
-        showPage('write-review');
-    });
-}
+        document.body.appendChild(fixedEl);
+        document.getElementById('goWriteReviewBtn')?.addEventListener('click', () => {
+                hapticLight();
+                writeReviewEntryPage = 'reviews';
+                showPage('write-review');
+        });
+    }
 }
 
-                    async function renderReviewsPage() {
+async function renderReviewsPage() {
     const container = document.getElementById("reviewsContent");
     if (!container) return;
 
@@ -2644,7 +2650,7 @@ if (hasReviewableOrder) {
     const initialReviews = await getReviewsData();
     window.__allReviews = initialReviews;
 
-            container.innerHTML = `
+    container.innerHTML = `
             <div class="search-section" style="display:flex;gap:10px;margin-bottom:13px;align-items:center;">
                 <div class="search-bar">
                     <img class="search-icon" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'%3E%3C/path%3E%3C/svg%3E">
@@ -2659,11 +2665,11 @@ if (hasReviewableOrder) {
                             <div id="reviewsList" style="margin-top:13px;"></div>
         `;
 
-            await renderReviewsFixedAction();
+    await renderReviewsFixedAction();
     setupReviewsListUI(initialReviews);
 }
 
-    function renderWriteReviewPage() {
+function renderWriteReviewPage() {
     const container = document.getElementById("writeReviewContent");
     if (!container) return;
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
@@ -2689,68 +2695,68 @@ if (hasReviewableOrder) {
     let completedOrders = [];
     let reviewedOrderIds = [];
 
-            function buildItemsHtml(itemsArr) {
-return buildCollapsedItemsHtml(itemsArr, 'review-item-row', 'review-item-name', 'review-item-price');
-}
+    function buildItemsHtml(itemsArr) {
+        return buildCollapsedItemsHtml(itemsArr, 'review-item-row', 'review-item-name', 'review-item-price');
+    }
 
     if (!userId) {
         container.innerHTML =
-            `<div class="review-empty">Пожалуйста, авторизуйтесь через Telegram</div>`;
+        `<div class="review-empty">Пожалуйста, авторизуйтесь через Telegram</div>`;
         const fixedBlock = document.getElementById("cartCheckoutFixed");
         if (fixedBlock) fixedBlock.style.display = "none";
         return;
     }
 
-            try {
-                    return Promise.all([
-            fetch(`https://placedgames.up.railway.app/api/user-orders?userId=${userId}`).then(r => r.json()),
-            getReviewsData()
+    try {
+        return Promise.all([
+                fetch(`https://placedgames.up.railway.app/api/user-orders?userId=${userId}`).then(r => r.json()),
+                getReviewsData()
         ]).then(([ordersRes, reviewsRes]) => {
-            const allCompleted = ordersRes.filter(o =>
-                o.status_code === 'done' || o.status_code === 'completed'
-            );
+                const allCompleted = ordersRes.filter(o =>
+                    o.status_code === 'done' || o.status_code === 'completed'
+                );
 
-            const reviewedOrderIds = reviewsRes
+                const reviewedOrderIds = reviewsRes
                 .filter(r => String(r.user_id) === String(userId))
                 .map(r => String(r.order_id));
 
-            completedOrders = allCompleted.filter(o =>
-                !reviewedOrderIds.includes(String(o.id))
-            );
+                completedOrders = allCompleted.filter(o =>
+                    !reviewedOrderIds.includes(String(o.id))
+                );
 
-            const orderItemsMap = {};
-            completedOrders.forEach(o => {
-                let arr = [];
-                try { arr = JSON.parse(o.items || '[]'); } catch (e) {}
-                orderItemsMap[o.id] = arr;
-            });
+                const orderItemsMap = {};
+                completedOrders.forEach(o => {
+                        let arr = [];
+                        try { arr = JSON.parse(o.items || '[]'); } catch (e) {}
+                        orderItemsMap[o.id] = arr;
+                });
 
-            if (!completedOrders.length) {
-                container.innerHTML = `
+                if (!completedOrders.length) {
+                    container.innerHTML = `
                             <div class="review-empty">
                                 <div style="font-size:48px;margin-bottom:16px;">📝</div>
                                 <div style="font-size:18px;font-weight:500;color:white;margin-bottom:8px;">Нет заказов для отзыва</div>
                                 <div style="color:var(--text-secondary);font-size:15px;">Вы уже оставили отзывы на все выполненные заказы</div>
                             </div>
                         `;
-                const fixedBlock = document.getElementById("cartCheckoutFixed");
-                if (fixedBlock) fixedBlock.style.display = "none";
-                return;
-            }
-
-            const orderOptions = completedOrders.map(o => {
-                const dateObj = o.date ? new Date(o.date) : null;
-                let dateStr = '';
-                if (dateObj && !isNaN(dateObj)) {
-                    const d = String(dateObj.getDate()).padStart(2, '0');
-                    const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-                    const y = String(dateObj.getFullYear()).slice(2);
-                    dateStr = ` (${d}.${m}.${y})`;
+                    const fixedBlock = document.getElementById("cartCheckoutFixed");
+                    if (fixedBlock) fixedBlock.style.display = "none";
+                    return;
                 }
-                return `<option value="${o.id}" data-num="${o.order_number}">Заказ #${o.order_number}${dateStr}</option>`;
-            }).join('');
 
-            container.innerHTML = `
+                const orderOptions = completedOrders.map(o => {
+                        const dateObj = o.date ? new Date(o.date) : null;
+                        let dateStr = '';
+                        if (dateObj && !isNaN(dateObj)) {
+                            const d = String(dateObj.getDate()).padStart(2, '0');
+                            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+                            const y = String(dateObj.getFullYear()).slice(2);
+                            dateStr = ` (${d}.${m}.${y})`;
+                        }
+                        return `<option value="${o.id}" data-num="${displayOrderNumber(o.order_number)}">Заказ #${displayOrderNumber(o.order_number)}${dateStr}</option>`;
+                }).join('');
+
+                container.innerHTML = `
                         <div class="order-data-card" style="margin-bottom:0;position:relative;z-index:2;">
                           <div class="form-section">
 <div class="form-label">Выберите заказ</div>
@@ -2767,23 +2773,23 @@ return buildCollapsedItemsHtml(itemsArr, 'review-item-row', 'review-item-name', 
 </div>
                             <div class="form-section" style="margin-bottom:0;">
                                 <div class="form-label" style="font-size:20px;">
-                                    Текст отзыва 
+                                    Текст отзыва
                                     <span id="reviewCharCount" style="color:var(--text-secondary);font-weight:400;font-size:14px;">0/70</span>
                                 </div>
-                                <textarea class="review-textarea" id="reviewTextarea" 
-                                    placeholder="Напишите ваш отзыв..." maxlength="70" rows="3" 
+                                <textarea class="review-textarea" id="reviewTextarea"
+                                    placeholder="Напишите ваш отзыв..." maxlength="70" rows="3"
                                     style="font-size:17px;"></textarea>
                             </div>
                         </div>
-                        
+
                         <div style="position:relative;margin-top:-32px;z-index:1;background:var(--col-bg);border:1px solid var(--border-color);border-radius:0 0 28px 28px;padding:12px 18px;padding-top:40px;" id="previewItemsCard">
                             ${buildItemsHtml(orderItemsMap[completedOrders[0]?.id])}
                         </div>
                     `;
 
-            const fixedBlock = document.getElementById("cartCheckoutFixed");
-            fixedBlock.style.display = "block";
-            fixedBlock.innerHTML =
+                const fixedBlock = document.getElementById("cartCheckoutFixed");
+                fixedBlock.style.display = "block";
+                fixedBlock.innerHTML =
                 `
                         <div class="checkout-card">
                             <div class="checkout-buttons-row">
@@ -2795,115 +2801,115 @@ return buildCollapsedItemsHtml(itemsArr, 'review-item-row', 'review-item-name', 
                         </div>
                     `;
 
-            setTimeout(() => {
-                                                        const textarea = document.getElementById('reviewTextarea');
-                const counter = document.getElementById('reviewCharCount');
-                const previewItemsCard = document.getElementById('previewItemsCard');
-                const orderSelect = document.getElementById('reviewOrderSelect');
-                const submitBtn = document.getElementById('reviewSubmitBtnFixed');
-                const satisfactionSelect = document.getElementById('satisfactionSelect');
-                textarea?.addEventListener('input', function() {
-                    let val = this.value.replace(/[\r\n]/g, '');
-                    if (val !== this.value) this.value = val;
-                    if (counter) counter.textContent = `${val.length}/70`;
-                });
+                setTimeout(() => {
+                        const textarea = document.getElementById('reviewTextarea');
+                        const counter = document.getElementById('reviewCharCount');
+                        const previewItemsCard = document.getElementById('previewItemsCard');
+                        const orderSelect = document.getElementById('reviewOrderSelect');
+                        const submitBtn = document.getElementById('reviewSubmitBtnFixed');
+                        const satisfactionSelect = document.getElementById('satisfactionSelect');
+                        textarea?.addEventListener('input', function() {
+                                let val = this.value.replace(/[\r\n]/g, '');
+                                if (val !== this.value) this.value = val;
+                                if (counter) counter.textContent = `${val.length}/70`;
+                        });
 
-                textarea?.addEventListener('keydown', function(e) {
-                    if (e.key === 'Enter') e.preventDefault();
-                });
+                        textarea?.addEventListener('keydown', function(e) {
+                                if (e.key === 'Enter') e.preventDefault();
+                        });
 
-                orderSelect?.addEventListener('change', function() {
-                    const orderId = this.value;
-                    if (previewItemsCard) {
-                        previewItemsCard.innerHTML = buildItemsHtml(
-                            orderItemsMap[orderId]);
-                    }
-                });
+                        orderSelect?.addEventListener('change', function() {
+                                const orderId = this.value;
+                                if (previewItemsCard) {
+                                    previewItemsCard.innerHTML = buildItemsHtml(
+                                        orderItemsMap[orderId]);
+                                }
+                        });
 
-                                    submitBtn?.addEventListener('click', async function() {
-                    hapticLight();
-                    const text = textarea?.value.trim();
-                    const orderId = orderSelect?.value;
-                    const selectedOption = orderSelect?.options[orderSelect
-                        .selectedIndex];
-                                                                    const orderNumber = selectedOption?.dataset.num || '';
-                    const rating = satisfactionSelect.value;
-                          if (!text) {
-                        showAppAlert('Пожалуйста, напишите текст отзыва');
-                        textarea?.focus();
-                        return;
-                    }
+                        submitBtn?.addEventListener('click', async function() {
+                                hapticLight();
+                                const text = textarea?.value.trim();
+                                const orderId = orderSelect?.value;
+                                const selectedOption = orderSelect?.options[orderSelect
+                                    .selectedIndex];
+                                const orderNumber = selectedOption?.dataset.num || '';
+                                const rating = satisfactionSelect.value;
+                                if (!text) {
+                                    showAppAlert('Пожалуйста, напишите текст отзыва');
+                                    textarea?.focus();
+                                    return;
+                                }
 
-                    if (text.length < 3) {
-                        showAppAlert('Отзыв должен содержать минимум 3 символа');
-                        textarea?.focus();
-                        return;
-                    }
+                                if (text.length < 3) {
+                                    showAppAlert('Отзыв должен содержать минимум 3 символа');
+                                    textarea?.focus();
+                                    return;
+                                }
 
-                    if (!orderId) {
-                        showAppAlert('Пожалуйста, выберите заказ');
-                        return;
-                    }
+                                if (!orderId) {
+                                    showAppAlert('Пожалуйста, выберите заказ');
+                                    return;
+                                }
 
-                                            const ratingText = rating === 'good' ? 'Нравится' : 'Не нравится';
-                    const confirmed = await new Promise(resolve => {
-                        window.Telegram.WebApp.showPopup({
-                        message: `Подтверждение отзыва:\n\nНомер заказа: #${orderNumber}\nОценка: ${ratingText}\nТекст вашего отзыва:\n${text}`,
-                            buttons: [
-                                { id: 'publish', type: 'default', text: 'Опубликовать отзыв' }
-                            ]
-                        }, (buttonId) => resolve(buttonId === 'publish'));
-                    });
-                    if (!confirmed) return;
+                                const ratingText = rating === 'good' ? 'Нравится' : 'Не нравится';
+                                const confirmed = await new Promise(resolve => {
+                                        window.Telegram.WebApp.showPopup({
+                                                message: `Подтверждение отзыва:\n\nНомер заказа: #${orderNumber}\nОценка: ${ratingText}\nТекст вашего отзыва:\n${text}`,
+                                                buttons: [
+                                                    { id: 'publish', type: 'default', text: 'Опубликовать отзыв' }
+                                                ]
+                                            }, (buttonId) => resolve(buttonId === 'publish'));
+                                });
+                                if (!confirmed) return;
 
-                    hapticMedium();
-                    this.disabled = true;
-                    this.textContent = 'Отправка...';
+                                hapticMedium();
+                                this.disabled = true;
+                                this.textContent = 'Отправка...';
 
-                    try {
-                        const response = await fetch(
-                            'https://placedgames.up.railway.app/api/reviews', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                },
-body: JSON.stringify({
-userId: String(userId),
-userName: nickname,
-userUsername: tgUser?.username || null,
-photoUrl: photoUrl || null,
-text: text,
-rating: rating,
-orderId: parseInt(orderId),
-orderNumber: orderNumber
-})
-                            });
+                                try {
+                                    const response = await fetch(
+                                        'https://placedgames.up.railway.app/api/reviews', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json'
+                                            },
+                                            body: JSON.stringify({
+                                                    userId: String(userId),
+                                                    userName: nickname,
+                                                    userUsername: tgUser?.username || null,
+                                                    photoUrl: photoUrl || null,
+                                                    text: text,
+                                                    rating: rating,
+                                                    orderId: parseInt(orderId),
+                                                    orderNumber: orderNumber
+                                            })
+                                    });
 
-                        const result = await response.json();
+                                    const result = await response.json();
 
-                                                     if (response.ok && result.success) {
-                            reviewsListCache = null;
-                            reviewsFetchPromise = null;
-                            showPage('reviews');
-                        } else {
-                            showAppAlert('❌ ' + (result.error ||
-                                'Ошибка при отправке отзыва'));
-                        }
-                    } catch (error) {
-                        showAppAlert(
-                            '❌ Ошибка соединения с сервером. Проверьте интернет и попробуйте снова.'
-                        );
-                    } finally {
-                        this.disabled = false;
-                        this.textContent = 'Отправить отзыв';
-                    }
-                });
+                                    if (response.ok && result.success) {
+                                        reviewsListCache = null;
+                                        reviewsFetchPromise = null;
+                                        showPage('reviews');
+                                    } else {
+                                        showAppAlert('❌ ' + (result.error ||
+                                                'Ошибка при отправке отзыва'));
+                                    }
+                                } catch (error) {
+                                    showAppAlert(
+                                        '❌ Ошибка соединения с сервером. Проверьте интернет и попробуйте снова.'
+                                    );
+                                } finally {
+                                    this.disabled = false;
+                                    this.textContent = 'Отправить отзыв';
+                                }
+                        });
 
-            }, 100);
+                    }, 100);
         });
     } catch (error) {
         container.innerHTML =
-            `<div class="review-empty">Ошибка загрузки данных. Попробуйте позже.</div>`;
+        `<div class="review-empty">Ошибка загрузки данных. Попробуйте позже.</div>`;
         const fixedBlock = document.getElementById("cartCheckoutFixed");
         if (fixedBlock) fixedBlock.style.display = "none";
     }
@@ -2940,23 +2946,23 @@ function renderGamePage() {
                             <button class="empty-catalog-btn" id="reloadProductsBtn">Обновить</button>
                         </div>`;
             setTimeout(() => {
-                const btn = document.getElementById('reloadProductsBtn');
-                if (!btn) return;
-                btn.addEventListener('click', () => {
-                    hapticLight();
-                    btn.textContent = 'Обновление...';
-                    btn.style.pointerEvents = 'none';
-                    reloadProductsScript((success) => {
-                        if (success && hasAnyProductsLoaded()) {
-                            renderGamePage();
-                        } else {
-                            btn.textContent = 'Не удалось, ещё раз';
-                            btn.style.pointerEvents = '';
-                            reportClientError('Reload products.js failed', 'reload-button', null);
-                        }
+                    const btn = document.getElementById('reloadProductsBtn');
+                    if (!btn) return;
+                    btn.addEventListener('click', () => {
+                            hapticLight();
+                            btn.textContent = 'Обновление...';
+                            btn.style.pointerEvents = 'none';
+                            reloadProductsScript((success) => {
+                                    if (success && hasAnyProductsLoaded()) {
+                                        renderGamePage();
+                                    } else {
+                                        btn.textContent = 'Не удалось, ещё раз';
+                                        btn.style.pointerEvents = '';
+                                        reportClientError('Reload products.js failed', 'reload-button', null);
+                                    }
+                            });
                     });
-                });
-            }, 0);
+                }, 0);
         } else {
             grid.innerHTML = `<div class="empty-state-icon" style="width:100%;"><svg class="icon icon-empty-game-notfound icon--muted"><use href="#icon-catalog"></use></svg><div class="empty-title">Товары не найдены</div></div>`;
         }
@@ -2965,14 +2971,14 @@ function renderGamePage() {
 
     grid.style.display = "";
     grid.innerHTML = prods.map(p => {
-        const imgs = p.images && p.images.length ? p.images : [p.image];
-        const carouselHtml = `<div class="card-img-carousel" data-index="0">
+            const imgs = p.images && p.images.length ? p.images : [p.image];
+            const carouselHtml = `<div class="card-img-carousel" data-index="0">
                      <div class="card-img-track">
                          ${imgs.map(img => `<img class="card-img" src="${img}" alt="${escapeHtml(p.name)}">`).join('')}
                      </div>
                      ${imgs.length > 1 ? `<div class="card-img-dots">${imgs.map((_, i) => `<span class="card-img-dot ${i === 0 ? 'active' : ''}"></span>`).join('')}</div>` : ''}
                  </div>`;
-                                            return `
+            return `
                     <div class="product-card" data-id="${p.id}">
                         ${carouselHtml}
                         <div class="card-info">
@@ -2988,13 +2994,13 @@ function renderGamePage() {
                         </div>
                     </div>
                 `;
-            }).join("");
+    }).join("");
 
     requestAnimationFrame(() => fitProductTitles(grid));
 
     attachGameCardEvents();
 
-            const gameSearchEl = document.getElementById("gameSearchInput");
+    const gameSearchEl = document.getElementById("gameSearchInput");
     if (gameSearchEl) {
         gameSearchEl.value = gameSearchQuery;
         gameSearchEl.oninput = (e) => {
@@ -3022,24 +3028,24 @@ function renderGamePage() {
     }
 }
 
-    function setupSearchClear(inputId, clearBtnId, onClear) {
-const input = document.getElementById(inputId);
-const clearBtn = document.getElementById(clearBtnId);
-if (!input || !clearBtn) return;
-function toggle() {
-    clearBtn.classList.toggle('visible', input.value.length > 0);
-}
-toggle();
-if (clearBtn.dataset.clearBound === 'true') return;
-clearBtn.dataset.clearBound = 'true';
-input.addEventListener('input', toggle);
-clearBtn.addEventListener('click', () => {
-    hapticLight();
-    input.value = '';
-    input.dispatchEvent(new Event('input', { bubbles: true }));
+function setupSearchClear(inputId, clearBtnId, onClear) {
+    const input = document.getElementById(inputId);
+    const clearBtn = document.getElementById(clearBtnId);
+    if (!input || !clearBtn) return;
+    function toggle() {
+        clearBtn.classList.toggle('visible', input.value.length > 0);
+    }
     toggle();
-    if (onClear) onClear();
-});
+    if (clearBtn.dataset.clearBound === 'true') return;
+    clearBtn.dataset.clearBound = 'true';
+    input.addEventListener('input', toggle);
+    clearBtn.addEventListener('click', () => {
+            hapticLight();
+            input.value = '';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            toggle();
+            if (onClear) onClear();
+    });
 }
 
 function setSlideWidths(carousel) {
@@ -3047,53 +3053,53 @@ function setSlideWidths(carousel) {
     const imgs = track.querySelectorAll('.card-img');
     const w = Math.round(carousel.clientWidth) - 14;
     imgs.forEach(img => {
-        img.style.width = w + 'px';
-        img.style.flexBasis = w + 'px';
+            img.style.width = w + 'px';
+            img.style.flexBasis = w + 'px';
     });
 }
 
 function refreshAllCarousels() {
     document.querySelectorAll('#game-page .card-img-carousel').forEach(carousel => {
-        const track = carousel.querySelector('.card-img-track');
-        const dots = carousel.querySelectorAll('.card-img-dot');
-        if (!track) return;
+            const track = carousel.querySelector('.card-img-track');
+            const dots = carousel.querySelectorAll('.card-img-dot');
+            if (!track) return;
 
-        setSlideWidths(carousel);
+            setSlideWidths(carousel);
 
-        let activeIndex = 0;
-        dots.forEach((d, i) => { if (d.classList.contains('active')) activeIndex = i; });
+            let activeIndex = 0;
+            dots.forEach((d, i) => { if (d.classList.contains('active')) activeIndex = i; });
 
-        const targetSlide = track.children[activeIndex];
-        if (targetSlide) {
-            track.style.transform = `translateX(-${targetSlide.offsetLeft}px)`;
-        }
+            const targetSlide = track.children[activeIndex];
+            if (targetSlide) {
+                track.style.transform = `translateX(-${targetSlide.offsetLeft}px)`;
+            }
     });
 }
 
-    let resizeDebounceTimer = null;
+let resizeDebounceTimer = null;
 window.addEventListener('resize', () => {
-    clearTimeout(resizeDebounceTimer);
-    resizeDebounceTimer = setTimeout(() => {
-        refreshAllCarousels();
-        fitProductTitles(document);
-    }, 150);
+        clearTimeout(resizeDebounceTimer);
+        resizeDebounceTimer = setTimeout(() => {
+                refreshAllCarousels();
+                fitProductTitles(document);
+            }, 150);
 });
 
 window.addEventListener('orientationchange', () => {
-    setTimeout(() => {
-        refreshAllCarousels();
-        fitProductTitles(document);
-    }, 300);
+        setTimeout(() => {
+                refreshAllCarousels();
+                fitProductTitles(document);
+            }, 300);
 });
 
-    function getCurrentActiveMenuPage() {
+function getCurrentActiveMenuPage() {
     const activeBtn = document.querySelector('.menu-item.active');
     if (activeBtn) return activeBtn.dataset.page;
     if (document.getElementById('profileMenuWrapper')?.classList.contains('active')) return 'profile';
     return null;
 }
 
-    function refreshMenuSliderOnResize() {
+function refreshMenuSliderOnResize() {
     const wrapper = document.getElementById("bottomMenuWrapper");
     if (!wrapper || wrapper.offsetParent === null) return;
     const pageId = getCurrentActiveMenuPage();
@@ -3102,141 +3108,141 @@ window.addEventListener('orientationchange', () => {
 
 let menuResizeDebounceTimer = null;
 window.addEventListener('resize', () => {
-    clearTimeout(menuResizeDebounceTimer);
-    menuResizeDebounceTimer = setTimeout(refreshMenuSliderOnResize, 150);
+        clearTimeout(menuResizeDebounceTimer);
+        menuResizeDebounceTimer = setTimeout(refreshMenuSliderOnResize, 150);
 });
 
 window.addEventListener('orientationchange', () => {
-    setTimeout(refreshMenuSliderOnResize, 300);
+        setTimeout(refreshMenuSliderOnResize, 300);
 });
 
-    document.addEventListener('focusout', (e) => {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-        setTimeout(refreshMenuSliderOnResize, 150);
-    }
+document.addEventListener('focusout', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            setTimeout(refreshMenuSliderOnResize, 150);
+        }
 });
 
-    if (typeof ResizeObserver !== 'undefined') {
+if (typeof ResizeObserver !== 'undefined') {
     let bodyRoDebounce = null;
     const bodyRo = new ResizeObserver(() => {
-        clearTimeout(bodyRoDebounce);
-        bodyRoDebounce = setTimeout(() => {
-            refreshAllCarousels();
-            refreshMenuSliderOnResize();
-            fitProductTitles(document);
-        }, 120);
+            clearTimeout(bodyRoDebounce);
+            bodyRoDebounce = setTimeout(() => {
+                    refreshAllCarousels();
+                    refreshMenuSliderOnResize();
+                    fitProductTitles(document);
+                }, 120);
     });
     bodyRo.observe(document.body);
 }
 
 function attachGameCardEvents() {
     document.querySelectorAll('#game-page .card-img-carousel').forEach(carousel => {
-        const track = carousel.querySelector('.card-img-track');
-        const dots = carousel.querySelectorAll('.card-img-dot');
-        const count = dots.length;
-        if (count < 2) return;
+            const track = carousel.querySelector('.card-img-track');
+            const dots = carousel.querySelectorAll('.card-img-dot');
+            const count = dots.length;
+            if (count < 2) return;
 
-        setSlideWidths(carousel);
+            setSlideWidths(carousel);
 
-        let index = 0;
-        let startX = 0;
+            let index = 0;
+            let startX = 0;
 
-        function goTo(i) {
-            index = Math.max(0, Math.min(i, count - 1));
-            const targetSlide = track.children[index];
-            const offset = targetSlide.offsetLeft;
-            track.style.transform = `translateX(-${offset}px)`;
-            dots.forEach((d, di) => d.classList.toggle('active', di === index));
-        }
-
-        carousel.addEventListener('pointerdown', (e) => {
-            startX = e.clientX;
-        });
-        carousel.addEventListener('pointerup', (e) => {
-            const deltaX = e.clientX - startX;
-            if (Math.abs(deltaX) > 30) {
-                goTo(deltaX < 0 ? index + 1 : index - 1);
-            } else if (Math.abs(deltaX) < 8) {
-                const rect = carousel.getBoundingClientRect();
-                const tapX = e.clientX - rect.left;
-                goTo(tapX > rect.width / 2 ? index + 1 : index - 1);
+            function goTo(i) {
+                index = Math.max(0, Math.min(i, count - 1));
+                const targetSlide = track.children[index];
+                const offset = targetSlide.offsetLeft;
+                track.style.transform = `translateX(-${offset}px)`;
+                dots.forEach((d, di) => d.classList.toggle('active', di === index));
             }
-        });
+
+            carousel.addEventListener('pointerdown', (e) => {
+                    startX = e.clientX;
+            });
+            carousel.addEventListener('pointerup', (e) => {
+                    const deltaX = e.clientX - startX;
+                    if (Math.abs(deltaX) > 30) {
+                        goTo(deltaX < 0 ? index + 1 : index - 1);
+                    } else if (Math.abs(deltaX) < 8) {
+                        const rect = carousel.getBoundingClientRect();
+                        const tapX = e.clientX - rect.left;
+                        goTo(tapX > rect.width / 2 ? index + 1 : index - 1);
+                    }
+            });
     });
 
     document.querySelectorAll('#game-page .product-card').forEach(card => {
-        const cardId = card.dataset.id;
-        const actionBtn = card.querySelector('.card-action-btn');
-        if (!actionBtn) return;
-        if (actionBtn.classList.contains('cart-add-btn')) {
-            actionBtn.replaceWith(actionBtn.cloneNode(true));
-            const newBtn = card.querySelector('.cart-add-btn');
-            newBtn?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                hapticLight();
-                handleCartAction(cardId, true);
-                const btn2 = card.querySelector('.card-action-btn, .card-info > div:last-child');
-                if (btn2) btn2.outerHTML = renderCartButtonHtml(cardId);
-                attachGameCardEvents();
-            });
-        } else if (actionBtn.classList.contains('counter-btn')) {
-            const minus = actionBtn.querySelector('.counter-minus');
-            const plus = actionBtn.querySelector('.counter-plus');
-            minus?.replaceWith(minus.cloneNode(true));
-            plus?.replaceWith(plus.cloneNode(true));
-            card.querySelector('.counter-minus')?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                hapticLight();
-                handleCartAction(cardId, false);
-                const lastChild = card.querySelector('.card-info > div:last-child');
-                if (lastChild) lastChild.outerHTML = renderCartButtonHtml(cardId);
-                attachGameCardEvents();
-            });
-                            card.querySelector('.counter-plus')?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                hapticLight();
-                handleCartAction(cardId, true);
-                const lastChild = card.querySelector('.card-info > div:last-child');
-                if (lastChild) lastChild.outerHTML = renderCartButtonHtml(cardId);
-                attachGameCardEvents();
-            });
-        }
+            const cardId = card.dataset.id;
+            const actionBtn = card.querySelector('.card-action-btn');
+            if (!actionBtn) return;
+            if (actionBtn.classList.contains('cart-add-btn')) {
+                actionBtn.replaceWith(actionBtn.cloneNode(true));
+                const newBtn = card.querySelector('.cart-add-btn');
+                newBtn?.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        hapticLight();
+                        handleCartAction(cardId, true);
+                        const btn2 = card.querySelector('.card-action-btn, .card-info > div:last-child');
+                        if (btn2) btn2.outerHTML = renderCartButtonHtml(cardId);
+                        attachGameCardEvents();
+                });
+            } else if (actionBtn.classList.contains('counter-btn')) {
+                const minus = actionBtn.querySelector('.counter-minus');
+                const plus = actionBtn.querySelector('.counter-plus');
+                minus?.replaceWith(minus.cloneNode(true));
+                plus?.replaceWith(plus.cloneNode(true));
+                card.querySelector('.counter-minus')?.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        hapticLight();
+                        handleCartAction(cardId, false);
+                        const lastChild = card.querySelector('.card-info > div:last-child');
+                        if (lastChild) lastChild.outerHTML = renderCartButtonHtml(cardId);
+                        attachGameCardEvents();
+                });
+                card.querySelector('.counter-plus')?.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        hapticLight();
+                        handleCartAction(cardId, true);
+                        const lastChild = card.querySelector('.card-info > div:last-child');
+                        if (lastChild) lastChild.outerHTML = renderCartButtonHtml(cardId);
+                        attachGameCardEvents();
+                });
+            }
     });
 
     document.querySelectorAll('#game-page [data-info-product]').forEach(btn => {
-        if (btn.dataset.bound === 'true') return;
-        btn.dataset.bound = 'true';
-        btn.addEventListener('pointerdown', (e) => e.stopPropagation());
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            hapticLight();
-            showProductInfoPopup(btn.dataset.infoProduct);
-        });
+            if (btn.dataset.bound === 'true') return;
+            btn.dataset.bound = 'true';
+            btn.addEventListener('pointerdown', (e) => e.stopPropagation());
+            btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    hapticLight();
+                    showProductInfoPopup(btn.dataset.infoProduct);
+            });
     });
 }
 
 function buildReviewCardHtml(rv) {
     const avatar = rv.photo_url ?
-        `<img style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" src="${escapeHtml(rv.photo_url)}" alt="avatar">` :
-        `<div class="review-avatar">👤</div>`;
+    `<img style="width:38px;height:38px;border-radius:50%;object-fit:cover;flex-shrink:0;" src="${escapeHtml(rv.photo_url)}" alt="avatar">` :
+    `<div class="review-avatar">👤</div>`;
     const dt = rv.created_at ? new Date(rv.created_at) : null;
     const dateStr = dt ?
-        `${dt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} ${dt.toLocaleDateString('ru-RU',{year:'2-digit',month:'2-digit',day:'2-digit'})}` :
-        '';
+    `${dt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})} ${dt.toLocaleDateString('ru-RU',{year:'2-digit',month:'2-digit',day:'2-digit'})}` :
+    '';
     const rvRating = rv.rating || (rv.satisfied ? 'good' : 'bad');
     const rc = getSatisfactionColors(rvRating);
     const orderBadge = rv.order_number ?
-        `<div class="review-badge-stack">
+    `<div class="review-badge-stack">
             <span class="review-order-badge-wrap">
                 <span class="review-order-badge-backdrop"></span>
-                <span class="review-order-badge">#${rv.order_number}</span>
+                <span class="review-order-badge" data-order-id="${rv.order_id ?? ''}">#${displayOrderNumber(rv.order_number)}</span>
             </span>
             <span class="review-rating-badge" style="background:${rc.bg};color:${rc.color};border-color:${rc.border};">
         <svg width="21" height="21" viewBox="0 0 512 512"><use href="#${rc.icon}"></use></svg>
     </span>
         </div>` :
-        '';
-            let items = [];
+    '';
+    let items = [];
     try { items = JSON.parse(rv.order_items || '[]'); } catch (e) {}
     const itemsHtml = buildCollapsedItemsHtml(items, 'review-item-row', 'review-item-name', 'review-item-price');
     return `<div class="review-card-wrapper"><div class="review-card"><div class="review-header">${avatar}<div class="review-header-info"><div class="review-author-name">${escapeHtml(rv.user_name || 'Пользователь')}</div><div class="review-date">${dateStr}</div></div>${orderBadge}</div><div class="review-text">${escapeHtml(rv.text)}</div></div>${itemsHtml ? `<div class="review-items-card">${itemsHtml}</div>` : ''}</div>`;
@@ -3244,32 +3250,35 @@ function buildReviewCardHtml(rv) {
 
 function attachReviewOrderBadgeHandlers(scopeEl) {
     scopeEl.querySelectorAll('.review-order-badge:not([data-bound])').forEach(badge => {
-        badge.setAttribute('data-bound', 'true');
-        badge.addEventListener('click', async () => {
-            hapticLight();
-            savedReviewsScrollY = window.scrollY;
-            const orderNum = badge.textContent.replace('#', '').trim();
+            badge.setAttribute('data-bound', 'true');
+            badge.addEventListener('click', async () => {
+                    hapticLight();
+                    savedReviewsScrollY = window.scrollY;
+                    const orderId = badge.dataset.orderId;
+                    const orderNum = badge.textContent.replace('#', '').trim();
 
-            let found = orders.find(o => String(o.order_number) === orderNum);
+                    let found = orderId
+                    ? orders.find(o => String(o.id) === String(orderId))
+                    : orders.find(o => String(o.order_number).slice(0, 4) === orderNum);
 
-            if (!found) {
-                try {
-                    const r = await fetch('https://placedgames.up.railway.app/api/refresh-order', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orderNumber: orderNum })
-                    });
-                    found = await r.json();
-                } catch (e) {}
-            }
+                    if (!found && orderId) {
+                        try {
+                            const r = await fetch('https://placedgames.up.railway.app/api/refresh-order', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ orderId: Number(orderId) })
+                            });
+                            found = await r.json();
+                        } catch (e) {}
+                    }
 
-            if (found && found.id) {
-                const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-                const isOwner = String(found.user_id) === String(tgUserId);
-                navigationHistory.push('reviews');
-                showOrderDetail(found, isOwner);
-            }
-        });
+                    if (found && found.id) {
+                        const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+                        const isOwner = String(found.user_id) === String(tgUserId);
+                        navigationHistory.push('reviews');
+                        showOrderDetail(found, isOwner);
+                    }
+            });
     });
 }
 
@@ -3290,132 +3299,132 @@ function renderReviewsList(list) {
 
     if (rest.length) {
         setTimeout(() => {
-            const c = document.getElementById('reviewsList');
-            if (!c) return;
-            c.insertAdjacentHTML('beforeend', rest.map(buildReviewCardHtml).join(''));
-            attachReviewOrderBadgeHandlers(c);
-        }, 0);
+                const c = document.getElementById('reviewsList');
+                if (!c) return;
+                c.insertAdjacentHTML('beforeend', rest.map(buildReviewCardHtml).join(''));
+                attachReviewOrderBadgeHandlers(c);
+            }, 0);
     }
 }
 
 function applyReviewFilters(list) {
-window.__allReviews = list;
-const searchVal = document.getElementById('reviewSearchInput')?.value.toLowerCase() || '';
-const gameVal = document.getElementById('reviewGameSelect')?.value || 'Все отзывы';
+    window.__allReviews = list;
+    const searchVal = document.getElementById('reviewSearchInput')?.value.toLowerCase() || '';
+    const gameVal = document.getElementById('reviewGameSelect')?.value || 'Все отзывы';
 
-let filtered = list;
+    let filtered = list;
 
-if (gameVal === 'Ваши отзывы') {
-    const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    filtered = filtered.filter(rv => String(rv.user_id) === String(tgUserId));
-} else if (gameVal === 'Нравится') {
-    filtered = filtered.filter(rv => (rv.rating || (rv.satisfied ? 'good' : 'bad')) === 'good');
-} else if (gameVal === 'Не нравится') {
-    filtered = filtered.filter(rv => (rv.rating || (rv.satisfied ? 'good' : 'bad')) === 'bad');
-} else if (gameVal !== 'Все отзывы') {
-    filtered = filtered.filter(rv => {
-        if (rv.order_game_name) {
-            return rv.order_game_name === gameVal;
-        }
-        let items = [];
-        try { items = JSON.parse(rv.order_items || '[]'); } catch (e) {}
-        const game = games.find(g => g.name === gameVal);
-        if (!game) return false;
-        return items.some(i => game.getProducts().some(p => p.name === i.name));
-    });
-}
+    if (gameVal === 'Ваши отзывы') {
+        const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+        filtered = filtered.filter(rv => String(rv.user_id) === String(tgUserId));
+    } else if (gameVal === 'Нравится') {
+        filtered = filtered.filter(rv => (rv.rating || (rv.satisfied ? 'good' : 'bad')) === 'good');
+    } else if (gameVal === 'Не нравится') {
+        filtered = filtered.filter(rv => (rv.rating || (rv.satisfied ? 'good' : 'bad')) === 'bad');
+    } else if (gameVal !== 'Все отзывы') {
+        filtered = filtered.filter(rv => {
+                if (rv.order_game_name) {
+                    return rv.order_game_name === gameVal;
+                }
+                let items = [];
+                try { items = JSON.parse(rv.order_items || '[]'); } catch (e) {}
+                const game = games.find(g => g.name === gameVal);
+                if (!game) return false;
+                return items.some(i => game.getProducts().some(p => p.name === i.name));
+        });
+    }
 
-if (searchVal.trim()) {
-    filtered = filtered.filter(rv => {
-        let items = [];
-        try { items = JSON.parse(rv.order_items || '[]'); } catch (e) {}
-        return items.some(i => i.name.toLowerCase().includes(searchVal));
-    });
-}
+    if (searchVal.trim()) {
+        filtered = filtered.filter(rv => {
+                let items = [];
+                try { items = JSON.parse(rv.order_items || '[]'); } catch (e) {}
+                return items.some(i => i.name.toLowerCase().includes(searchVal));
+        });
+    }
 
-renderReviewsList(filtered);
+    renderReviewsList(filtered);
 }
 
 function countReviewsByGame(list) {
-const counts = {};
-games.forEach(g => { counts[g.name] = 0; });
-list.forEach(rv => {
-    let matchedGame = null;
-    if (rv.order_game_name) {
-        matchedGame = games.find(g => g.name === rv.order_game_name);
-    } else {
-        let items = [];
-        try { items = JSON.parse(rv.order_items || '[]'); } catch (e) {}
-        matchedGame = games.find(g => items.some(i => g.getProducts().some(p => p.name === i.name)));
-    }
-    if (matchedGame) counts[matchedGame.name] = (counts[matchedGame.name] || 0) + 1;
-});
-return counts;
+    const counts = {};
+    games.forEach(g => { counts[g.name] = 0; });
+    list.forEach(rv => {
+            let matchedGame = null;
+            if (rv.order_game_name) {
+                matchedGame = games.find(g => g.name === rv.order_game_name);
+            } else {
+                let items = [];
+                try { items = JSON.parse(rv.order_items || '[]'); } catch (e) {}
+                matchedGame = games.find(g => items.some(i => g.getProducts().some(p => p.name === i.name)));
+            }
+            if (matchedGame) counts[matchedGame.name] = (counts[matchedGame.name] || 0) + 1;
+    });
+    return counts;
 }
 
 function countReviewsByRating(list) {
-let good = 0, bad = 0;
-list.forEach(rv => {
-    const rating = rv.rating || (rv.satisfied ? 'good' : 'bad');
-    if (rating === 'good') good++; else bad++;
-});
-return { good, bad };
+    let good = 0, bad = 0;
+    list.forEach(rv => {
+            const rating = rv.rating || (rv.satisfied ? 'good' : 'bad');
+            if (rating === 'good') good++; else bad++;
+    });
+    return { good, bad };
 }
 
-                async function getReviewsData(forceRefresh = false) {
+async function getReviewsData(forceRefresh = false) {
     if (reviewsListCache && !forceRefresh) return reviewsListCache;
     if (reviewsFetchPromise && !forceRefresh) return reviewsFetchPromise;
     reviewsFetchPromise = fetch('https://placedgames.up.railway.app/api/reviews')
-        .then(r => r.json())
-        .then(list => {
+    .then(r => r.json())
+    .then(list => {
             reviewsListCache = list;
             reviewsFetchPromise = null;
             return list;
-        })
-        .catch(e => {
+    })
+    .catch(e => {
             reviewsFetchPromise = null;
             throw e;
-        });
+    });
     return reviewsFetchPromise;
 }
 
-            function setupReviewsListUI(list) {
-const gameSelect = document.getElementById('reviewGameSelect');
-if (gameSelect) {
-    const counts = countReviewsByGame(list);
-    const ratingCounts = countReviewsByRating(list);
-    const totalCount = list.length;
-    const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    const mineCount = list.filter(rv => String(rv.user_id) === String(tgUserId)).length;
+function setupReviewsListUI(list) {
+    const gameSelect = document.getElementById('reviewGameSelect');
+    if (gameSelect) {
+        const counts = countReviewsByGame(list);
+        const ratingCounts = countReviewsByRating(list);
+        const totalCount = list.length;
+        const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+        const mineCount = list.filter(rv => String(rv.user_id) === String(tgUserId)).length;
 
-    const options = [
-        { value: 'Все отзывы', count: totalCount },
-        { value: 'Нравится', count: ratingCounts.good },
-        { value: 'Не нравится', count: ratingCounts.bad },
-        { value: 'Ваши отзывы', count: mineCount },
-        ...games.map(g => ({ value: g.name, count: counts[g.name] || 0 }))
-    ];
+        const options = [
+            { value: 'Все отзывы', count: totalCount },
+            { value: 'Нравится', count: ratingCounts.good },
+            { value: 'Не нравится', count: ratingCounts.bad },
+            { value: 'Ваши отзывы', count: mineCount },
+            ...games.map(g => ({ value: g.name, count: counts[g.name] || 0 }))
+        ];
 
-    gameSelect.innerHTML = options.map(o =>
-        `<option value="${escapeHtml(o.value)}">${escapeHtml(o.value)} (${o.count})</option>`
-    ).join('');
+        gameSelect.innerHTML = options.map(o =>
+            `<option value="${escapeHtml(o.value)}">${escapeHtml(o.value)} (${o.count})</option>`
+        ).join('');
 
-    gameSelect.onchange = () => {
-        hapticLight();
-        applyReviewFilters(list);
-    };
-}
-const searchInput = document.getElementById('reviewSearchInput');
-if (searchInput) {
-    searchInput.oninput = () => applyReviewFilters(list);
-}
-setupSearchClear('reviewSearchInput', 'reviewSearchClearBtn');
+        gameSelect.onchange = () => {
+            hapticLight();
+            applyReviewFilters(list);
+        };
+    }
+    const searchInput = document.getElementById('reviewSearchInput');
+    if (searchInput) {
+        searchInput.oninput = () => applyReviewFilters(list);
+    }
+    setupSearchClear('reviewSearchInput', 'reviewSearchClearBtn');
 
-applyReviewFilters(list);
-if (!list.length) {
-    const container = document.getElementById('reviewsList');
-    if (container) container.innerHTML = `<div class="review-empty">Пока нет отзывов</div>`;
-}
+    applyReviewFilters(list);
+    if (!list.length) {
+        const container = document.getElementById('reviewsList');
+        if (container) container.innerHTML = `<div class="review-empty">Пока нет отзывов</div>`;
+    }
 }
 
 async function loadReviewsList(forceRefresh = false) {
@@ -3429,7 +3438,7 @@ async function loadReviewsList(forceRefresh = false) {
     }
 }
 
-    async function renderProfilePage() {
+async function renderProfilePage() {
     const container = document.getElementById("profileContent");
     if (!container) return;
     let tgUser = null;
@@ -3438,19 +3447,27 @@ async function loadReviewsList(forceRefresh = false) {
     const username = tgUser?.username ? "@" + tgUser.username : "@username";
     const photoUrl = tgUser?.photo_url || "";
 
-            let referralStats = { invited: 0, invited24h: 0, earned: 0, earned24h: 0 };
+    let referralStats = { invited: 0, invited24h: 0, earned: 0, earned24h: 0 };
     const walletPromise = fetchUserWalletBalance();
     const referralPromise = tgUser?.id
-        ? fetch(`https://placedgames.up.railway.app/api/referral-stats?userId=${tgUser.id}`)
-              .then(r => r.json())
-              .catch(() => referralStats)
-        : Promise.resolve(referralStats);
+    ? fetch(`https://placedgames.up.railway.app/api/referral-stats?userId=${tgUser.id}`)
+    .then(r => r.json())
+    .catch(() => referralStats)
+    : Promise.resolve(referralStats);
+    const refCodePromise = tgUser?.id
+    ? fetch('https://placedgames.up.railway.app/api/referral-code')
+    .then(r => r.json())
+    .then(d => (d && d.refCode) ? d.refCode : null)
+    .catch(() => null)
+    : Promise.resolve(null);
 
-    const [, referralResult] = await Promise.all([walletPromise, referralPromise]);
+    const [, referralResult, refCodeResult] = await Promise.all([walletPromise, referralPromise, refCodePromise]);
     referralStats = referralResult;
+    if (refCodeResult) userRefCode = refCodeResult;
 
-   const referralLink = tgUser?.id ? `t.me/PlacedGamesBot?startapp=ref${tgUser.id}` :
-        't.me/PlacedGamesBot';
+    const referralLink = userRefCode
+    ? `t.me/PlacedGamesBot?startapp=n${userRefCode}`
+    : (tgUser?.id ? `t.me/PlacedGamesBot?startapp=ref${tgUser.id}` : 't.me/PlacedGamesBot');
 
     container.innerHTML = `
             <div class="profile-wrapper">
@@ -3576,119 +3593,119 @@ async function loadReviewsList(forceRefresh = false) {
         `;
 
     setTimeout(() => {
-        document.getElementById('referralInvited24h')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            hapticLight();
-            const val = document.getElementById('referralInvited24h')?.textContent.replace('+',
-                '') || '0';
-            showAppAlert(
-                `+${val} – это количество пользователей, которых вы пригласили за последние 24 часа`
-            );
-        });
-        document.getElementById('referralEarned24h')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            hapticLight();
-            showAppAlert('Получайте 2% с покупок рефералов, заработанные средства начисляются на баланс кошелька');
-        });
-        document.getElementById("walletDepositBtn")?.addEventListener("click", () => {
-            hapticLight();
-            showAppAlert("В данный момент пополнить кошелёк нельзя, попробуйте позже");
-        });
-        document.getElementById("walletGoBtn")?.addEventListener("click", () => {
-            hapticLight();
-            showPage("wallet");
-        });
-        document.getElementById("cashbackInfoBtn")?.addEventListener("click", () => {
-            hapticLight();
-            showAppAlert(
-                "Ваш процент кэшбэка - 2%\n\nПолучайте кэшбэк за каждую вашу покупку и за каждую покупку приглашенного друга, используйте заработанные средства для оплаты заказов"
-            );
-        });
-                    document.getElementById("referralCopyBtn")?.addEventListener("click", async (e) => {
-            hapticLight();
-            e.stopPropagation();
-            if (navigator.clipboard) {
-                const el = e.currentTarget;
-                el.style.transform = "scale(0.85)";
-                await navigator.clipboard.writeText(`https://${referralLink}`);
-                setTimeout(() => {
-                    el.style.transform = "scale(1)";
-                }, 150);
-                showReferralCopiedAlert(referralLink);
-            }
-        });
-        document.getElementById("referralCardGoBtn")?.addEventListener("click", () => {
-hapticLight();
-showPage("referrals");
-});
-                    document.getElementById("sectionReviewsBtn")?.addEventListener("click", () => {
-            hapticLight();
-            showPage("reviews");
-        });
-        document.getElementById("sectionHelpBtn")?.addEventListener("click", () => {
-            hapticLight();
-            showPage("help");
-        });
-        document.getElementById("supportEmailBtn")?.addEventListener("click", () => {
-hapticLight();
-const msg = `Связаться с поддержкой:\n\nСпособ связи: Email\nГрафик работы: 9:00 - 0:00\nВремя ответа: до 24 часов`;
-if (window.Telegram?.WebApp?.showPopup) {
-    window.Telegram.WebApp.showPopup({
-        message: msg,
-        buttons: [
-            { id: 'go', type: 'default', text: 'Перейти' },
-            { id: 'close', type: 'close' }
-        ]
-    }, (buttonId) => {
-        if (buttonId === 'go') {
-            hapticLight();
-            window.open('mailto:placedsupport@gmail.com', '_blank');
-        }
-    });
-} else {
-    window.open('mailto:placedsupport@gmail.com', '_blank');
-}
-});
-document.getElementById("supportTgBtn")?.addEventListener("click", () => {
-hapticLight();
-const msg = `Связаться с поддержкой:\n\nСпособ связи: Telegram\nГрафик работы: 9:00 - 0:00\nВремя ответа: до 30 минут`;
-if (window.Telegram?.WebApp?.showPopup) {
-    window.Telegram.WebApp.showPopup({
-        message: msg,
-        buttons: [
-            { id: 'go', type: 'default', text: 'Перейти' },
-            { id: 'close', type: 'close' }
-        ]
-    }, (buttonId) => {
-        if (buttonId === 'go') {
-            hapticLight();
-            window.open('https://t.me/PlacedSupport', '_blank');
-        }
-    });
-} else {
-    window.open('https://t.me/PlacedSupport', '_blank');
-}
-});
-        document.getElementById("sectionSubscribeBtn")?.addEventListener("click", () => {
-            hapticLight();
-            window.open("https://t.me/placedgames", "_blank");
-        });
-                    document.getElementById("profileInfoBtn")?.addEventListener("click", async () => {
-            hapticLight();
-            await showProfileInfoAlert();
-        });
-            }, 0);
+            document.getElementById('referralInvited24h')?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    hapticLight();
+                    const val = document.getElementById('referralInvited24h')?.textContent.replace('+',
+                        '') || '0';
+                    showAppAlert(
+                        `+${val} – это количество пользователей, которых вы пригласили за последние 24 часа`
+                    );
+            });
+            document.getElementById('referralEarned24h')?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    hapticLight();
+                    showAppAlert('Получайте 2% с покупок рефералов, заработанные средства начисляются на баланс кошелька');
+            });
+            document.getElementById("walletDepositBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    showAppAlert("В данный момент пополнить кошелёк нельзя, попробуйте позже");
+            });
+            document.getElementById("walletGoBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    showPage("wallet");
+            });
+            document.getElementById("cashbackInfoBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    showAppAlert(
+                        "Ваш процент кэшбэка - 2%\n\nПолучайте кэшбэк за каждую вашу покупку и за каждую покупку приглашенного друга, используйте заработанные средства для оплаты заказов"
+                    );
+            });
+            document.getElementById("referralCopyBtn")?.addEventListener("click", async (e) => {
+                    hapticLight();
+                    e.stopPropagation();
+                    if (navigator.clipboard) {
+                        const el = e.currentTarget;
+                        el.style.transform = "scale(0.85)";
+                        await navigator.clipboard.writeText(`https://${referralLink}`);
+                        setTimeout(() => {
+                                el.style.transform = "scale(1)";
+                            }, 150);
+                        showReferralCopiedAlert(referralLink);
+                    }
+            });
+            document.getElementById("referralCardGoBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    showPage("referrals");
+            });
+            document.getElementById("sectionReviewsBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    showPage("reviews");
+            });
+            document.getElementById("sectionHelpBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    showPage("help");
+            });
+            document.getElementById("supportEmailBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    const msg = `Связаться с поддержкой:\n\nСпособ связи: Email\nГрафик работы: 9:00 - 0:00\nВремя ответа: до 24 часов`;
+                    if (window.Telegram?.WebApp?.showPopup) {
+                        window.Telegram.WebApp.showPopup({
+                                message: msg,
+                                buttons: [
+                                    { id: 'go', type: 'default', text: 'Перейти' },
+                                    { id: 'close', type: 'close' }
+                                ]
+                            }, (buttonId) => {
+                                if (buttonId === 'go') {
+                                    hapticLight();
+                                    window.open('mailto:placedsupport@gmail.com', '_blank');
+                                }
+                        });
+                    } else {
+                        window.open('mailto:placedsupport@gmail.com', '_blank');
+                    }
+            });
+            document.getElementById("supportTgBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    const msg = `Связаться с поддержкой:\n\nСпособ связи: Telegram\nГрафик работы: 9:00 - 0:00\nВремя ответа: до 30 минут`;
+                    if (window.Telegram?.WebApp?.showPopup) {
+                        window.Telegram.WebApp.showPopup({
+                                message: msg,
+                                buttons: [
+                                    { id: 'go', type: 'default', text: 'Перейти' },
+                                    { id: 'close', type: 'close' }
+                                ]
+                            }, (buttonId) => {
+                                if (buttonId === 'go') {
+                                    hapticLight();
+                                    window.open('https://t.me/PlacedSupport', '_blank');
+                                }
+                        });
+                    } else {
+                        window.open('https://t.me/PlacedSupport', '_blank');
+                    }
+            });
+            document.getElementById("sectionSubscribeBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    window.open("https://t.me/placedgames", "_blank");
+            });
+            document.getElementById("profileInfoBtn")?.addEventListener("click", async () => {
+                    hapticLight();
+                    await showProfileInfoAlert();
+            });
+        }, 0);
 }
 
 async function renderWalletPage() {
-const container = document.getElementById("walletContent");
-if (!container) return;
-container.innerHTML = '';
-const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    const container = document.getElementById("walletContent");
+    if (!container) return;
+    container.innerHTML = '';
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
 
-await fetchUserWalletBalance();
+    await fetchUserWalletBalance();
 
-            let transactions = [];
+    let transactions = [];
     if (tgUser?.id) {
         try {
             const r = await fetch(`https://placedgames.up.railway.app/api/wallet-transactions?userId=${tgUser.id}&limit=5`);
@@ -3707,7 +3724,7 @@ await fetchUserWalletBalance();
         const isPositive = tx.amount >= 0;
         let title;
         if (tx.type === 'purchase' || tx.type === 'cashback_referral' || tx.type === 'cashback_own') {
-            title = tx.order_number ? `Заказ #${tx.order_number}` : (txLabels[tx.type] || '');
+            title = tx.order_number ? `Заказ #${displayOrderNumber(tx.order_number)}` : (txLabels[tx.type] || '');
         } else {
             title = tx.amount >= 0 ? 'Пополнение' : 'Списание';
         }
@@ -3783,60 +3800,70 @@ await fetchUserWalletBalance();
         `;
 
     setTimeout(() => {
-        document.getElementById("walletPageDepositBtn")?.addEventListener("click", () => {
-            hapticLight();
-            showAppAlert("В данный момент пополнить кошелёк нельзя, попробуйте позже");
-        });
-        document.getElementById("walletPageWithdrawBtn")?.addEventListener("click", () => {
-            hapticLight();
-            showAppAlert("Вывод денежных средств в данный момент недоступен");
-        });
-        document.getElementById("walletPageCashbackInfoBtn")?.addEventListener("click", () => {
-            hapticLight();
-            showAppAlert("Ваш процент кэшбэка - 2%\n\nПолучайте кэшбэк за каждую вашу покупку и за каждую покупку приглашенного друга, используйте заработанные средства для оплаты заказов");
-        });
-        document.getElementById("walletShowMoreBtn")?.addEventListener("click", async function() {
-            hapticLight();
-            this.textContent = "Загрузка...";
-            try {
-                const r = await fetch(`https://placedgames.up.railway.app/api/wallet-transactions?userId=${tgUser.id}&limit=1000`);
-                const allTx = await r.json();
-                const wrap = document.getElementById("walletTxListWrap");
-                if (wrap) wrap.innerHTML = buildWalletTxListHtml(allTx, false);
-            } catch (e) {
-                this.textContent = "Показать все";
-            }
-        });
-    }, 0);
+            document.getElementById("walletPageDepositBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    showAppAlert("В данный момент пополнить кошелёк нельзя, попробуйте позже");
+            });
+            document.getElementById("walletPageWithdrawBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    showAppAlert("Вывод денежных средств в данный момент недоступен");
+            });
+            document.getElementById("walletPageCashbackInfoBtn")?.addEventListener("click", () => {
+                    hapticLight();
+                    showAppAlert("Ваш процент кэшбэка - 2%\n\nПолучайте кэшбэк за каждую вашу покупку и за каждую покупку приглашенного друга, используйте заработанные средства для оплаты заказов");
+            });
+            document.getElementById("walletShowMoreBtn")?.addEventListener("click", async function() {
+                    hapticLight();
+                    this.textContent = "Загрузка...";
+                    try {
+                        const r = await fetch(`https://placedgames.up.railway.app/api/wallet-transactions?userId=${tgUser.id}&limit=1000`);
+                        const allTx = await r.json();
+                        const wrap = document.getElementById("walletTxListWrap");
+                        if (wrap) wrap.innerHTML = buildWalletTxListHtml(allTx, false);
+                    } catch (e) {
+                        this.textContent = "Показать все";
+                    }
+            });
+        }, 0);
 }
 
 async function renderReferralsPage() {
-const container = document.getElementById("referralsContent");
-if (!container) return;
-container.innerHTML = '';
-const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    const container = document.getElementById("referralsContent");
+    if (!container) return;
+    container.innerHTML = '';
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
 
-let referralStats = { invited: 0, invited24h: 0, earned: 0, earned24h: 0 };
-let referralList = [];
+    let referralStats = { invited: 0, invited24h: 0, earned: 0, earned24h: 0 };
+    let referralList = [];
 
-const referralPromise = tgUser?.id
+    const referralPromise = tgUser?.id
     ? fetch(`https://placedgames.up.railway.app/api/referral-stats?userId=${tgUser.id}`)
-          .then(r => r.json()).catch(() => referralStats)
+    .then(r => r.json()).catch(() => referralStats)
     : Promise.resolve(referralStats);
 
     const listPromise = tgUser?.id
-? fetch(`https://placedgames.up.railway.app/api/referral-list?userId=${tgUser.id}&limit=5`)
-      .then(r => r.json()).catch(() => [])
-: Promise.resolve([]);
+    ? fetch(`https://placedgames.up.railway.app/api/referral-list?userId=${tgUser.id}&limit=5`)
+    .then(r => r.json()).catch(() => [])
+    : Promise.resolve([]);
 
-const [statsRes, listRes] = await Promise.all([referralPromise, listPromise]);
-referralStats = statsRes;
-referralList = (listRes || []).slice().sort((a, b) => (b.earned || 0) - (a.earned || 0));
+    const refCodePromise = tgUser?.id
+    ? fetch('https://placedgames.up.railway.app/api/referral-code')
+    .then(r => r.json())
+    .then(d => (d && d.refCode) ? d.refCode : null)
+    .catch(() => null)
+    : Promise.resolve(null);
 
-const referralLink = tgUser?.id ? `t.me/PlacedGamesBot?startapp=ref${tgUser.id}` : 't.me/PlacedGamesBot';
+    const [statsRes, listRes, refCodeRes] = await Promise.all([referralPromise, listPromise, refCodePromise]);
+    referralStats = statsRes;
+    referralList = (listRes || []).slice().sort((a, b) => (b.earned || 0) - (a.earned || 0));
+    if (refCodeRes) userRefCode = refCodeRes;
+
+    const referralLink = userRefCode
+    ? `t.me/PlacedGamesBot?startapp=n${userRefCode}`
+    : (tgUser?.id ? `t.me/PlacedGamesBot?startapp=ref${tgUser.id}` : 't.me/PlacedGamesBot');
 
     function buildReferralRowHtml(r) {
-    return `<div class="wallet-tx-row">
+        return `<div class="wallet-tx-row">
         <div class="wallet-tx-line1">
             <span class="wallet-tx-title">${escapeHtml(r.nickname || 'Пользователь')}</span>
             <span class="wallet-tx-amount" style="color:var(--text-primary);">${formatPrice(r.earned || 0)}</span>
@@ -3846,18 +3873,18 @@ const referralLink = tgUser?.id ? `t.me/PlacedGamesBot?startapp=ref${tgUser.id}`
             <span class="wallet-tx-subtitle">Заработано</span>
         </div>
     </div>`;
-}
+    }
 
-function buildReferralListHtml(list, showMoreBtn) {
-    if (!list.length) return `<div class="review-empty">Пока нет приглашённых</div>`;
-    let html = list.map(buildReferralRowHtml).join('');
-    if (showMoreBtn) html += `<div class="wallet-show-more-row" id="referralsShowMoreBtn">Показать всех рефералов</div>`;
-    return html;
-}
+    function buildReferralListHtml(list, showMoreBtn) {
+        if (!list.length) return `<div class="review-empty">Пока нет приглашённых</div>`;
+        let html = list.map(buildReferralRowHtml).join('');
+        if (showMoreBtn) html += `<div class="wallet-show-more-row" id="referralsShowMoreBtn">Показать всех рефералов</div>`;
+        return html;
+    }
 
-const listHtml = buildReferralListHtml(referralList, referralList.length >= 5);
+    const listHtml = buildReferralListHtml(referralList, referralList.length >= 5);
 
-container.innerHTML = `
+    container.innerHTML = `
     <div class="referral-wrapper">
         <div class="referral-main-card">
             <div class="referral-title">Реферальная программа</div>
@@ -3899,39 +3926,39 @@ container.innerHTML = `
     </div>
 `;
 
-setTimeout(() => {
+    setTimeout(() => {
             document.getElementById("referralsPageCopyBtn")?.addEventListener("click", async (e) => {
-        hapticLight();
-        if (navigator.clipboard) {
-            const el = e.currentTarget;
-            el.style.transform = "scale(0.85)";
-            await navigator.clipboard.writeText(`https://${referralLink}`);
-            setTimeout(() => { el.style.transform = "scale(1)"; }, 150);
-            showReferralCopiedAlert(referralLink);
-        }
-    });
-    document.getElementById("referralsPageInvited24h")?.addEventListener("click", () => {
-        hapticLight();
-        showAppAlert(`+${referralStats.invited24h} – это количество пользователей, которых вы пригласили за последние 24 часа`);
-    });
-    document.getElementById("referralsPageEarned24h")?.addEventListener("click", () => {
-        hapticLight();
-        showAppAlert('Получайте 2% с покупок рефералов, заработанные средства начисляются на баланс кошелька');
-    });
+                    hapticLight();
+                    if (navigator.clipboard) {
+                        const el = e.currentTarget;
+                        el.style.transform = "scale(0.85)";
+                        await navigator.clipboard.writeText(`https://${referralLink}`);
+                        setTimeout(() => { el.style.transform = "scale(1)"; }, 150);
+                        showReferralCopiedAlert(referralLink);
+                    }
+            });
+            document.getElementById("referralsPageInvited24h")?.addEventListener("click", () => {
+                    hapticLight();
+                    showAppAlert(`+${referralStats.invited24h} – это количество пользователей, которых вы пригласили за последние 24 часа`);
+            });
+            document.getElementById("referralsPageEarned24h")?.addEventListener("click", () => {
+                    hapticLight();
+                    showAppAlert('Получайте 2% с покупок рефералов, заработанные средства начисляются на баланс кошелька');
+            });
             document.getElementById("referralsShowMoreBtn")?.addEventListener("click", async function() {
-        hapticLight();
-        this.textContent = "Загрузка...";
-        try {
-            const r = await fetch(`https://placedgames.up.railway.app/api/referral-list?userId=${tgUser.id}&limit=1000`);
-            let allList = await r.json();
-            allList = (allList || []).slice().sort((a, b) => (b.earned || 0) - (a.earned || 0));
-            const wrap = document.getElementById("referralsListWrap");
-            if (wrap) wrap.innerHTML = buildReferralListHtml(allList, false);
-        } catch (e) {
-            this.textContent = "Показать всех";
-        }
-    });
-}, 0);
+                    hapticLight();
+                    this.textContent = "Загрузка...";
+                    try {
+                        const r = await fetch(`https://placedgames.up.railway.app/api/referral-list?userId=${tgUser.id}&limit=1000`);
+                        let allList = await r.json();
+                        allList = (allList || []).slice().sort((a, b) => (b.earned || 0) - (a.earned || 0));
+                        const wrap = document.getElementById("referralsListWrap");
+                        if (wrap) wrap.innerHTML = buildReferralListHtml(allList, false);
+                    } catch (e) {
+                        this.textContent = "Показать всех";
+                    }
+            });
+        }, 0);
 }
 
 function themeIconRotationDeg(theme) {
@@ -3959,16 +3986,22 @@ function toggleAppLanguage() {
 function updateThemeIconRotations(theme) {
     const deg = themeIconRotationDeg(theme);
     document.querySelectorAll('.theme-icon-rotatable').forEach(icon => {
-        icon.style.transform = `rotate(${deg}deg)`;
-        icon.dataset.rotation = deg;
+            icon.style.transform = `rotate(${deg}deg)`;
+            icon.dataset.rotation = deg;
     });
 }
 
 function toggleAppTheme() {
     hapticLight();
     const newTheme = getAppTheme() === 'night' ? 'tinted' : 'night';
-    applyTheme(newTheme, true);
     updateThemeIconRotations(newTheme);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+                applyTheme(newTheme, true);
+                if (document.getElementById('settings-page')?.classList.contains('active-page')) {
+                    const titleEl = document.getElementById('settingsThemeTitleText');
+                    if (titleEl) titleEl.textContent = themeTitleFor(newTheme);
+                }
+    }));
 }
 
 function getBottomMenuOffset() {
@@ -3980,7 +4013,7 @@ function applyBottomMenuOffset(offset) {
     localStorage.setItem('bottomMenuOffset', String(offset));
 }
 
-    function cycleBottomMenuOffset() {
+function cycleBottomMenuOffset() {
     const options = [16, 20, 24, 28, 32];
     const current = getBottomMenuOffset();
     const idx = options.indexOf(current);
@@ -4090,83 +4123,79 @@ function renderSettingsPage() {
     `;
 
     setTimeout(() => {
-                    document.getElementById('settingsThemeBtn')?.addEventListener('click', () => {
-            toggleAppTheme();
-            const titleEl = document.getElementById('settingsThemeTitleText');
-            if (titleEl) titleEl.textContent = themeTitleFor(getAppTheme());
-        });
-        document.getElementById('settingsLanguageBtn')?.addEventListener('click', toggleAppLanguage);
-        document.getElementById('settingsVibrationBtn')?.addEventListener('click', () => {
-            const next = !isVibrationEnabled();
-            localStorage.setItem('vibrationEnabled', next ? 'true' : 'false');
-            if (next) hapticLight();
-            renderSettingsPage();
-        });
-        document.getElementById('settingsFormatBtn')?.addEventListener('click', () => {
-            const current = localStorage.getItem('appFormat') || 'fullscreen';
-            const next = current === 'fullscreen' ? 'fullsize' : 'fullscreen';
-            applyAppFormat(next);
-            hapticLight();
-            renderSettingsPage();
-        });
-        document.getElementById('settingsClearCacheBtn')?.addEventListener('click', () => {
-            hapticLight();
-            if (window.Telegram?.WebApp?.showPopup) {
-                window.Telegram.WebApp.showPopup({
-                    message: 'Вы действительно хотите очистить кэш приложения?',
-                    buttons: [
-                        { id: 'clear', type: 'destructive', text: 'Очистить' },
-                        { id: 'close', type: 'close' }
-                    ]
-                }, (buttonId) => {
-                    if (buttonId === 'clear') {
-                        hapticMedium();
-                        clearAppCache();
+            document.getElementById('settingsThemeBtn')?.addEventListener('click', toggleAppTheme);
+            document.getElementById('settingsLanguageBtn')?.addEventListener('click', toggleAppLanguage);
+            document.getElementById('settingsVibrationBtn')?.addEventListener('click', () => {
+                    const next = !isVibrationEnabled();
+                    localStorage.setItem('vibrationEnabled', next ? 'true' : 'false');
+                    if (next) hapticLight();
+                    renderSettingsPage();
+            });
+            document.getElementById('settingsFormatBtn')?.addEventListener('click', () => {
+                    const current = localStorage.getItem('appFormat') || 'fullscreen';
+                    const next = current === 'fullscreen' ? 'fullsize' : 'fullscreen';
+                    applyAppFormat(next);
+                    hapticLight();
+                    renderSettingsPage();
+            });
+            document.getElementById('settingsClearCacheBtn')?.addEventListener('click', () => {
+                    hapticLight();
+                    if (window.Telegram?.WebApp?.showPopup) {
+                        window.Telegram.WebApp.showPopup({
+                                message: 'Вы действительно хотите очистить кэш приложения?',
+                                buttons: [
+                                    { id: 'clear', type: 'destructive', text: 'Очистить' },
+                                    { id: 'close', type: 'close' }
+                                ]
+                            }, (buttonId) => {
+                                if (buttonId === 'clear') {
+                                    hapticMedium();
+                                    clearAppCache();
+                                }
+                        });
                     }
-                });
-            }
-        });
-        document.getElementById('settingsOffsetBtn')?.addEventListener('click', () => {
-            cycleBottomMenuOffset();
-        });
-    }, 0);
+            });
+            document.getElementById('settingsOffsetBtn')?.addEventListener('click', () => {
+                    cycleBottomMenuOffset();
+            });
+        }, 0);
 }
 
 const HELP_SUBTITLE_TEXT = "Справочная информация страницы";
 
 const helpSectionsData = [
     { key: 'catalog', title: 'Каталог', items: [
-        { q: 'Сортировка и поиск', a: 'Для быстрого поиска сервиса или товара вы можете использовать поиск по названию или использовать фильтры категорий находящийся справа от графы поиска.' },
-        { q: 'Товары и количество', a: 'Для того чтобы добавить товар в корзину нажмите кнопку «В корзину», после чего товар будет добавлен в корзину, также вы можете добавить несколько позиций товара используя кнопку «+».' },
-                ]},
+            { q: 'Сортировка и поиск', a: 'Для быстрого поиска сервиса или товара вы можете использовать поиск по названию или использовать фильтры категорий находящийся справа от графы поиска.' },
+            { q: 'Товары и количество', a: 'Для того чтобы добавить товар в корзину нажмите кнопку «В корзину», после чего товар будет добавлен в корзину, также вы можете добавить несколько позиций товара используя кнопку «+».' },
+    ]},
     { key: 'cart', title: 'Корзина', items: [
-        { q: 'Информация о товаре', a: 'Чтобы узнать информацию о товаре нажмите на иконку информации в правом верхнем углу карточки товара.' },
-        { q: 'Применение промокода', a: 'Нажмите на круглую кнопку рядом с общей стоимостью и введите промокод в открывшемся поле.' },
-        { q: 'Оформление и оплата', a: 'На странице оформления укажите нужные данные и выберите способ оплаты, после перехода к оплате отправьте нужную сумму по указанным реквизитам и нажмите кнопку «Оформить заказ».' },
+            { q: 'Информация о товаре', a: 'Чтобы узнать информацию о товаре нажмите на иконку информации в правом верхнем углу карточки товара.' },
+            { q: 'Применение промокода', a: 'Нажмите на круглую кнопку рядом с общей стоимостью и введите промокод в открывшемся поле.' },
+            { q: 'Оформление и оплата', a: 'На странице оформления укажите нужные данные и выберите способ оплаты, после перехода к оплате отправьте нужную сумму по указанным реквизитам и нажмите кнопку «Оформить заказ».' },
     ]},
     { key: 'orders', title: 'Заказы', items: [
-        { q: 'Статус «Ожидает проверки»', a: 'Данный статус появляется сразу после оформления заказа и означает то, что ваш перевод ожидает проверки, после подтверждения перевода статус заказа изменится на «Ожидает выполнения».' },
-        { q: 'Статус «Ожидание кода»', a: 'Если вы увидели данный статус в карточке заказа, пожалуйста нажмите на карточку заказа и введите код, который вам придёт, в соответствующее поле на странице заказа.' },
-        { q: 'Начисление кэшбэка', a: 'Кэшбэк начисляется автоматически после выполнения заказа, если оплата была произведена не с кошелька.' },
+            { q: 'Статус «Ожидает проверки»', a: 'Данный статус появляется сразу после оформления заказа и означает то, что ваш перевод ожидает проверки, после подтверждения перевода статус заказа изменится на «Ожидает выполнения».' },
+            { q: 'Статус «Ожидание кода»', a: 'Если вы увидели данный статус в карточке заказа, пожалуйста нажмите на карточку заказа и введите код, который вам придёт, в соответствующее поле на странице заказа.' },
+            { q: 'Начисление кэшбэка', a: 'Кэшбэк начисляется автоматически после выполнения заказа, если оплата была произведена не с кошелька.' },
     ]},
     { key: 'profile', title: 'Профиль', items: [
-        { q: 'Статистика аккаунта', a: 'Нажмите на иконку информации рядом с вашим именем в верхней части карточки профиля.' },
-        { q: 'Смена темы приложения', a: 'Нажмите на иконку темы в правом верхнем углу, чтобы переключить светлую и тёмную тему.' },
-        { q: 'Изм. формат приложения', a: 'Чтобы изменить формат приложения зажмите круглый элемент нижнего меню с вашей аватаркой профиля и удерживайте 2 секунды, после чего следуйте инструкции.' },
+            { q: 'Статистика аккаунта', a: 'Нажмите на иконку информации рядом с вашим именем в верхней части карточки профиля.' },
+            { q: 'Смена темы приложения', a: 'Нажмите на иконку темы в правом верхнем углу, чтобы переключить светлую и тёмную тему.' },
+            { q: 'Изм. формат приложения', a: 'Чтобы изменить формат приложения зажмите круглый элемент нижнего меню с вашей аватаркой профиля и удерживайте 2 секунды, после чего следуйте инструкции.' },
     ]},
     { key: 'reviews', title: 'Отзывы', items: [
-        { q: 'Как оставить отзыв', a: 'Перейдите на страницу выполненного заказа и нажмите кнопку «Оставить отзыв».' },
-        { q: 'Почему нельзя оставить отзыв повторно', a: 'На каждый заказ можно оставить только один отзыв.' },
-        { q: 'Фильтрация отзывов', a: 'Используйте поиск и фильтры по сервису и оценке в верхней части страницы.' },
+            { q: 'Как оставить отзыв', a: 'Перейдите на страницу выполненного заказа и нажмите кнопку «Оставить отзыв».' },
+            { q: 'Почему нельзя оставить отзыв повторно', a: 'На каждый заказ можно оставить только один отзыв.' },
+            { q: 'Фильтрация отзывов', a: 'Используйте поиск и фильтры по сервису и оценке в верхней части страницы.' },
     ]},
     { key: 'wallet', title: 'Кошелёк', items: [
-        { q: 'Начисление кэшбэка', a: 'Кэшбэк начисляется за каждую вашу покупку, но получить кэшбэк можно только если способ оплаты — любой перечисленный банк, а не «Кошелёк».' },
-        { q: 'Пополнение и вывод', a: 'В данный момент функции пополнения и вывода средств временно недоступны, следите за обновлениями в новостном канале.' },
+            { q: 'Начисление кэшбэка', a: 'Кэшбэк начисляется за каждую вашу покупку, но получить кэшбэк можно только если способ оплаты — любой перечисленный банк, а не «Кошелёк».' },
+            { q: 'Пополнение и вывод', a: 'В данный момент функции пополнения и вывода средств временно недоступны, следите за обновлениями в новостном канале.' },
     ]},
     { key: 'referrals', title: 'Рефералы', items: [
-        { q: 'Как получить реферальную ссылку', a: 'Скопируйте ссылку на странице «Рефералы» и поделитесь ей с друзьями.' },
-        { q: 'Сколько можно заработать', a: 'Вы получаете 2% от каждой покупки приглашённого друга на баланс кошелька.' },
-        { q: 'Статистика приглашений', a: 'Показывает общее количество приглашённых пользователей и количество за последние 24 часа.' },
+            { q: 'Как получить реферальную ссылку', a: 'Скопируйте ссылку на странице «Рефералы» и поделитесь ей с друзьями.' },
+            { q: 'Сколько можно заработать', a: 'Вы получаете 2% от каждой покупки приглашённого друга на баланс кошелька.' },
+            { q: 'Статистика приглашений', a: 'Показывает общее количество приглашённых пользователей и количество за последние 24 часа.' },
     ]},
 ];
 
@@ -4180,10 +4209,10 @@ function buildHelpFaqItemHtml(sectionKey, idx, item) {
     </div>`;
 }
 
-        function buildHelpSectionHtml(section, number) {
+function buildHelpSectionHtml(section, number) {
     const itemsHtml = section.items.map((item, idx) => {
-        const divider = idx > 0 ? '<div class="help-faq-divider"></div>' : '';
-        return divider + buildHelpFaqItemHtml(section.key, idx, item);
+            const divider = idx > 0 ? '<div class="help-faq-divider"></div>' : '';
+            return divider + buildHelpFaqItemHtml(section.key, idx, item);
     }).join('');
     return `<div class="referral-wrapper" style="margin-bottom:13px;">
             <div class="referral-main-card">
@@ -4198,19 +4227,19 @@ function buildHelpFaqItemHtml(sectionKey, idx, item) {
         </div>`;
 }
 
-    function attachHelpFaqHandlers() {
-document.querySelectorAll('.help-faq-row').forEach(row => {
-    if (row.dataset.bound === 'true') return;
-    row.dataset.bound = 'true';
-    row.addEventListener('click', () => {
-        hapticLight();
-        const item = row.closest('.help-faq-item');
-        if (!item) return;
-        const wasOpen = item.classList.contains('open');
-        document.querySelectorAll('#helpContent .help-faq-item.open').forEach(el => el.classList.remove('open'));
-        if (!wasOpen) item.classList.add('open');
+function attachHelpFaqHandlers() {
+    document.querySelectorAll('.help-faq-row').forEach(row => {
+            if (row.dataset.bound === 'true') return;
+            row.dataset.bound = 'true';
+            row.addEventListener('click', () => {
+                    hapticLight();
+                    const item = row.closest('.help-faq-item');
+                    if (!item) return;
+                    const wasOpen = item.classList.contains('open');
+                    document.querySelectorAll('#helpContent .help-faq-item.open').forEach(el => el.classList.remove('open'));
+                    if (!wasOpen) item.classList.add('open');
+            });
     });
-});
 }
 
 function renderHelpPage() {
@@ -4226,7 +4255,7 @@ function saveCurrentPage(pageId) {
 
 function getLastPage() {
     const savedPage = localStorage.getItem("lastPage");
-            if (savedPage === "payment") {
+    if (savedPage === "payment") {
         const hasCart = Object.keys(cart).length > 0;
         const canRestore = hasCart && getCardNumberFromValue(checkoutData.paymentMethod) && pendingOrderNumber;
         if (canRestore) return "payment";
@@ -4243,22 +4272,22 @@ function getLastPage() {
 
 function injectPageHeader() {
     const pageTitles = {
-'catalog': 'Каталог',
-'cart': 'Корзина',
-'orders': 'Заказы',
-'profile': 'Профиль',
-'wallet': 'Кошелёк',
-'referrals': 'Рефералы',
-'settings': 'Настройки',
-'checkout': 'Оформление',
-'payment': 'Оплата',
-'order-detail': 'Заказ',
-'reviews': 'Отзывы',
-    'write-review': 'Оставить отзыв',
-'help': 'Справка',
-'game': currentGame?.name || 'Игра',
-'buy': games.find(g => g.id === buySel.gameId)?.name || 'Покупка',
-};
+        'catalog': 'Каталог',
+        'cart': 'Корзина',
+        'orders': 'Заказы',
+        'profile': 'Профиль',
+        'wallet': 'Кошелёк',
+        'referrals': 'Рефералы',
+        'settings': 'Настройки',
+        'checkout': 'Оформление',
+        'payment': 'Оплата',
+        'order-detail': 'Заказ',
+        'reviews': 'Отзывы',
+        'write-review': 'Оставить отзыв',
+        'help': 'Справка',
+        'game': currentGame?.name || 'Игра',
+        'buy': games.find(g => g.id === buySel.gameId)?.name || 'Покупка',
+    };
 
     const activePage = document.querySelector('.page.active-page');
     if (!activePage) return;
@@ -4266,7 +4295,7 @@ function injectPageHeader() {
     const title = pageTitles[pageId];
     if (title === undefined) return;
 
-                    document.querySelectorAll('.page-header-sticky').forEach(el => el.remove());
+    document.querySelectorAll('.page-header-sticky').forEach(el => el.remove());
 
     activePage.insertAdjacentHTML('afterbegin', renderPageHeader(title, pageId));
 
@@ -4300,7 +4329,7 @@ function showPage(pageId, skipHistoryAdd = false) {
         }
     }
     if (pageId === "catalog") { navigationHistory = []; }
-            if (pageId === "payment") {
+    if (pageId === "payment") {
         localStorage.setItem("lastPage", "payment");
     } else if (localStorage.getItem("lastPage") === "payment") {
         localStorage.setItem("lastPage", "cart");
@@ -4326,12 +4355,13 @@ function showPage(pageId, skipHistoryAdd = false) {
         currentGame = null;
         savedGameScrollY = 0;
         catalogServiceFilter = "Все сервисы";
+        updateMenuSlider(pageId);
         renderCatalog();
         if (checkoutBlock) checkoutBlock.style.display = "none";
     }
     if (pageId === "cart") { renderCartPage(); }
     if (pageId === "buy") { renderBuyPage(); }
-            if (pageId === "orders") {
+    if (pageId === "orders") {
         runWithLoader(() => renderOrdersPage(), 2000);
         if (checkoutBlock) checkoutBlock.style.display = "none";
     }
@@ -4340,17 +4370,17 @@ function showPage(pageId, skipHistoryAdd = false) {
         if (checkoutBlock) checkoutBlock.style.display = "none";
     }
     if (pageId === "wallet") {
-runWithLoader(() => renderWalletPage(), 0);
-if (checkoutBlock) checkoutBlock.style.display = "none";
-}
-            if (pageId === "referrals") {
-runWithLoader(() => renderReferralsPage(), 0);
-if (checkoutBlock) checkoutBlock.style.display = "none";
-}
+        runWithLoader(() => renderWalletPage(), 0);
+        if (checkoutBlock) checkoutBlock.style.display = "none";
+    }
+    if (pageId === "referrals") {
+        runWithLoader(() => renderReferralsPage(), 0);
+        if (checkoutBlock) checkoutBlock.style.display = "none";
+    }
     if (pageId === "settings") {
-renderSettingsPage();
-if (checkoutBlock) checkoutBlock.style.display = "none";
-}
+        renderSettingsPage();
+        if (checkoutBlock) checkoutBlock.style.display = "none";
+    }
     if (pageId === "checkout") { renderCheckoutForm(); }
     if (pageId === "payment") { renderPaymentPage(); }
     if (pageId === "filter") {
@@ -4369,7 +4399,7 @@ if (checkoutBlock) checkoutBlock.style.display = "none";
         if (checkoutBlock) checkoutBlock.style.display = "none";
         setTimeout(() => window.scrollTo({ top: savedGameScrollY, behavior: 'instant' }), 50);
     }
-            if (pageId === "write-review") {
+    if (pageId === "write-review") {
         runWithLoader(() => renderWriteReviewPage(), 2000);
         if (checkoutBlock) checkoutBlock.style.display = "none";
     }
@@ -4392,7 +4422,7 @@ if (checkoutBlock) checkoutBlock.style.display = "none";
         }
         saveCurrentPage(pageId);
         updateMenuSlider(pageId);
-            } else if (pageId === "buy") {
+    } else if (pageId === "buy") {
         document.querySelectorAll(".menu-item").forEach(btn => btn.classList.remove("active"));
         document.querySelector('.menu-item[data-page="catalog"]')?.classList.add("active");
         document.getElementById("profileMenuWrapper")?.classList.remove("active");
@@ -4421,65 +4451,65 @@ function initBackButtonHandler() {
     if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
         tg.BackButton.onClick(function() {
-if (navigationHistory.length > 0) {
-    const previousPage = navigationHistory.pop();
-    if (previousPage === "catalog") {
-        currentGame = null;
-        savedGameScrollY = 0;
-        showPage("catalog", true);
-    } else if (previousPage === "game") {
-        document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
-        document.getElementById("game-page")?.classList.add("active-page");
-        document.getElementById("cartCheckoutFixed").style.display = "none";
-        document.querySelectorAll(".menu-item").forEach(b => b.classList.remove("active"));
-        document.querySelector('.menu-item[data-page="catalog"]')?.classList.add("active");
-        document.getElementById("profileMenuWrapper")?.classList.remove("active");
-        updateMenuSlider("catalog");
-        injectPageHeader();
-        tg.BackButton.show();
-        window.scrollTo({ top: savedGameScrollY, behavior: 'instant' });
-            } else if (previousPage === "orders") {
-        document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
-        document.getElementById("orders-page")?.classList.add("active-page");
-        document.getElementById("cartCheckoutFixed").style.display = "none";
-        document.querySelectorAll(".menu-item").forEach(b => b.classList.remove("active"));
-        document.querySelector('.menu-item[data-page="orders"]')?.classList.add("active");
-        document.getElementById("profileMenuWrapper")?.classList.remove("active");
-        updateMenuSlider("orders");
-        injectPageHeader();
-        tg.BackButton.show();
-        window.scrollTo({ top: savedOrdersScrollY, behavior: 'instant' });
-            } else if (previousPage === "reviews") {
-        document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
-        document.getElementById("reviews-page")?.classList.add("active-page");
-        document.getElementById("cartCheckoutFixed").style.display = "none";
-        document.querySelectorAll(".menu-item").forEach(b => b.classList.remove("active"));
-        document.getElementById("profileMenuWrapper")?.classList.add("active");
-        updateMenuSlider("profile");
-        injectPageHeader();
-        renderReviewsFixedAction();
-        tg.BackButton.show();
-        window.scrollTo({ top: savedReviewsScrollY, behavior: 'instant' });
-    } else if (previousPage === "order-detail") {
-        if (currentOpenOrder) {
-            const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-            const isOwner = String(currentOpenOrder.user_id) === String(tgUserId);
-            showOrderDetail(currentOpenOrder, isOwner);
-        } else {
-            showPage(previousPage, true);
-        }
-    } else {
-                    showPage(previousPage, true);
-                }
-            } else {
-                if (currentGame) {
-                    currentGame = null;
-                    savedGameScrollY = 0;
-                    showPage("catalog", true);
+                if (navigationHistory.length > 0) {
+                    const previousPage = navigationHistory.pop();
+                    if (previousPage === "catalog") {
+                        currentGame = null;
+                        savedGameScrollY = 0;
+                        showPage("catalog", true);
+                    } else if (previousPage === "game") {
+                        document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
+                        document.getElementById("game-page")?.classList.add("active-page");
+                        document.getElementById("cartCheckoutFixed").style.display = "none";
+                        document.querySelectorAll(".menu-item").forEach(b => b.classList.remove("active"));
+                        document.querySelector('.menu-item[data-page="catalog"]')?.classList.add("active");
+                        document.getElementById("profileMenuWrapper")?.classList.remove("active");
+                        updateMenuSlider("catalog");
+                        injectPageHeader();
+                        tg.BackButton.show();
+                        window.scrollTo({ top: savedGameScrollY, behavior: 'instant' });
+                    } else if (previousPage === "orders") {
+                        document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
+                        document.getElementById("orders-page")?.classList.add("active-page");
+                        document.getElementById("cartCheckoutFixed").style.display = "none";
+                        document.querySelectorAll(".menu-item").forEach(b => b.classList.remove("active"));
+                        document.querySelector('.menu-item[data-page="orders"]')?.classList.add("active");
+                        document.getElementById("profileMenuWrapper")?.classList.remove("active");
+                        updateMenuSlider("orders");
+                        injectPageHeader();
+                        tg.BackButton.show();
+                        window.scrollTo({ top: savedOrdersScrollY, behavior: 'instant' });
+                    } else if (previousPage === "reviews") {
+                        document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
+                        document.getElementById("reviews-page")?.classList.add("active-page");
+                        document.getElementById("cartCheckoutFixed").style.display = "none";
+                        document.querySelectorAll(".menu-item").forEach(b => b.classList.remove("active"));
+                        document.getElementById("profileMenuWrapper")?.classList.add("active");
+                        updateMenuSlider("profile");
+                        injectPageHeader();
+                        renderReviewsFixedAction();
+                        tg.BackButton.show();
+                        window.scrollTo({ top: savedReviewsScrollY, behavior: 'instant' });
+                    } else if (previousPage === "order-detail") {
+                        if (currentOpenOrder) {
+                            const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+                            const isOwner = String(currentOpenOrder.user_id) === String(tgUserId);
+                            showOrderDetail(currentOpenOrder, isOwner);
+                        } else {
+                            showPage(previousPage, true);
+                        }
+                    } else {
+                        showPage(previousPage, true);
+                    }
                 } else {
-                    showPage("catalog");
+                    if (currentGame) {
+                        currentGame = null;
+                        savedGameScrollY = 0;
+                        showPage("catalog", true);
+                    } else {
+                        showPage("catalog");
+                    }
                 }
-            }
         });
     }
 }
@@ -4521,29 +4551,29 @@ function applyTheme(theme, persist) {
     }
 }
 
-    function initTheme() {
+function initTheme() {
     applyTheme(getAppTheme(), false);
     applyBottomMenuOffset(getBottomMenuOffset());
 }
 
-    function requestTelegramWriteAccess() {
+function requestTelegramWriteAccess() {
     try {
         const tg = window.Telegram?.WebApp;
         if (!tg || typeof tg.requestWriteAccess !== 'function') return;
         if (localStorage.getItem('writeAccessRequested') === 'true') return;
         tg.requestWriteAccess((granted) => {
-            localStorage.setItem('writeAccessRequested', 'true');
+                localStorage.setItem('writeAccessRequested', 'true');
         });
     } catch (e) {}
 }
 
-        async function initApp() {
+async function initApp() {
     initTheme();
     loadCartFromLocalStorage();
     requestTelegramWriteAccess();
     const tgU = window.Telegram?.WebApp?.initDataUnsafe?.user;
 
-            if (tgU?.id) {
+    if (tgU?.id) {
         const avatarEl = document.getElementById("profileMenuAvatar");
         const cachedAvatar = getCachedAvatarDataUrl(tgU.id);
         if (avatarEl && cachedAvatar) {
@@ -4584,7 +4614,7 @@ function applyTheme(theme, persist) {
     const slider = document.getElementById("menuSlider");
     if (slider) slider.classList.add("no-transition");
 
-            showPage(lastPage);
+    showPage(lastPage);
     if (lastPage === 'payment') {
         navigationHistory = ['cart', 'checkout'];
         document.querySelector('.menu-item[data-page="cart"]')?.classList.add('active');
@@ -4604,163 +4634,179 @@ function applyTheme(theme, persist) {
         "startapp");
 
     let referrerIdForTrack = null;
-    if (startParam && startParam.startsWith("ref") && tgU?.id) {
+    let referrerCodeForTrack = null;
+    if (startParam && startParam.startsWith("n") && /^[a-z0-9]{6}$/.test(startParam.slice(1)) && tgU?.id) {
+        referrerCodeForTrack = startParam.slice(1);
+    } else if (startParam && startParam.startsWith("ref") && tgU?.id) {
         const parsedRef = parseInt(startParam.replace("ref", ""));
-        if (parsedRef && parsedRef !== tgU.id) referrerIdForTrack = parsedRef;
+        if (parsedRef && parsedRef !== tgU.id) referrerIdForTrack = String(parsedRef);
     }
 
     if (tgU?.id) {
         fetch('https://placedgames.up.railway.app/api/track-user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: String(tgU.id),
-                userName: tgU.first_name || null,
-                userUsername: tgU.username || null,
-                photoUrl: tgU.photo_url || null,
-                referrerId: referrerIdForTrack ? String(referrerIdForTrack) : null
-            })
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                        userId: String(tgU.id),
+                        userName: tgU.first_name || null,
+                        userUsername: tgU.username || null,
+                        photoUrl: tgU.photo_url || null,
+                        referrerId: referrerIdForTrack,
+                        referrerCode: referrerCodeForTrack
+                })
+        }).then(r => r.json()).then(d => {
+                if (d && d.success && d.refCode) userRefCode = d.refCode;
         }).catch(() => {});
     }
 
     if (startParam && startParam.startsWith('order_')) {
         const orderNum = startParam.slice(6);
         loadUserOrders().then(() => {
-            const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-            const found = orders.find(o => String(o.order_number) === orderNum);
-            if (found) {
-                const isOwner = String(found.user_id) === String(tgUserId);
-                navigationHistory.push('orders');
-                setTimeout(() => showOrderDetail(found, isOwner), 0);
-            } else {
-                fetch('https://placedgames.up.railway.app/api/refresh-order', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ orderNumber: orderNum })
+                const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+                const found = orders.find(o => String(o.order_number) === orderNum);
+                if (found) {
+                    const isOwner = String(found.user_id) === String(tgUserId);
+                    navigationHistory.push('orders');
+                    setTimeout(() => showOrderDetail(found, isOwner), 0);
+                } else {
+                    fetch('https://placedgames.up.railway.app/api/refresh-order', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ orderNumber: orderNum })
                     })
                     .then(r => r.json())
                     .then(order => {
-                        if (order && order.id) {
-                            const isOwner = String(order.user_id) === String(tgUserId);
-                            navigationHistory.push('orders');
-                            setTimeout(() => showOrderDetail(order, isOwner), 0);
-                        }
+                            if (order && order.id) {
+                                const isOwner = String(order.user_id) === String(tgUserId);
+                                navigationHistory.push('orders');
+                                setTimeout(() => showOrderDetail(order, isOwner), 0);
+                            }
                     })
                     .catch(() => {});
-            }
+                }
         });
     }
 }
 
-   (function() {
-    if (window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-                    tg.ready();
-        tg.expand();
-        try {
-            let tgPopupOpen = false;
-            let tgPopupTimer = null;
-            const guardPopup = (name, cbIndex) => {
-                const orig = tg[name];
-                if (typeof orig !== 'function') return;
-                tg[name] = function(...args) {
-                    const cb = args[cbIndex];
-                    if (tgPopupOpen) {
-                        if (typeof cb === 'function') { try { cb(); } catch (e) {} }
-                        return;
-                    }
-                    tgPopupOpen = true;
-                    clearTimeout(tgPopupTimer);
-                    tgPopupTimer = setTimeout(() => { tgPopupOpen = false; }, 60000);
-                    args[cbIndex] = function(...r) {
-                        tgPopupOpen = false;
+(function() {
+        if (window.Telegram && window.Telegram.WebApp) {
+            const tg = window.Telegram.WebApp;
+            tg.ready();
+            tg.expand();
+            try {
+                let tgPopupOpen = false;
+                let tgPopupTimer = null;
+                const guardPopup = (name, cbIndex) => {
+                    const orig = tg[name];
+                    if (typeof orig !== 'function') return;
+                    tg[name] = function(...args) {
+                        const cb = args[cbIndex];
+                        if (tgPopupOpen) {
+                            if (typeof cb === 'function') { try { cb(); } catch (e) {} }
+                            return;
+                        }
+                        tgPopupOpen = true;
                         clearTimeout(tgPopupTimer);
-                        if (typeof cb === 'function') return cb.apply(this, r);
+                        tgPopupTimer = setTimeout(() => { tgPopupOpen = false; }, 60000);
+                        args[cbIndex] = function(...r) {
+                            tgPopupOpen = false;
+                            clearTimeout(tgPopupTimer);
+                            if (typeof cb === 'function') return cb.apply(this, r);
+                        };
+                        try {
+                            return orig.apply(tg, args);
+                        } catch (e) {
+                            tgPopupOpen = false;
+                            clearTimeout(tgPopupTimer);
+                        }
                     };
-                    try {
-                        return orig.apply(tg, args);
-                    } catch (e) {
-                        tgPopupOpen = false;
-                        clearTimeout(tgPopupTimer);
-                    }
                 };
-            };
-            guardPopup('showPopup', 1);
-        } catch (e) {}
-        try {
-            const savedFormat = localStorage.getItem('appFormat') || 'fullscreen';
-            if (savedFormat === 'fullsize') {
-                if (tg.exitFullscreen) tg.exitFullscreen();
-            } else {
-                tg.requestFullscreen();
-            }
-        } catch (e) {}
-        try { const bg0 = getThemeBgColor(getAppTheme()); tg.setHeaderColor(bg0); tg.setBackgroundColor(bg0); } catch (e) {}
-        try { if (tg.disableClosingConfirmation) tg.disableClosingConfirmation(); } catch (e) {}
-        try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) {}
-        initBackButtonHandler();
-        tg.BackButton.hide();
-    }
+                guardPopup('showPopup', 1);
+            } catch (e) {}
+            try {
+                const savedFormat = localStorage.getItem('appFormat') || 'fullscreen';
+                if (savedFormat === 'fullsize') {
+                    if (tg.exitFullscreen) tg.exitFullscreen();
+                } else {
+                    tg.requestFullscreen();
+                }
+            } catch (e) {}
+            try { const bg0 = getThemeBgColor(getAppTheme()); tg.setHeaderColor(bg0); tg.setBackgroundColor(bg0); } catch (e) {}
+            try { if (tg.disableClosingConfirmation) tg.disableClosingConfirmation(); } catch (e) {}
+            try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) {}
+            initBackButtonHandler();
+            tg.BackButton.hide();
+        }
 })();
 
 document.addEventListener("click", function(e) {
-    if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA" && e.target.tagName !== "SELECT") {
-        if (e.target.closest('#codeActionBlock')) return;
-        if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement
-                .tagName === "TEXTAREA" || document.activeElement.tagName === "SELECT")) {
-            document.activeElement.blur();
+        if (e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA" && e.target.tagName !== "SELECT") {
+            if (e.target.closest('#codeActionBlock')) return;
+            if (document.activeElement && (document.activeElement.tagName === "INPUT" || document.activeElement
+                    .tagName === "TEXTAREA" || document.activeElement.tagName === "SELECT")) {
+                document.activeElement.blur();
+            }
         }
-    }
+});
+
+function updateInputFocusClasses(target) {
+    const isTextField = !!target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA');
+    document.body.classList.toggle('input-focused', isTextField);
+    document.body.classList.toggle('cart-input-focused', isTextField && !!target.closest('#cartCheckoutFixed'));
+}
+document.addEventListener('focusin', (e) => updateInputFocusClasses(e.target));
+document.addEventListener('focusout', () => {
+        setTimeout(() => updateInputFocusClasses(document.activeElement), 0);
 });
 
 const searchInputEl = document.getElementById("searchInput");
 if (searchInputEl) {
     searchInputEl.addEventListener("input", (e) => {
-        searchQuery = e.target.value;
-        renderCatalog();
+            searchQuery = e.target.value;
+            renderCatalog();
     });
 }
 
 setupSearchClear('searchInput', 'searchClearBtn');
 
-    document.querySelectorAll(".menu-item").forEach(btn => {
-    btn.addEventListener("click", () => {
-        if (btn.id === "profileMenuBtn" && profileLongPressFired) {
-            profileLongPressFired = false;
-            return;
-        }
-        if (btn.id === "profileMenuBtn") {
-            const nowTap = Date.now();
-            const isDoubleTap = nowTap - lastProfileTapAt < PROFILE_DOUBLE_TAP_MS;
-            lastProfileTapAt = isDoubleTap ? 0 : nowTap;
-            if (isDoubleTap) {
-                hapticMedium();
-                if (!document.getElementById('settings-page')?.classList.contains('active-page')) showPage('settings');
-                return;
-            }
-        }
-        hapticLight();
-        if (btn.dataset.page === "catalog" && currentGame && !isBuyPageActive()) {
-            if (document.getElementById("game-page").classList.contains("active-page")) {
-                currentGame = null;
-                savedGameScrollY = 0;
-                showPage("catalog", true);
-                return;
-            }
-            document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
-            document.getElementById("game-page")?.classList.add("active-page");
-            document.querySelectorAll(".menu-item").forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-            document.getElementById("profileMenuWrapper")?.classList.remove("active");
-            updateMenuSlider("catalog");
-            injectPageHeader();
-            document.getElementById("cartCheckoutFixed").style.display = "none";
-            if (window.Telegram?.WebApp) window.Telegram.WebApp.BackButton.show();
-            window.scrollTo({ top: savedGameScrollY, behavior: 'instant' });
-            return;
-        }
-        showPage(btn.dataset.page);
-    });
+document.querySelectorAll(".menu-item").forEach(btn => {
+        btn.addEventListener("click", () => {
+                if (btn.id === "profileMenuBtn" && profileLongPressFired) {
+                    profileLongPressFired = false;
+                    return;
+                }
+                if (btn.id === "profileMenuBtn") {
+                    const nowTap = Date.now();
+                    const isDoubleTap = nowTap - lastProfileTapAt < PROFILE_DOUBLE_TAP_MS;
+                    lastProfileTapAt = isDoubleTap ? 0 : nowTap;
+                    if (isDoubleTap) {
+                        hapticMedium();
+                        if (!document.getElementById('settings-page')?.classList.contains('active-page')) showPage('settings');
+                        return;
+                    }
+                }
+                hapticLight();
+                if (btn.dataset.page === "catalog" && currentGame && !isBuyPageActive()) {
+                    if (document.getElementById("game-page").classList.contains("active-page")) {
+                        currentGame = null;
+                        savedGameScrollY = 0;
+                        showPage("catalog", true);
+                        return;
+                    }
+                    document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
+                    document.getElementById("game-page")?.classList.add("active-page");
+                    document.querySelectorAll(".menu-item").forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    document.getElementById("profileMenuWrapper")?.classList.remove("active");
+                    updateMenuSlider("catalog");
+                    injectPageHeader();
+                    document.getElementById("cartCheckoutFixed").style.display = "none";
+                    if (window.Telegram?.WebApp) window.Telegram.WebApp.BackButton.show();
+                    window.scrollTo({ top: savedGameScrollY, behavior: 'instant' });
+                    return;
+                }
+                showPage(btn.dataset.page);
+        });
 });
 
 function updateMenuSlider(pageId) {
@@ -4770,6 +4816,7 @@ function updateMenuSlider(pageId) {
     const profileCircle = document.getElementById("profileMenuWrapper");
     if (!slider || !wrapper || !pill || !profileCircle) return;
 
+    slider.getBoundingClientRect();
     const wrapperRect = wrapper.getBoundingClientRect();
 
     if (pageId === "profile") {
@@ -4782,85 +4829,81 @@ function updateMenuSlider(pageId) {
     }
 
     const pages = ["catalog", "cart", "orders"];
-const index = pages.indexOf(pageId);
-if (index === -1) {
-slider.style.opacity = "0";
-return;
+    const index = pages.indexOf(pageId);
+    if (index === -1) {
+        slider.style.opacity = "0";
+        return;
+    }
+    const pillRect = pill.getBoundingClientRect();
+    const segmentWidth = (pillRect.width - 8) / 3;
+    slider.style.opacity = "1";
+    slider.style.left = (pillRect.left - wrapperRect.left + 4 + index * segmentWidth) + "px";
+    slider.style.width = segmentWidth + "px";
+    slider.style.borderRadius = "50px";
 }
-const pillRect = pill.getBoundingClientRect();
-const segmentWidth = (pillRect.width - 8) / 3;
-slider.style.opacity = "1";
-slider.style.left = (pillRect.left - wrapperRect.left + 4 + index * segmentWidth) + "px";
-slider.style.width = segmentWidth + "px";
-slider.style.borderRadius = "50px";
-   }
 
 document.querySelectorAll(".page").forEach(p => p.classList.remove("active-page"));
 initApp().catch(e => showCrashRecoveryUI(e.message));
 
-    document.addEventListener('click', function(e) {
-    const doubleBtn = e.target.closest('#headerDoubleBtn');
-    if (!doubleBtn) return;
+document.addEventListener('click', function(e) {
+        const doubleBtn = e.target.closest('#headerDoubleBtn');
+        if (!doubleBtn) return;
 
-    const isRefresh = e.target.closest('#headerRefreshIcon');
-    const isTheme = e.target.closest('#headerThemeIcon');
+        const isRefresh = e.target.closest('#headerRefreshIcon');
+        const isTheme = e.target.closest('#headerThemeIcon');
 
-            if (isRefresh) {
-hapticLight();
-showTopLoader();
-Promise.resolve(refreshCurrentPage()).finally(hideTopLoader);
-    } else if (isTheme) {
-        toggleAppTheme();
-        if (document.getElementById('settings-page')?.classList.contains('active-page')) {
-            const titleEl = document.getElementById('settingsThemeTitleText');
-            if (titleEl) titleEl.textContent = themeTitleFor(getAppTheme());
+        if (isRefresh) {
+            hapticLight();
+            showTopLoader();
+            Promise.resolve(refreshCurrentPage()).finally(hideTopLoader);
+        } else if (isTheme) {
+            toggleAppTheme();
         }
-    }
 });
 
-    (function setupProfileLongPress() {
-    const profileBtn = document.getElementById("profileMenuBtn");
-    if (!profileBtn) return;
-    const LONG_PRESS_MS = 350;
-    let pressTimer = null;
+(function setupProfileLongPress() {
+        const profileBtn = document.getElementById("profileMenuBtn");
+        if (!profileBtn) return;
+        const LONG_PRESS_MS = 350;
+        let pressTimer = null;
 
-    function startPress() {
-        profileLongPressFired = false;
-        pressTimer = setTimeout(() => {
-            profileLongPressFired = true;
-                            hapticMedium();
-            if (document.getElementById('settings-page')?.classList.contains('active-page')) return;
-            showProfileInfoAlert();
-        }, LONG_PRESS_MS);
-    }
-    function cancelPress() {
-        clearTimeout(pressTimer);
-    }
+        function startPress() {
+            profileLongPressFired = false;
+            pressTimer = setTimeout(() => {
+                    profileLongPressFired = true;
+                    hapticMedium();
+                    if (document.getElementById('settings-page')?.classList.contains('active-page')) return;
+                    showProfileInfoAlert();
+                }, LONG_PRESS_MS);
+        }
+        function cancelPress() {
+            clearTimeout(pressTimer);
+        }
 
-    profileBtn.addEventListener("pointerdown", startPress);
-    profileBtn.addEventListener("pointerup", cancelPress);
-    profileBtn.addEventListener("pointerleave", cancelPress);
-    profileBtn.addEventListener("pointercancel", cancelPress);
+        profileBtn.addEventListener("pointerdown", startPress);
+        profileBtn.addEventListener("pointerup", cancelPress);
+        profileBtn.addEventListener("pointerleave", cancelPress);
+        profileBtn.addEventListener("pointercancel", cancelPress);
 })();
 
 async function refreshCurrentPage() {
-const activePage = document.querySelector('.page.active-page');
-if (!activePage) return;
-const pageId = activePage.id.replace('-page', '');
+    const activePage = document.querySelector('.page.active-page');
+    if (!activePage) return;
+    const pageId = activePage.id.replace('-page', '');
 
-try {
-    switch (pageId) {
+    try {
+        switch (pageId) {
         case 'catalog':
             await fetch('https://placedgames.up.railway.app/api/products')
-                .then(r => r.json())
-                .then(() => renderCatalog())
-                .catch(() => renderCatalog());
+            .then(r => r.json())
+            .then(() => renderCatalog())
+            .catch(() => renderCatalog());
             break;
         case 'cart':
             renderCartPage();
             renderCheckoutBlock();
             break;
-                    case 'orders':
+        case 'orders':
             orderStatusFilter = "Все заказы";
             const orderSearchEl = document.getElementById('orderSearchInput');
             if (orderSearchEl) {
@@ -4881,25 +4924,25 @@ try {
         case 'order-detail':
             if (currentOpenOrder) {
                 await fetch('https://placedgames.up.railway.app/api/refresh-order', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderId: currentOpenOrder.id })
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ orderId: currentOpenOrder.id })
                 })
                 .then(r => r.json())
                 .then(updatedOrder => {
-                    currentOpenOrder = updatedOrder;
-                    const index = orders.findIndex(o => o.id == updatedOrder.id);
-                    if (index !== -1) orders[index] = updatedOrder;
-                    const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-                    const isOwner = String(updatedOrder.user_id) === String(tgUserId);
-                    showOrderDetail(updatedOrder, isOwner);
-                    hapticLight();
+                        currentOpenOrder = updatedOrder;
+                        const index = orders.findIndex(o => o.id == updatedOrder.id);
+                        if (index !== -1) orders[index] = updatedOrder;
+                        const tgUserId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+                        const isOwner = String(updatedOrder.user_id) === String(tgUserId);
+                        showOrderDetail(updatedOrder, isOwner);
+                        hapticLight();
                 });
             }
             break;
         default:
             const fn = window[`render${pageId.charAt(0).toUpperCase() + pageId.slice(1)}Page`];
             if (typeof fn === 'function') await fn();
-    }
-} catch (e) {}
+        }
+    } catch (e) {}
 }

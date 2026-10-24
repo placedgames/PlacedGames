@@ -1,29 +1,18 @@
-/* =====================================================================
-   LIQUID GLASS — блики вместо обводки
-   Блики есть:   лево-верх (угол + вся верхняя грань)
-                 право-низ (угол + вся нижняя грань)
-                 право (слабо)
-   Бликов нет:   право-верх (угол), лево-низ (угол), левая грань
 
-   Bottom card (.order-items-card, .review-items-card, .cart-item-delivery,
-   .profile-bottom-card, .referral-bottom-card, .filter-btn и инлайн
-   col-bg карточки) НЕ затрагиваются — у них остаётся прежняя обводка.
-   ===================================================================== */
 
 :root {
-    --glass-rgb: 88, 90, 98;      /* цвет бликов (тёмно-серый) */
-    --glass-strong: 0.15;         /* яркость углов: лево-верх и право-низ */
-    --glass-faint: 0.054;         /* яркость правой стороны */
-    --glass-w: 1px;               /* толщина блика */
-    --glass-h: 100%;              /* 100% = блик тянется вдоль ВСЕЙ верхней/нижней грани */
-    --glass-v: min(28px, 55%);    /* как далеко блик стекает вниз/вверх по бокам */
+    --glass-rgb: 88, 90, 98;
+    --glass-strong: 0.15;
+    --glass-faint: 0.054;
+    --glass-w: 1px;
+    --glass-h: 100%;
+    --glass-v: min(28px, 55%);
 }
 
 html[data-dark="tinted"] {
     --glass-rgb: 82, 98, 122;
 }
 
-/* ---------- 1. Убираем старую обводку (место под неё остаётся) ---------- */
 .search-bar,
 .page-header-title-btn,
 .page-header-double-btn,
@@ -43,14 +32,12 @@ html[data-dark="tinted"] {
     border-color: transparent !important;
 }
 
-/* overflow:hidden обрезал бы блик, который лежит на самой границе */
 .product-card,
 .page-header-title-btn,
 #menuPill {
     overflow: visible !important;
 }
 
-/* ---------- 2. Сам блик ---------- */
 .search-bar::before,
 .page-header-title-btn::before,
 .page-header-double-btn::before,
@@ -73,36 +60,34 @@ html[data-dark="tinted"] {
     border-radius: inherit;
     pointer-events: none;
     background:
-        /* лево-верх: угол + верхняя грань на всю длину */
-        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
-            rgba(var(--glass-rgb), var(--glass-strong)) 0%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.5)) 40%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.18)) 72%,
-            rgba(var(--glass-rgb), 0) 100%),
-        /* право-низ: угол + нижняя грань на всю длину */
-        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
-            rgba(var(--glass-rgb), var(--glass-strong)) 0%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.5)) 40%,
-            rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.18)) 72%,
-            rgba(var(--glass-rgb), 0) 100%),
-        /* правая сторона: слабо, по центру */
-        radial-gradient(ellipse 30px 48% at 100% 50%,
-            rgba(var(--glass-rgb), var(--glass-faint)) 0%,
-            rgba(var(--glass-rgb), 0) 100%);
-    /* оставляем только кольцо шириной padding */
+
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
+    rgba(var(--glass-rgb), var(--glass-strong)) 0%,
+    rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.5)) 40%,
+    rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.18)) 72%,
+    rgba(var(--glass-rgb), 0) 100%),
+
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
+    rgba(var(--glass-rgb), var(--glass-strong)) 0%,
+    rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.5)) 40%,
+    rgba(var(--glass-rgb), calc(var(--glass-strong) * 0.18)) 72%,
+    rgba(var(--glass-rgb), 0) 100%),
+
+    radial-gradient(ellipse 30px 48% at 100% 50%,
+    rgba(var(--glass-rgb), var(--glass-faint)) 0%,
+    rgba(var(--glass-rgb), 0) 100%);
+
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     mask-composite: exclude;
 }
 
-/* ---------- 2б. Второй слой: мягкое свечение ВНУТРИ карточки ---------- */
-/* Плавно затухает от обводки внутрь (примерно на 2px) и по длине грани, как основной блик */
 :root {
-    --glass2-rgb: 100, 102, 111;  /* свой цвет второго слоя */
-    --glass2-a: 0.28;             /* яркость у самой обводки (0 = выключить) */
-    --glass2-blur: 3px;           /* глубина затухания: 3px ≈ 1.5–2px видимого свечения внутрь */
-    --glass2-spread: 1px;         /* насколько плотный край до начала затухания */
+    --glass2-rgb: 100, 102, 111;
+    --glass2-a: 0.28;
+    --glass2-blur: 3px;
+    --glass2-spread: 1px;
 }
 
 html[data-dark="tinted"] {
@@ -131,19 +116,19 @@ html[data-dark="tinted"] {
     pointer-events: none;
     box-shadow: inset 0 0 var(--glass2-blur) var(--glass2-spread) rgba(var(--glass2-rgb), var(--glass2-a));
     -webkit-mask-image:
-        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
-            #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
-        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
-            #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
-        radial-gradient(ellipse 30px 48% at 100% 50%,
-            rgba(0,0,0,0.4) 0%, transparent 100%);
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
+    #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
+    #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
+    radial-gradient(ellipse 30px 48% at 100% 50%,
+    rgba(0,0,0,0.4) 0%, transparent 100%);
     mask-image:
-        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
-            #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
-        radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
-            #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
-        radial-gradient(ellipse 30px 48% at 100% 50%,
-            rgba(0,0,0,0.4) 0%, transparent 100%);
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
+    #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
+    #000 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.18) 72%, transparent 100%),
+    radial-gradient(ellipse 30px 48% at 100% 50%,
+    rgba(0,0,0,0.4) 0%, transparent 100%);
 }
 
 #menuPill,
@@ -157,7 +142,6 @@ html[data-dark="tinted"] #profileMenuWrapper > div:first-child {
     --glass2-rgb: 110, 130, 155;
 }
 
-/* Блик карточек товаров рисуем поверх картинки/карусели */
 .product-card {
     isolation: isolate;
 }
@@ -167,12 +151,10 @@ html[data-dark="tinted"] #profileMenuWrapper > div:first-child {
     z-index: 3;
 }
 
-/* ---------- 3. Нижнее меню: стекло, светлее и меньше окрашивается фоном ---------- */
-/* Меняй значения здесь — остальные элементы не затронуты */
 :root {
-    --menu-glass-bg: rgba(44, 44, 48, 0.8);   /* светлее и плотнее; меньше последнее число = прозрачнее */
-    --menu-glass-blur: 30px;                    /* размытие фона под меню */
-    --menu-glass-saturate: 0.8;                /* 1 = цвета как есть, меньше 1 = приглушает цвет под меню */
+    --menu-glass-bg: rgba(44, 44, 48, 0.8);
+    --menu-glass-blur: 30px;
+    --menu-glass-saturate: 0.8;
 }
 
 html[data-dark="tinted"] {
@@ -181,7 +163,7 @@ html[data-dark="tinted"] {
 
 #menuPill,
 #profileMenuWrapper > div:first-child {
-    --glass-rgb: 108, 110, 118;   /* цвет блика меню */
+    --glass-rgb: 108, 110, 118;
     --glass-strong: 0.25;
     --glass-faint: 0.12;
     background: var(--menu-glass-bg) !important;
@@ -232,52 +214,51 @@ html[data-dark="tinted"] #profileMenuWrapper > div:first-child {
     --fixed-border: rgba(48, 48, 51, 1);
     --menu-slider-bg: rgba(200, 200, 204, 0.1);
     --accent-blue-bg: rgba(56, 150, 200, 0.1);
-    /* ===== Размеры иконок (редактируй здесь) ===== */
-    /* Шапка */
+
     --icon-size-header-title: 22px;
     --icon-size-header-refresh: 27.3px;
     --icon-size-header-theme: 25.3px;
-    /* Фильтры */
+
     --icon-size-filter-catalog: 27px;
     --icon-size-filter-game: 27px;
-    /* Нижнее меню */
+
     --icon-size-nav-catalog: 26px;
     --icon-size-nav-cart: 31px;
     --icon-size-nav-orders: 30px;
-    /* Корзина */
+
     --icon-size-cart-warn: 21px;
     --icon-size-cart-qty-minus: 14px;
     --icon-size-cart-qty-plus: 14px;
-    /* Счётчик в карточке товара */
+
     --icon-size-counter-minus: 14px;
     --icon-size-counter-plus: 14px;
-    /* Промокод */
+
     --icon-size-promo-open: 26px;
     --icon-size-promo-apply: 19px;
     --icon-size-promo-back: 16px;
-    /* Оформление / оплата */
+
     --icon-size-payment-copy: 17px;
     --icon-size-payment-help: 24px;
-    /* Заказ (код / отзыв) */
+
     --icon-size-order-code-help: 24px;
     --icon-size-order-code-submit: 19px;
     --icon-size-order-review-help: 24px;
-    /* Иконки info (везде свой размер) */
+
     --icon-size-info-cart: 21px;
     --icon-size-info-order-status: 21px;
     --icon-size-info-profile: 24px;
     --icon-size-info-field: 19px;
-    /* Отзывы */
+
     --icon-size-reviews-help: 24px;
     --icon-size-writereview-help: 24px;
-    /* Пустые состояния */
+
     --icon-size-empty-cart: 80px;
     --icon-size-empty-orders: 80px;
     --icon-size-empty-game-reload: 80px;
     --icon-size-empty-game-notfound: 80px;
-    /* Профиль */
+
     --icon-size-profile-referral-copy: 17px;
-    /* ===== Цвета иконок (редактируй здесь) ===== */
+
     --icon-color-accent: #4cb4e9;
     --icon-color-muted: var(--text-secondary);
     --icon-color-primary: var(--text-primary);
@@ -287,7 +268,6 @@ html[data-dark="tinted"] #profileMenuWrapper > div:first-child {
     --bottom-menu-offset: 16px;
 }
 
-/* Tinted тёмная тема (Настройки → Цвет тёмной темы). Только для тёмной темы, цвета текстов не меняются */
 html[data-dark="tinted"] {
     --app-bg: #181D23;
     --card-bg: #242D38;
@@ -426,12 +406,12 @@ body {
 }
 
 @keyframes tgDotPulse {
-    
+
     0%, 60%, 100% {
         opacity: 0.25;
         transform: scale(1);
     }
-    
+
     30% {
         opacity: 1;
         transform: scale(1.25);
@@ -505,16 +485,16 @@ body {
 }
 
 @media (hover: none) and (pointer: coarse) {
-    body:has(input:focus, textarea:focus) #bottomMenuWrapper {
+    body.input-focused #bottomMenuWrapper {
         display: none !important;
     }
-    body:has(input:focus, textarea:focus) #cartCheckoutFixed {
+    body.input-focused #cartCheckoutFixed {
         display: none !important;
     }
-    body:has(#cartCheckoutFixed input:focus, #cartCheckoutFixed textarea:focus) #bottomMenuWrapper {
+    body.cart-input-focused #bottomMenuWrapper {
         display: flex !important;
     }
-    body:has(#cartCheckoutFixed input:focus, #cartCheckoutFixed textarea:focus) #cartCheckoutFixed {
+    body.cart-input-focused #cartCheckoutFixed {
         display: block !important;
     }
 }
@@ -526,7 +506,7 @@ body {
     background: none;
     border: none;
     cursor: pointer;
-    transition: all 0.1s;
+    transition: opacity 0.1s;
     flex: 1;
     padding: 5px 0 2px 0;
     position: relative;
@@ -535,7 +515,7 @@ body {
 
 .menu-icon-wrap {
     height: 28px;
-    /* фиксированная высота — под самую крупную из nav-иконок */
+
     display: flex;
     align-items: center;
     justify-content: center;
@@ -549,7 +529,6 @@ body {
 }
 
 .menu-icon {
-    transition: all 0.1s;
 }
 
 .menu-icon-inactive {
@@ -698,7 +677,6 @@ body {
     border-radius: 39px 39px 28px 28px;
     overflow: hidden;
     cursor: pointer;
-    transition: 0.1s linear;
     position: relative;
 }
 
@@ -723,7 +701,7 @@ svg.product-info-icon {
     aspect-ratio: 1 / 1;
     object-fit: cover;
     padding: 7px;
-    border-radius: 41px; /* 34 видимых + 7 padding */
+    border-radius: 41px;
     box-sizing: border-box;
 }
 
@@ -731,7 +709,7 @@ svg.product-info-icon {
     position: relative;
     width: 100%;
     aspect-ratio: 1 / 1;
-    border-radius: 39px 39px 0 0; /* как верх карточки, иначе углы перекрывают блик */
+    border-radius: 39px 39px 0 0;
     overflow: hidden;
     box-sizing: border-box;
     background: var(--card-bg);
@@ -922,7 +900,6 @@ svg.product-info-icon {
     padding: 0;
 }
 
-/* каждая строка — как отдельная карточка: свои отступы 9px (+1px обводка карточки = 10px) и свои кнопки (.cart-actions позиционируются от строки) */
 .cart-item-row {
     display: flex;
     gap: 14px;
@@ -935,7 +912,6 @@ svg.product-info-icon {
     padding-bottom: 10px;
 }
 
-/* линия разделителя занимает 1px сверху строки, поэтому сверху 11px = 10px видимого отступа */
 .cart-item-row + .cart-item-row {
     padding-top: 11px;
 }
@@ -1030,7 +1006,7 @@ svg.product-info-icon {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    /* не заезжает на кнопку -1+ (её ширина ~100px + отступ) */
+
     max-width: calc(100% - 109px);
 }
 
@@ -1040,7 +1016,6 @@ svg.product-info-icon {
     right: 10px;
 }
 
-/* у строк над разделителем нижний отступ на 1px больше — кнопки остаются на том же месте относительно картинки */
 .cart-item-row:not(:last-child) .cart-actions {
     bottom: 11px;
 }
@@ -2161,7 +2136,6 @@ svg.product-info-icon {
     opacity: 1;
 }
 
-/* ===== Базовые классы иконок (SVG-спрайт) ===== */
 .icon {
     flex-shrink: 0;
     fill: currentColor;
@@ -2188,7 +2162,6 @@ svg.product-info-icon {
     color: var(--icon-color-danger);
 }
 
-/* Классы размеров иконок */
 .icon-header-title {
     width: var(--icon-size-header-title);
     height: var(--icon-size-header-title);
@@ -2206,6 +2179,11 @@ svg.product-info-icon {
     width: var(--icon-size-header-theme);
     height: var(--icon-size-header-theme);
     transition: transform 0.3s ease;
+}
+
+.theme-icon-rotatable {
+    transform-box: fill-box;
+    transform-origin: center;
 }
 
 .icon-filter-catalog {
@@ -2409,19 +2387,14 @@ svg.product-info-icon {
     animation-delay: 0.36s;
 }
 
-/* =====================================================================
-   BOTTOM CARDS — переливание внутри обычной обводки
-   Обводка остаётся, а внутри неё цвет обводки плавно затухает до прозрачного
-   по всему периметру (без масок, без блика по углам).
-   ===================================================================== */
 :root {
-    --border-fade-color: rgba(30, 30, 33, 1);       /* цвет затухания, НОЧНАЯ тема */
-    --border-fade-blur: 2px;                        /* глубина затухания */
-    --border-fade-spread: 0.5px;                     /* плотный край до начала затухания */
+    --border-fade-color: rgba(30, 30, 33, 1);
+    --border-fade-blur: 2px;
+    --border-fade-spread: 0.5px;
 }
 
 html[data-dark="tinted"] {
-    --border-fade-color: rgba(35, 44, 55, 1);              /* цвет затухания, ТЁМНАЯ (tinted) тема */
+    --border-fade-color: rgba(35, 44, 55, 1);
 }
 
 .order-items-card,
