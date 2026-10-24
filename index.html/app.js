@@ -4535,7 +4535,7 @@ function getAppTheme() {
 }
 
 function getThemeBgColor(theme) {
-    return theme === 'tinted' ? '#181D23' : '#151416';
+    return theme === 'tinted' ? '#181D23' : '#151516';
 }
 
 function applyTheme(theme, persist) {
