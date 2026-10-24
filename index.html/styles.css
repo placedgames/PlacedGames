@@ -642,32 +642,33 @@ body {
 
 .products-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 20px;
+    max-width: 100%;
 }
 
 @media (min-width: 600px) {
     .products-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
 
 @media (min-width: 900px) {
     .products-grid {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(5, minmax(0, 1fr));
     }
 }
 
 @media (min-width: 1200px) {
     .products-grid {
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(6, minmax(0, 1fr));
     }
 }
 
 @media (min-width: 1600px) {
     .products-grid {
-        grid-template-columns: repeat(7, 1fr);
+        grid-template-columns: repeat(7, minmax(0, 1fr));
     }
 }
 
@@ -678,6 +679,7 @@ body {
     overflow: hidden;
     cursor: pointer;
     position: relative;
+    min-width: 0;
 }
 
 .product-title-row {
@@ -1038,6 +1040,7 @@ svg.product-info-icon {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    border-radius: 12px;
 }
 
 .cart-qty-value {
@@ -1060,12 +1063,12 @@ svg.product-info-icon {
 }
 
 .checkout-card {
-    background: var(--sticky-bg2);
+    background: var(--sticky-bg);
     backdrop-filter: blur(12px);
     border-radius: 34px;
     padding: 14px;
     padding-bottom: 79px;
-    border: 1px solid var(--fixed-border);
+    border: 1px solid var(--bottom-menu-border);
     display: flex;
     flex-direction: column;
     gap: 14px;
@@ -1328,7 +1331,7 @@ svg.product-info-icon {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 7px 0;
+    padding: 5px 0;
 }
 
 .order-detail-row:first-child {
@@ -1352,7 +1355,7 @@ svg.product-info-icon {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 32px;
-    padding: 16px;
+    padding: 14px;
     margin-bottom: 14 !important;
     position: relative;
     z-index: 2;
@@ -2012,8 +2015,8 @@ svg.product-info-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 14px 0 1px 0;
-    margin-top: 6px;
+    padding: 12px 0 2px 0;
+    margin-top: 0;
     border-top: 1px solid var(--divider-color);
     color: var(--text-secondary);
     font-size: 16px;
@@ -2405,4 +2408,127 @@ html[data-dark="tinted"] {
 .filter-btn,
 [style*="background:var(--col-bg)"] {
     box-shadow: inset 0 0 var(--border-fade-blur) var(--border-fade-spread) var(--border-fade-color);
+}
+
+:root {
+    --lg-rgb: 76, 180, 233;
+    --lg-strong: 0.4;
+    --lg-faint: 0.14;
+    --lg2-rgb: 126, 203, 255;
+    --lg2-a: 0.5;
+}
+
+html[data-dark="tinted"] {
+    --lg-rgb: 96, 172, 226;
+    --lg2-rgb: 140, 200, 250;
+}
+
+.checkout-button,
+.promo-btn,
+.promo-action-btn,
+.cart-add-btn,
+.counter-btn,
+.cart-qty-btn,
+.review-order-badge,
+.review-rating-badge {
+    position: relative;
+    border-color: transparent !important;
+}
+
+.checkout-button::before,
+.promo-btn::before,
+.promo-action-btn::before,
+.cart-add-btn::before,
+.counter-btn::before,
+.cart-qty-btn::before,
+.review-order-badge::before,
+.review-rating-badge::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    padding: var(--glass-w);
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
+    rgba(var(--lg-rgb), var(--lg-strong)) 0%,
+    rgba(var(--lg-rgb), calc(var(--lg-strong) * 0.5)) 40%,
+    rgba(var(--lg-rgb), calc(var(--lg-strong) * 0.18)) 72%,
+    rgba(var(--lg-rgb), 0) 100%),
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
+    rgba(var(--lg-rgb), var(--lg-strong)) 0%,
+    rgba(var(--lg-rgb), calc(var(--lg-strong) * 0.5)) 40%,
+    rgba(var(--lg-rgb), calc(var(--lg-strong) * 0.18)) 72%,
+    rgba(var(--lg-rgb), 0) 100%),
+    radial-gradient(ellipse 30px 48% at 100% 50%,
+    rgba(var(--lg-rgb), var(--lg-faint)) 0%,
+    rgba(var(--lg-rgb), 0) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    mask-composite: exclude;
+}
+
+.checkout-button::after,
+.promo-btn::after,
+.promo-action-btn::after,
+.cart-add-btn::after,
+.counter-btn::after,
+.cart-qty-btn::after,
+.review-order-badge::after,
+.review-rating-badge::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    box-shadow: inset 0 0 var(--glass2-blur) var(--glass2-spread) rgba(var(--lg2-rgb), var(--lg2-a));
+    -webkit-mask-image:
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
+    #000 0%, rgba(0, 0, 0, 0.5) 40%, rgba(0, 0, 0, 0.18) 72%, transparent 100%),
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
+    #000 0%, rgba(0, 0, 0, 0.5) 40%, rgba(0, 0, 0, 0.18) 72%, transparent 100%),
+    radial-gradient(ellipse 30px 48% at 100% 50%,
+    rgba(0, 0, 0, 0.4) 0%, transparent 100%);
+    mask-image:
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 0 0,
+    #000 0%, rgba(0, 0, 0, 0.5) 40%, rgba(0, 0, 0, 0.18) 72%, transparent 100%),
+    radial-gradient(ellipse var(--glass-h) var(--glass-v) at 100% 100%,
+    #000 0%, rgba(0, 0, 0, 0.5) 40%, rgba(0, 0, 0, 0.18) 72%, transparent 100%),
+    radial-gradient(ellipse 30px 48% at 100% 50%,
+    rgba(0, 0, 0, 0.4) 0%, transparent 100%);
+}
+
+.promo-action-btn.back-btn {
+    --lg-rgb: 239, 68, 68;
+    --lg-strong: 0.42;
+    --lg-faint: 0.15;
+    --lg2-rgb: 255, 128, 128;
+    --lg2-a: 0.5;
+}
+
+.review-rating-badge.badge-good {
+    --lg-rgb: 34, 197, 94;
+    --lg-strong: 0.42;
+    --lg-faint: 0.15;
+    --lg2-rgb: 128, 255, 176;
+    --lg2-a: 0.5;
+}
+
+.review-rating-badge.badge-bad {
+    --lg-rgb: 239, 68, 68;
+    --lg-strong: 0.42;
+    --lg-faint: 0.15;
+    --lg2-rgb: 255, 128, 128;
+    --lg2-a: 0.5;
+}
+
+.review-rating-badge.badge-good,
+.review-rating-badge.badge-bad {
+    z-index: 1;
+    isolation: isolate;
+}
+
+.review-order-badge {
+    isolation: isolate;
 }

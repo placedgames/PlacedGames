@@ -2331,7 +2331,7 @@ function buildOrderReviewBlockHtml(order, review) {
                 <span class="review-order-badge-backdrop"></span>
                 <span class="review-order-badge" data-order-id="${review.order_id ?? ''}" data-order-num="${displayOrderNumber(review.order_number)}">#${displayOrderNumber(review.order_number)}</span>
             </span>
-            <span class="review-rating-badge" style="background:${rc.bg};color:${rc.color};border-color:${rc.border};">
+            <span class="review-rating-badge ${reviewRating === 'good' ? 'badge-good' : 'badge-bad'}" style="background:${rc.bg};color:${rc.color};border-color:${rc.border};">
         <svg width="21" height="21" viewBox="0 0 512 512"><use href="#${rc.icon}"></use></svg>
     </span>
         </div>` :
@@ -2445,7 +2445,7 @@ function showOrderDetail(order, isOwner = true) {
                         return game?.name || '—';
                     })())}</span>
                 </div>
-                <div class="order-detail-row">
+                ${isOwner ? `<div class="order-detail-row">
                     <span class="order-detail-label">Способ оплаты</span>
                     <span class="order-detail-value">${paymentMethod}</span>
                 </div>
@@ -2456,7 +2456,7 @@ function showOrderDetail(order, isOwner = true) {
                 <div class="order-detail-row">
                     <span class="order-detail-label">${isTelegramOrder ? 'Получатель' : 'Почта'}</span>
                     <span class="order-detail-value">${escapeHtml(email)}</span>
-                </div>
+                </div>` : ''}
                 ${order.promo ? `<div class="order-detail-row">
                     <span class="order-detail-label">Промокод</span>
                     <span class="order-detail-value">${isOwner ? `${escapeHtml(order.promo)} (${Number(order.promo_discount) || 0}%)` : `*** (${Number(order.promo_discount) || 0}%)`}</span>
@@ -3237,7 +3237,7 @@ function buildReviewCardHtml(rv) {
                 <span class="review-order-badge-backdrop"></span>
                 <span class="review-order-badge" data-order-id="${rv.order_id ?? ''}">#${displayOrderNumber(rv.order_number)}</span>
             </span>
-            <span class="review-rating-badge" style="background:${rc.bg};color:${rc.color};border-color:${rc.border};">
+            <span class="review-rating-badge ${rvRating === 'good' ? 'badge-good' : 'badge-bad'}" style="background:${rc.bg};color:${rc.color};border-color:${rc.border};">
         <svg width="21" height="21" viewBox="0 0 512 512"><use href="#${rc.icon}"></use></svg>
     </span>
         </div>` :
