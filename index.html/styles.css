@@ -1338,6 +1338,14 @@ svg.product-info-icon {
     padding-top: 0;
 }
 
+.order-data-card .order-detail-row {
+    padding: 6px 0;
+}
+
+.order-data-card .order-detail-row:first-child {
+    padding-top: 0;
+}
+
 .order-detail-label {
     color: var(--text-muted);
     font-size: 17px;
@@ -2433,32 +2441,32 @@ html[data-dark="tinted"] {
 .promo-btn,
 .promo-action-btn.apply-btn,
 .counter-btn,
-.cart-qty-btn,
+.cart-quantity,
 .review-order-badge {
-    --lg-rgb: 30, 88, 130;
-    --lg-strong: 0.85;
-    --lg-faint: 0.3;
-    --lg2-rgb: 52, 142, 200;
-    --lg2-a: 0.6;
+    --lg-rgb: 16, 50, 80;
+    --lg-strong: 0.95;
+    --lg-faint: 0.4;
+    --lg2-rgb: 34, 96, 144;
+    --lg2-a: 0.5;
 }
 
 /* красные: темнее */
 .promo-action-btn.back-btn,
 .review-rating-badge.badge-bad {
-    --lg-rgb: 125, 28, 28;
-    --lg-strong: 0.85;
-    --lg-faint: 0.3;
-    --lg2-rgb: 205, 52, 52;
-    --lg2-a: 0.55;
+    --lg-rgb: 78, 16, 16;
+    --lg-strong: 0.95;
+    --lg-faint: 0.4;
+    --lg2-rgb: 142, 34, 34;
+    --lg2-a: 0.5;
 }
 
 /* зелёные: темнее */
 .review-rating-badge.badge-good {
-    --lg-rgb: 15, 92, 44;
-    --lg-strong: 0.85;
-    --lg-faint: 0.3;
-    --lg2-rgb: 32, 165, 82;
-    --lg2-a: 0.55;
+    --lg-rgb: 9, 58, 28;
+    --lg-strong: 0.95;
+    --lg-faint: 0.4;
+    --lg2-rgb: 20, 108, 54;
+    --lg2-a: 0.5;
 }
 
 /* --- общая основа --- */
@@ -2467,7 +2475,7 @@ html[data-dark="tinted"] {
 .promo-action-btn,
 .cart-add-btn,
 .counter-btn,
-.cart-qty-btn,
+.cart-quantity,
 .review-order-badge,
 .review-rating-badge {
     position: relative;
@@ -2481,7 +2489,7 @@ html[data-dark="tinted"] {
 .promo-action-btn::before,
 .cart-add-btn::before,
 .counter-btn::before,
-.cart-qty-btn::before,
+.cart-quantity::before,
 .review-order-badge::before,
 .review-rating-badge::before {
     content: "";
@@ -2516,7 +2524,7 @@ html[data-dark="tinted"] {
 .promo-action-btn::after,
 .cart-add-btn::after,
 .counter-btn::after,
-.cart-qty-btn::after,
+.cart-quantity::after,
 .review-order-badge::after,
 .review-rating-badge::after {
     content: "";
