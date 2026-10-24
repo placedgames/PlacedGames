@@ -2461,7 +2461,7 @@ html[data-dark="tinted"] {
 /* кнопка с номером заказа — своя обводка */
 .review-order-badge {
     --lg-rgb: 56, 150, 200;
-    --lg-strong: 0.06;
+    --lg-strong: 0.01;
     --lg-faint: 0.12;
     --lg2-rgb: 56, 150, 200;
     --lg2-a: 0.18;
@@ -2470,7 +2470,7 @@ html[data-dark="tinted"] {
 /* красная кнопка с оценкой — своя обводка */
 .review-rating-badge.badge-bad {
     --lg-rgb: 239, 68, 68;
-    --lg-strong: 0.06;
+    --lg-strong: 0.01;
     --lg-faint: 0.13;
     --lg2-rgb: 239, 68, 68;
     --lg2-a: 0.2;
@@ -2479,7 +2479,7 @@ html[data-dark="tinted"] {
 /* зелёная кнопка с оценкой */
 .review-rating-badge.badge-good {
     --lg-rgb: 34, 197, 94;
-    --lg-strong: 0.06;
+    --lg-strong: 0.01;
     --lg-faint: 0.16;
     --lg2-rgb: 34, 197, 94;
     --lg2-a: 0.18;
