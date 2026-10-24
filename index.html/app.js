@@ -2445,7 +2445,7 @@ function showOrderDetail(order, isOwner = true) {
                         return game?.name || '—';
                     })())}</span>
                 </div>
-                ${isOwner ? `<div class="order-detail-row">
+                <div class="order-detail-row">
                     <span class="order-detail-label">Способ оплаты</span>
                     <span class="order-detail-value">${paymentMethod}</span>
                 </div>
@@ -2456,7 +2456,7 @@ function showOrderDetail(order, isOwner = true) {
                 <div class="order-detail-row">
                     <span class="order-detail-label">${isTelegramOrder ? 'Получатель' : 'Почта'}</span>
                     <span class="order-detail-value">${escapeHtml(email)}</span>
-                </div>` : ''}
+                </div>
                 ${order.promo ? `<div class="order-detail-row">
                     <span class="order-detail-label">Промокод</span>
                     <span class="order-detail-value">${isOwner ? `${escapeHtml(order.promo)} (${Number(order.promo_discount) || 0}%)` : `*** (${Number(order.promo_discount) || 0}%)`}</span>
@@ -2469,7 +2469,7 @@ function showOrderDetail(order, isOwner = true) {
                     <span class="order-detail-label">Кэшбэк</span>
                     <span class="order-detail-value" style="color:#22c55e;">+${formatPrice(Math.round(order.total * 0.02))}</span>
                 </div>` : ''}
-                <div class="order-detail-row" style="padding-bottom:4px;">
+                <div class="order-detail-row" style="padding-bottom:2px;">
                     <span class="order-detail-label" style="font-weight:400;">Сумма заказа</span>
                     <span class="order-detail-value" style="color:var(--text-primary); font-weight:500;">${formatPrice(order.total)}</span>
                 </div>

@@ -1343,7 +1343,7 @@ svg.product-info-icon {
 }
 
 .order-data-card .order-detail-row:first-child {
-    padding-top: 0;
+    padding-top: 2px;
 }
 
 .order-detail-label {
@@ -1362,7 +1362,7 @@ svg.product-info-icon {
 .order-data-card {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
-    border-radius: 32px;
+    border-radius: 31px;
     padding: 14px;
     margin-bottom: 14 !important;
     position: relative;
@@ -2443,30 +2443,30 @@ html[data-dark="tinted"] {
 .counter-btn,
 .cart-quantity,
 .review-order-badge {
-    --lg-rgb: 16, 50, 80;
-    --lg-strong: 0.95;
-    --lg-faint: 0.4;
-    --lg2-rgb: 34, 96, 144;
-    --lg2-a: 0.5;
+    --lg-rgb: 56, 150, 200;
+    --lg-strong: 0.26;
+    --lg-faint: 0.12;
+    --lg2-rgb: 56, 150, 200;
+    --lg2-a: 0.18;
 }
 
 /* красные: темнее */
 .promo-action-btn.back-btn,
 .review-rating-badge.badge-bad {
-    --lg-rgb: 78, 16, 16;
-    --lg-strong: 0.95;
-    --lg-faint: 0.4;
-    --lg2-rgb: 142, 34, 34;
-    --lg2-a: 0.5;
+    --lg-rgb: 239, 68, 68;
+    --lg-strong: 0.28;
+    --lg-faint: 0.13;
+    --lg2-rgb: 239, 68, 68;
+    --lg2-a: 0.2;
 }
 
 /* зелёные: темнее */
 .review-rating-badge.badge-good {
-    --lg-rgb: 9, 58, 28;
-    --lg-strong: 0.95;
-    --lg-faint: 0.4;
-    --lg2-rgb: 20, 108, 54;
-    --lg2-a: 0.5;
+    --lg-rgb: 34, 197, 94;
+    --lg-strong: 0.26;
+    --lg-faint: 0.12;
+    --lg2-rgb: 34, 197, 94;
+    --lg2-a: 0.18;
 }
 
 /* --- общая основа --- */
