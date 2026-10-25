@@ -4297,7 +4297,16 @@ function injectPageHeader() {
 
     document.querySelectorAll('.page-header-sticky').forEach(el => el.remove());
 
+    document.querySelectorAll('.page-banner').forEach(el => el.remove());
     activePage.insertAdjacentHTML('afterbegin', renderPageHeader(title, pageId));
+
+    if (pageId === 'catalog' || pageId === 'game') {
+        const headerEl = activePage.querySelector('.page-header-sticky');
+        if (headerEl) {
+            headerEl.insertAdjacentHTML('afterend',
+                '<div class="page-banner"><img src="https://cdn.jsdelivr.net/gh/placedgames/media/img/Photo.jpg" alt="" draggable="false"></div>');
+        }
+    }
 
     const navSelect = activePage.querySelector('#pageHeaderNavSelect');
     if (navSelect) {
