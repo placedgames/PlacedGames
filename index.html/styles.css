@@ -2591,65 +2591,20 @@ html[data-dark="tinted"] {
 }
 
 
-/* ===== Баннер «Быстрая покупка» между хедером и поиском (каталог и страницы сервисов) ===== */
+/* ===== Баннер-изображение между хедером и поиском (каталог и страницы сервисов) ===== */
 .page-banner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 12px;                 /* отступы внутри карточки (одинаковые со всех сторон) */
-    border-radius: 30px;           /* закругление карточки */
+    padding: 0;                    /* отступы внутри карточки (0 = картинка во всю карточку) */
+    border-radius: 30px;           /* закругление карточки (обводка берётся от .content-card) */
     margin-bottom: 12px;           /* расстояние до поиска */
 }
 
-.page-banner-left {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    align-self: stretch;
-    justify-content: space-between;
-    gap: 10px;                     /* расстояние между текстом и кнопкой */
-    min-width: 0;
-}
-
-.page-banner-title {
-    font-size: 19px;               /* текст: размер */
-    font-weight: 550;              /* текст: толщина */
-    line-height: 1.25;
-    color: var(--text-primary);
-}
-
-.page-banner-btn {
-    width: auto;
-    height: 42px;                  /* кнопка: высота */
-    padding: 0 24px;               /* кнопка: ширина (боковые отступы) */
-    font-size: 18px;               /* кнопка: размер текста */
-    font-weight: 550;              /* кнопка: толщина текста */
-    flex-shrink: 0;
-}
-
-.page-banner-slider {
-    position: relative;
-    width: 74px;                   /* слайдер: размер */
-    height: 74px;
-    flex-shrink: 0;
-}
-
-.page-banner-slider img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    border-radius: 18px;           /* закругление изображений */
-    opacity: 0;
-    transition: opacity 0.5s ease; /* плавность смены */
+.page-banner-img {
+    display: block;
+    width: 100%;                   /* ширина изображения */
+    height: auto;
+    border-radius: 29px;           /* закругление изображения (на 1px меньше карточки) */
     -webkit-user-select: none;
     user-select: none;
     -webkit-user-drag: none;
     pointer-events: none;
-}
-
-.page-banner-slider img.active {
-    opacity: 1;
 }
