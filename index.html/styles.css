@@ -2589,22 +2589,3 @@ html[data-dark="tinted"] {
 .review-order-badge {
     isolation: isolate;
 }
-
-
-/* ===== Баннер-изображение между хедером и поиском (каталог и страницы сервисов) ===== */
-.page-banner {
-    padding: 0;                    /* отступы внутри карточки (0 = картинка во всю карточку) */
-    border-radius: 30px;           /* закругление карточки (обводка берётся от .content-card) */
-    margin-bottom: 12px;           /* расстояние до поиска */
-}
-
-.page-banner-img {
-    display: block;
-    width: 100%;                   /* ширина изображения */
-    height: auto;
-    border-radius: 29px;           /* закругление изображения (на 1px меньше карточки) */
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-user-drag: none;
-    pointer-events: none;
-}
