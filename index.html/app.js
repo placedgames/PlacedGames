@@ -4305,7 +4305,7 @@ function injectPageHeader() {
         if (headerEl) {
             headerEl.insertAdjacentHTML('afterend',
                 `<div class="content-card page-banner">
-                    <img class="page-banner-img" src="https://cdn.jsdelivr.net/gh/placedgames/media/img/Photo.jpg" alt="" draggable="false">
+                    <img class="page-banner-img" src="https://cdn.jsdelivr.net/gh/placedgames/media/img/Banner.jpg" alt="" draggable="false">
                 </div>`);
         }
     }
