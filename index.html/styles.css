@@ -2621,9 +2621,9 @@ html[data-dark="tinted"] {
 
 .page-banner-btn {
     width: auto;
-    height: 32px;                  /* кнопка: высота */
+    height: 42px;                  /* кнопка: высота */
     padding: 0 24px;               /* кнопка: ширина (боковые отступы) */
-    font-size: 17px;               /* кнопка: размер текста */
+    font-size: 18px;               /* кнопка: размер текста */
     font-weight: 550;              /* кнопка: толщина текста */
     flex-shrink: 0;
 }
