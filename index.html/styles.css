@@ -2597,9 +2597,9 @@ html[data-dark="tinted"] {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding: 14px;                 /* отступы внутри карточки (одинаковые со всех сторон) */
-    border-radius: 31px;           /* закругление карточки */
-    margin-bottom: 14px;           /* расстояние до поиска */
+    padding: 12px;                 /* отступы внутри карточки (одинаковые со всех сторон) */
+    border-radius: 30px;           /* закругление карточки */
+    margin-bottom: 12px;           /* расстояние до поиска */
 }
 
 .page-banner-left {
@@ -2613,33 +2613,33 @@ html[data-dark="tinted"] {
 }
 
 .page-banner-title {
-    font-size: 17px;               /* первая строка: размер */
-    font-weight: 500;              /* первая строка: толщина */
+    font-size: 18px;               /* первая строка: размер */
+    font-weight: 550;              /* первая строка: толщина */
     line-height: 1.25;
     color: var(--text-primary);
 }
 
 .page-banner-sub {
-    font-size: 15.5px;             /* вторая строка: размер */
+    font-size: 16px;             /* вторая строка: размер */
     font-weight: 500;              /* вторая строка: толщина */
     line-height: 1.25;
-    margin-top: 2px;               /* расстояние между строками */
+    margin-top: 1px;               /* расстояние между строками */
     color: var(--text-secondary, #9ca3af);   /* вторая строка: цвет */
 }
 
 .page-banner-btn {
     width: auto;
-    height: 28px;                  /* кнопка: высота */
+    height: 30px;                  /* кнопка: высота */
     padding: 0 18px;               /* кнопка: ширина (боковые отступы) */
-    font-size: 13px;               /* кнопка: размер текста */
-    font-weight: 500;
+    font-size: 16px;               /* кнопка: размер текста */
+    font-weight: 550;
     flex-shrink: 0;
 }
 
 .page-banner-slider {
     position: relative;
-    width: 72px;                   /* слайдер: размер */
-    height: 72px;
+    width: 74px;                   /* слайдер: размер */
+    height: 74px;
     flex-shrink: 0;
 }
 
