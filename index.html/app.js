@@ -4298,13 +4298,49 @@ function injectPageHeader() {
     document.querySelectorAll('.page-header-sticky').forEach(el => el.remove());
 
     document.querySelectorAll('.page-banner').forEach(el => el.remove());
+    if (window.__bannerTimer) { clearInterval(window.__bannerTimer); window.__bannerTimer = null; }
     activePage.insertAdjacentHTML('afterbegin', renderPageHeader(title, pageId));
 
     if (pageId === 'catalog' || pageId === 'game') {
         const headerEl = activePage.querySelector('.page-header-sticky');
         if (headerEl) {
+            const logos = ['BS', 'CR', 'PM', 'RB', 'TG'];
             headerEl.insertAdjacentHTML('afterend',
-                '<div class="page-banner"><img src="https://cdn.jsdelivr.net/gh/placedgames/media/img/Photo.jpg" alt="" draggable="false"></div>');
+                `<div class="content-card page-banner">
+                    <div class="page-banner-left">
+                        <div class="page-banner-text">Быстрая покупка<br>товаров в 3 клика</div>
+                        <div class="card-action-btn cart-add-btn page-banner-btn" id="pageBannerBtn">Перейти</div>
+                    </div>
+                    <div class="page-banner-slider" id="pageBannerSlider">
+                        ${logos.map((n, i) => `<img class="${i === 0 ? 'active' : ''}" src="https://cdn.jsdelivr.net/gh/placedgames/media/img/${n}.PNG" alt="" draggable="false">`).join('')}
+                    </div>
+                </div>`);
+
+            const bannerBtn = document.getElementById('pageBannerBtn');
+            if (bannerBtn) {
+                bannerBtn.addEventListener('click', () => {
+                    hapticLight();
+                    let target = null;
+                    if (pageId === 'game' && currentGame) {
+                        target = currentGame;
+                    } else {
+                        target = games.find(g => g.enabled !== false && g.getProducts().length) || games[0];
+                    }
+                    if (target) openBuyPage(target.id);
+                });
+            }
+
+            const slider = document.getElementById('pageBannerSlider');
+            if (slider) {
+                const imgs = slider.querySelectorAll('img');
+                let idx = 0;
+                window.__bannerTimer = setInterval(() => {
+                    if (!slider.isConnected) { clearInterval(window.__bannerTimer); window.__bannerTimer = null; return; }
+                    imgs[idx].classList.remove('active');
+                    idx = (idx + 1) % imgs.length;
+                    imgs[idx].classList.add('active');
+                }, 3000);
+            }
         }
     }
 
