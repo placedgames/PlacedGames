@@ -4308,8 +4308,8 @@ function injectPageHeader() {
             headerEl.insertAdjacentHTML('afterend',
                 `<div class="content-card page-banner">
                     <div class="page-banner-left">
-                        <div class="page-banner-text"><div class="page-banner-title">Быстрая покупка товаров</div><div class="page-banner-sub">Оформление в пару кликов</div></div>
-                        <div class="card-action-btn cart-add-btn page-banner-btn" id="pageBannerBtn">Перейти к покупке</div>
+                        <div class="page-banner-text"><div class="page-banner-title">Быстрая покупка товаров</div></div>
+                        <div class="card-action-btn cart-add-btn page-banner-btn" id="pageBannerBtn">Перейти</div>
                     </div>
                     <div class="page-banner-slider" id="pageBannerSlider">
                         ${logos.map((n, i) => `<img class="${i === 0 ? 'active' : ''}" src="https://cdn.jsdelivr.net/gh/placedgames/media/img/${n}.PNG" alt="" draggable="false">`).join('')}
