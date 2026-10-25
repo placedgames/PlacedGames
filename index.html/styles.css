@@ -2613,7 +2613,7 @@ html[data-dark="tinted"] {
 }
 
 .page-banner-title {
-    font-size: 18px;               /* текст: размер */
+    font-size: 19px;               /* текст: размер */
     font-weight: 550;              /* текст: толщина */
     line-height: 1.25;
     color: var(--text-primary);
@@ -2621,10 +2621,10 @@ html[data-dark="tinted"] {
 
 .page-banner-btn {
     width: auto;
-    height: 38px;                  /* кнопка: высота */
-    padding: 0 26px;               /* кнопка: ширина (боковые отступы) */
-    font-size: 18px;               /* кнопка: размер текста */
-    font-weight: 650;              /* кнопка: толщина текста */
+    height: 32px;                  /* кнопка: высота */
+    padding: 0 24px;               /* кнопка: ширина (боковые отступы) */
+    font-size: 17px;               /* кнопка: размер текста */
+    font-weight: 550;              /* кнопка: толщина текста */
     flex-shrink: 0;
 }
 
