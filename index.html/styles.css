@@ -2597,8 +2597,9 @@ html[data-dark="tinted"] {
     align-items: center;
     justify-content: space-between;
     gap: 10px;
-    padding: 10px 14px 10px 18px;
-    margin-bottom: 14px;
+    padding: 14px;                 /* отступы внутри карточки (одинаковые со всех сторон) */
+    border-radius: 31px;           /* закругление карточки */
+    margin-bottom: 14px;           /* расстояние до поиска */
 }
 
 .page-banner-left {
@@ -2607,30 +2608,38 @@ html[data-dark="tinted"] {
     align-items: flex-start;
     align-self: stretch;
     justify-content: space-between;
-    gap: 8px;
+    gap: 8px;                      /* расстояние между текстом и кнопкой */
     min-width: 0;
 }
 
-.page-banner-text {
-    font-size: 15px;
-    font-weight: 500;
+.page-banner-title {
+    font-size: 17px;               /* первая строка: размер */
+    font-weight: 500;              /* первая строка: толщина */
     line-height: 1.25;
     color: var(--text-primary);
 }
 
+.page-banner-sub {
+    font-size: 15.5px;             /* вторая строка: размер */
+    font-weight: 500;              /* вторая строка: толщина */
+    line-height: 1.25;
+    margin-top: 2px;               /* расстояние между строками */
+    color: var(--text-secondary, #9ca3af);   /* вторая строка: цвет */
+}
+
 .page-banner-btn {
     width: auto;
-    height: 28px;
-    padding: 0 18px;
-    font-size: 13px;
+    height: 28px;                  /* кнопка: высота */
+    padding: 0 18px;               /* кнопка: ширина (боковые отступы) */
+    font-size: 13px;               /* кнопка: размер текста */
     font-weight: 500;
     flex-shrink: 0;
 }
 
 .page-banner-slider {
     position: relative;
-    width: 62px;
-    height: 62px;
+    width: 72px;                   /* слайдер: размер */
+    height: 72px;
     flex-shrink: 0;
 }
 
@@ -2640,9 +2649,9 @@ html[data-dark="tinted"] {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    border-radius: 16px;
+    border-radius: 18px;           /* закругление изображений */
     opacity: 0;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.5s ease; /* плавность смены */
     -webkit-user-select: none;
     user-select: none;
     -webkit-user-drag: none;

@@ -4308,7 +4308,7 @@ function injectPageHeader() {
             headerEl.insertAdjacentHTML('afterend',
                 `<div class="content-card page-banner">
                     <div class="page-banner-left">
-                        <div class="page-banner-text">Быстрая покупка<br>товаров в 3 клика</div>
+                        <div class="page-banner-text"><div class="page-banner-title">Быстрая покупка товаров</div><div class="page-banner-sub">Оформление в пару кликов</div></div>
                         <div class="card-action-btn cart-add-btn page-banner-btn" id="pageBannerBtn">Перейти</div>
                     </div>
                     <div class="page-banner-slider" id="pageBannerSlider">
