@@ -154,7 +154,7 @@ html[data-dark="tinted"] .checkout-card {
 }
 
 :root {
-    --menu-glass-bg: rgba(44, 44, 48, 0.8);
+    --menu-glass-bg: rgba(44, 44, 47, 0.8);
     --menu-glass-blur: 30px;
     --menu-glass-saturate: 0.8;
 }
