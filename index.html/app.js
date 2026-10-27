@@ -3099,6 +3099,39 @@ function getCurrentActiveMenuPage() {
     return null;
 }
 
+function syncMenuSliderInstant() {
+    const slider = document.getElementById("menuSlider");
+    const wrapper = document.getElementById("bottomMenuWrapper");
+    if (!slider || !wrapper || wrapper.offsetParent === null) return;
+    const pageId = getCurrentActiveMenuPage();
+    if (!pageId) return;
+    slider.classList.add("no-transition");
+    updateMenuSlider(pageId);
+    void slider.offsetWidth;
+    slider.classList.remove("no-transition");
+}
+
+(function observeMenuSize() {
+    if (typeof ResizeObserver === 'undefined') return;
+    const start = () => {
+        const wrapper = document.getElementById("bottomMenuWrapper");
+        const pill = document.getElementById("menuPill");
+        if (!wrapper || !pill) return;
+        let raf = 0;
+        const schedule = () => {
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(syncMenuSliderInstant);
+        };
+        const ro = new ResizeObserver(schedule);
+        ro.observe(wrapper);
+        ro.observe(pill);
+        window.addEventListener('resize', schedule);
+        window.addEventListener('orientationchange', () => setTimeout(schedule, 150));
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+})();
+
 function refreshMenuSliderOnResize() {
     const wrapper = document.getElementById("bottomMenuWrapper");
     if (!wrapper || wrapper.offsetParent === null) return;
@@ -4067,7 +4100,7 @@ function applyMenuLayout() {
     const align = (large && side > 16) ? getMenuAlign() : 'center';
     if (align === 'center') root.removeAttribute('data-menu-align');
     else root.setAttribute('data-menu-align', align);
-    requestAnimationFrame(() => requestAnimationFrame(refreshMenuSliderOnResize));
+    requestAnimationFrame(() => requestAnimationFrame(syncMenuSliderInstant));
 }
 
 function cycleMenuSideOffset() {
@@ -4098,8 +4131,24 @@ function settingsRowHtml(btnId, title, subtitle, btnText) {
                             <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${title}</div>
                             <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">${subtitle}</div>
                         </div>
-                        <button id="${btnId}" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${btnText}</button>
+                        <button id="${btnId}" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:15px;font-weight:550;">${btnText}</button>
                     </div>`;
+}
+
+function nextBottomMenuOffset() {
+    const options = [16, 20, 24, 28, 32];
+    const idx = options.indexOf(getBottomMenuOffset());
+    return options[(idx + 1) % options.length];
+}
+
+function nextMenuSideOffset() {
+    const options = getAvailableMenuSideOptions();
+    const idx = options.indexOf(getMenuSideOffset());
+    return idx === -1 ? 16 : options[(idx + 1) % options.length];
+}
+
+function nextMenuAlign() {
+    return MENU_ALIGN_OPTIONS[(MENU_ALIGN_OPTIONS.indexOf(getMenuAlign()) + 1) % MENU_ALIGN_OPTIONS.length];
 }
 
 function cycleBottomMenuOffset() {
@@ -4142,12 +4191,13 @@ function renderSettingsPage() {
     const menuSide = getMenuSideOffset();
     const menuAlign = getMenuAlign();
     const menuAlignTitle = menuAlign === 'left' ? 'Слева' : (menuAlign === 'right' ? 'Справа' : 'По середине');
-    const menuAlignBtn = menuAlign === 'left' ? 'L' : (menuAlign === 'right' ? 'R' : 'M');
+    const nextAlignKey = nextMenuAlign();
+    const nextAlignBtn = nextAlignKey === 'left' ? 'L' : (nextAlignKey === 'right' ? 'R' : 'M');
     const menuSideRowHtml = isLarge
-        ? settingsRowHtml('settingsMenuSideBtn', `${menuSide} ${pluralizePixels(menuSide)}`, 'Боковой отступ меню', String(menuSide))
+        ? settingsRowHtml('settingsMenuSideBtn', `${menuSide} ${pluralizePixels(menuSide)}`, 'Боковой отступ меню', String(nextMenuSideOffset()))
         : '';
     const menuAlignRowHtml = (isLarge && menuSide > 16)
-        ? settingsRowHtml('settingsMenuAlignBtn', menuAlignTitle, 'Отображение меню', menuAlignBtn)
+        ? settingsRowHtml('settingsMenuAlignBtn', menuAlignTitle, 'Отображение меню', nextAlignBtn)
         : '';
 
     container.innerHTML = `
@@ -4163,24 +4213,17 @@ function renderSettingsPage() {
                             <div id="settingsThemeTitleText" style="font-size:19px;font-weight:550;color:var(--text-primary);">${themeTitle}</div>
                             <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Тема приложения</div>
                         </div>
-                        <button id="settingsThemeBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">
+                        <button id="settingsThemeBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:15px;font-weight:550;">
                             <svg class="icon theme-icon-rotatable" style="width:22px;height:22px;color:#4cb4e9;transform:rotate(${themeDeg}deg);transition:transform 0.3s ease;"><use href="#icon-theme"></use></svg>
                         </button>
                     </div>
-                    ${settingsRowHtml('settingsDesignBtn', designTitle, 'Дизайн приложения', designIsNormal ? 'D' : 'LG')}
+                    ${settingsRowHtml('settingsDesignBtn', designTitle, 'Дизайн приложения', designIsNormal ? 'LG' : 'DF')}
                     <div class="settings-row">
                         <div style="padding-left:2px;min-width:0;">
                             <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${vibrationOn ? 'Включено' : 'Выключено'}</div>
                             <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Вибрация нажатий</div>
                         </div>
-                        <button id="settingsVibrationBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${vibrationOn ? 'ON' : 'OFF'}</button>
-                    </div>
-                    <div class="settings-row">
-                        <div style="padding-left:2px;min-width:0;">
-                            <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${formatTitle}</div>
-                            <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Формат приложения</div>
-                        </div>
-                        <button id="settingsFormatBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">FS</button>
+                        <button id="settingsVibrationBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:15px;font-weight:550;">${vibrationOn ? 'OFF' : 'ON'}</button>
                     </div>
                 </div>
             </div>
@@ -4192,6 +4235,13 @@ function renderSettingsPage() {
             </div>
             <div class="referral-bottom-card">
                 <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;">
+                    <div class="settings-row">
+                        <div style="padding-left:2px;min-width:0;">
+                            <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${formatTitle}</div>
+                            <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Формат приложения</div>
+                        </div>
+                        <button id="settingsFormatBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:15px;font-weight:550;">${currentFormat === 'fullscreen' ? 'FZ' : 'FS'}</button>
+                    </div>
                     <div class="settings-row">
                         <div style="padding-left:2px;min-width:0;">
                             <div style="font-size:19px;font-weight:550;color:var(--text-primary);">Очист. кэш</div>
@@ -4210,7 +4260,7 @@ function renderSettingsPage() {
                             <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${bottomOffset} ${pluralizePixels(bottomOffset)}</div>
                             <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Нижний отступ меню</div>
                         </div>
-                        <button id="settingsOffsetBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${bottomOffset}</button>
+                        <button id="settingsOffsetBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:15px;font-weight:550;">${nextBottomMenuOffset()}</button>
                     </div>
                     ${menuSideRowHtml}
                     ${menuAlignRowHtml}
@@ -4634,8 +4684,7 @@ function getAppTheme() {
 }
 
 function getThemeBgColor(theme) {
-    if (theme === 'tinted') return '#181D23';
-    return getAppDesign() === 'normal' ? '#141415' : '#151516';
+    return theme === 'tinted' ? '#181D23' : '#151516';
 }
 
 function applyTheme(theme, persist) {

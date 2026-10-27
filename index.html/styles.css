@@ -1142,6 +1142,10 @@ svg.product-info-icon {
     cursor: pointer;
     text-align: center;
     height: 48px;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .promo-btn {
@@ -2449,9 +2453,7 @@ html[data-dark="tinted"] {
 
 /* сине-прозрачные: один общий цвет (кроме бейджа с номером заказа — он ниже) */
 .promo-btn,
-.promo-action-btn.apply-btn,
-.counter-btn,
-.cart-quantity {
+.promo-action-btn.apply-btn {
     --lg-rgb: 56, 150, 200;
     --lg-strong: 0.1;
     --lg-faint: 0.12;
@@ -2468,8 +2470,10 @@ html[data-dark="tinted"] {
     --lg2-a: 0.2;
 }
 
-/* кнопка с номером заказа — своя обводка */
-.review-order-badge {
+/* кнопка с номером заказа — своя обводка (её же используют + / − в каталоге и корзине) */
+.review-order-badge,
+.counter-btn,
+.cart-quantity {
     --lg-rgb: 56, 150, 200;
     --lg-strong: 0.06;
     --lg-faint: 0.12;
@@ -2604,7 +2608,7 @@ html:not([data-design="normal"]) .review-order-badge {
 /* ===== Боковой отступ и расположение нижнего меню (и закрепа корзины) ===== */
 :root {
     --menu-side: 16px;
-    --menu-min-w: 320px;
+    --menu-min-w: 340px;
 }
 
 #bottomMenuWrapper,
@@ -2631,19 +2635,13 @@ html[data-menu-align="right"] .cart-checkout-fixed {
 
 /* ===== Дизайн «Обычный»: обводки 1px, без бликов и эффектов ===== */
 html[data-design="normal"] {
-    --app-bg: #141415;
-    --card-bg: #242427;
-    --col-bg: #161617;
-    --slider-bg: #1c1c1e;
-    --header-btn-bg: #252528;
+    --sticky-bg: rgba(44, 44, 47, 0.97);
+    --sticky-bg2: rgba(44, 44, 47, 0.97);
     --border-color: rgba(42, 42, 45, 1);
     --divider-color: rgba(51, 51, 54, 1);
     --col-border-color: rgba(32, 32, 35, 1);
-    --sticky-bg: rgba(40, 40, 44, 0.98);
-    --sticky-bg2: rgba(38, 38, 42, 0.95);
     --bottom-menu-border: rgba(54, 55, 58, 1);
     --fixed-border: rgba(48, 48, 51, 1);
-    --menu-slider-bg: rgba(200, 200, 204, 0.1);
 }
 
 html[data-design="normal"][data-dark="tinted"] {
