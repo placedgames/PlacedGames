@@ -3102,7 +3102,7 @@ function getCurrentActiveMenuPage() {
 function syncMenuSliderInstant() {
     const slider = document.getElementById("menuSlider");
     const wrapper = document.getElementById("bottomMenuWrapper");
-    if (!slider || !wrapper || wrapper.offsetParent === null) return;
+    if (!slider || !wrapper || wrapper.getClientRects().length === 0) return;
     const pageId = getCurrentActiveMenuPage();
     if (!pageId) return;
     slider.classList.add("no-transition");
@@ -3134,7 +3134,7 @@ function syncMenuSliderInstant() {
 
 function refreshMenuSliderOnResize() {
     const wrapper = document.getElementById("bottomMenuWrapper");
-    if (!wrapper || wrapper.offsetParent === null) return;
+    if (!wrapper || wrapper.getClientRects().length === 0) return;
     const pageId = getCurrentActiveMenuPage();
     if (pageId) updateMenuSlider(pageId);
 }
@@ -4066,7 +4066,7 @@ function toggleAppDesign() {
 
 /* ===== Боковой отступ и расположение меню (только планшеты / ноутбуки / раскладные) ===== */
 const MENU_SIDE_OPTIONS = [16, 32, 64, 128, 192, 256];
-const MENU_MIN_WIDTH = 320;
+const MENU_MIN_WIDTH = 350;
 const MENU_ALIGN_OPTIONS = ['center', 'left', 'right'];
 
 function isLargeScreenDevice() {

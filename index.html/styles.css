@@ -2608,7 +2608,7 @@ html:not([data-design="normal"]) .review-order-badge {
 /* ===== Боковой отступ и расположение нижнего меню (и закрепа корзины) ===== */
 :root {
     --menu-side: 16px;
-    --menu-min-w: 340px;
+    --menu-min-w: 350px;
 }
 
 #bottomMenuWrapper,
