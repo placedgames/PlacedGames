@@ -12,46 +12,46 @@ html[data-dark="tinted"] {
     --glass-rgb: 82, 98, 122;
 }
 
-.search-bar,
-.page-header-title-btn,
-.page-header-double-btn,
-.product-card,
-.cart-item,
-.content-card,
-.order-data-card,
-.order-main-card,
-.profile-main-card,
-.quick-link-card,
-.referral-main-card,
-.review-card,
-.checkout-card,
-#menuPill,
-#profileMenuWrapper > div:first-child {
+html:not([data-design="normal"]) .search-bar,
+html:not([data-design="normal"]) .page-header-title-btn,
+html:not([data-design="normal"]) .page-header-double-btn,
+html:not([data-design="normal"]) .product-card,
+html:not([data-design="normal"]) .cart-item,
+html:not([data-design="normal"]) .content-card,
+html:not([data-design="normal"]) .order-data-card,
+html:not([data-design="normal"]) .order-main-card,
+html:not([data-design="normal"]) .profile-main-card,
+html:not([data-design="normal"]) .quick-link-card,
+html:not([data-design="normal"]) .referral-main-card,
+html:not([data-design="normal"]) .review-card,
+html:not([data-design="normal"]) .checkout-card,
+html:not([data-design="normal"]) #menuPill,
+html:not([data-design="normal"]) #profileMenuWrapper > div:first-child {
     position: relative;
     border-color: transparent !important;
 }
 
-.product-card,
-.page-header-title-btn,
-#menuPill {
+html:not([data-design="normal"]) .product-card,
+html:not([data-design="normal"]) .page-header-title-btn,
+html:not([data-design="normal"]) #menuPill {
     overflow: visible !important;
 }
 
-.search-bar::before,
-.page-header-title-btn::before,
-.page-header-double-btn::before,
-.product-card::before,
-.cart-item::before,
-.content-card::before,
-.order-data-card::before,
-.order-main-card::before,
-.profile-main-card::before,
-.quick-link-card::before,
-.referral-main-card::before,
-.review-card::before,
-.checkout-card::before,
-#menuPill::before,
-#profileMenuWrapper > div:first-child::before {
+html:not([data-design="normal"]) .search-bar::before,
+html:not([data-design="normal"]) .page-header-title-btn::before,
+html:not([data-design="normal"]) .page-header-double-btn::before,
+html:not([data-design="normal"]) .product-card::before,
+html:not([data-design="normal"]) .cart-item::before,
+html:not([data-design="normal"]) .content-card::before,
+html:not([data-design="normal"]) .order-data-card::before,
+html:not([data-design="normal"]) .order-main-card::before,
+html:not([data-design="normal"]) .profile-main-card::before,
+html:not([data-design="normal"]) .quick-link-card::before,
+html:not([data-design="normal"]) .referral-main-card::before,
+html:not([data-design="normal"]) .review-card::before,
+html:not([data-design="normal"]) .checkout-card::before,
+html:not([data-design="normal"]) #menuPill::before,
+html:not([data-design="normal"]) #profileMenuWrapper > div:first-child::before {
     content: "";
     position: absolute;
     inset: -1px;
@@ -93,21 +93,21 @@ html[data-dark="tinted"] {
     --glass2-rgb: 97, 115, 140;
 }
 
-.search-bar::after,
-.page-header-title-btn::after,
-.page-header-double-btn::after,
-.product-card::after,
-.cart-item::after,
-.content-card::after,
-.order-data-card::after,
-.order-main-card::after,
-.profile-main-card::after,
-.quick-link-card::after,
-.referral-main-card::after,
-.review-card::after,
-.checkout-card::after,
-#menuPill::after,
-#profileMenuWrapper > div:first-child::after {
+html:not([data-design="normal"]) .search-bar::after,
+html:not([data-design="normal"]) .page-header-title-btn::after,
+html:not([data-design="normal"]) .page-header-double-btn::after,
+html:not([data-design="normal"]) .product-card::after,
+html:not([data-design="normal"]) .cart-item::after,
+html:not([data-design="normal"]) .content-card::after,
+html:not([data-design="normal"]) .order-data-card::after,
+html:not([data-design="normal"]) .order-main-card::after,
+html:not([data-design="normal"]) .profile-main-card::after,
+html:not([data-design="normal"]) .quick-link-card::after,
+html:not([data-design="normal"]) .referral-main-card::after,
+html:not([data-design="normal"]) .review-card::after,
+html:not([data-design="normal"]) .checkout-card::after,
+html:not([data-design="normal"]) #menuPill::after,
+html:not([data-design="normal"]) #profileMenuWrapper > div:first-child::after {
     content: "";
     position: absolute;
     inset: -1px;
@@ -144,12 +144,12 @@ html[data-dark="tinted"] .checkout-card {
     --glass2-rgb: 110, 130, 155;
 }
 
-.product-card {
+html:not([data-design="normal"]) .product-card {
     isolation: isolate;
 }
 
-.product-card::before,
-.product-card::after {
+html:not([data-design="normal"]) .product-card::before,
+html:not([data-design="normal"]) .product-card::after {
     z-index: 3;
 }
 
@@ -164,9 +164,9 @@ html[data-dark="tinted"] {
 }
 
 /* Меню и все закрепы: одинаковый фон и блюр */
-#menuPill,
-#profileMenuWrapper > div:first-child,
-.checkout-card {
+html:not([data-design="normal"]) #menuPill,
+html:not([data-design="normal"]) #profileMenuWrapper > div:first-child,
+html:not([data-design="normal"]) .checkout-card {
     --glass-rgb: 108, 110, 118;
     --glass-strong: 0.25;
     --glass-faint: 0.12;
@@ -183,8 +183,8 @@ html[data-dark="tinted"] .checkout-card {
 
 /* Закрепы, у которых фон задан inline через --sticky-bg / --sticky-bg2 (app.js / index.html):
    фон берётся из переменных (они теперь равны цвету меню), тут добавляем блюр */
-[style*="--sticky-bg"],
-[style*="--sticky-bg2"] {
+html:not([data-design="normal"]) [style*="--sticky-bg"],
+html:not([data-design="normal"]) [style*="--sticky-bg2"] {
     -webkit-backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
     backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
 }
@@ -1068,12 +1068,8 @@ svg.product-info-icon {
 .cart-checkout-fixed {
     position: fixed;
     bottom: var(--bottom-menu-offset, 16px);
-    left: 16px;
-    right: 16px;
     z-index: 1000;
     max-width: none;
-    margin: 0 auto;
-    width: calc(100% - 32px);
 }
 
 .checkout-card {
@@ -2422,13 +2418,13 @@ html[data-dark="tinted"] {
     --border-fade-color: rgba(35, 44, 55, 1);
 }
 
-.order-items-card,
-.review-items-card,
-.cart-item-delivery,
-.profile-bottom-card,
-.referral-bottom-card,
-.filter-btn,
-[style*="background:var(--col-bg)"] {
+html:not([data-design="normal"]) .order-items-card,
+html:not([data-design="normal"]) .review-items-card,
+html:not([data-design="normal"]) .cart-item-delivery,
+html:not([data-design="normal"]) .profile-bottom-card,
+html:not([data-design="normal"]) .referral-bottom-card,
+html:not([data-design="normal"]) .filter-btn,
+html:not([data-design="normal"]) [style*="background:var(--col-bg)"] {
     box-shadow: inset 0 0 var(--border-fade-blur) var(--border-fade-spread) var(--border-fade-color);
 }
 
@@ -2500,28 +2496,28 @@ html[data-dark="tinted"] {
 }
 
 /* --- общая основа --- */
-.checkout-button,
-.promo-btn,
-.promo-action-btn,
-.cart-add-btn,
-.counter-btn,
-.cart-quantity,
-.review-order-badge,
-.review-rating-badge {
+html:not([data-design="normal"]) .checkout-button,
+html:not([data-design="normal"]) .promo-btn,
+html:not([data-design="normal"]) .promo-action-btn,
+html:not([data-design="normal"]) .cart-add-btn,
+html:not([data-design="normal"]) .counter-btn,
+html:not([data-design="normal"]) .cart-quantity,
+html:not([data-design="normal"]) .review-order-badge,
+html:not([data-design="normal"]) .review-rating-badge {
     position: relative;
 }
 
 /* Слои обводки лежат ВНУТРИ кнопки (inset: 0), поэтому размер кнопки не меняется
    и углы стыкуются. У бейджей есть собственная рамка 1px — для них слой
    сдвигается ровно на её толщину (-1px), чтобы тоже совпасть с краем. */
-.checkout-button::before,
-.promo-btn::before,
-.promo-action-btn::before,
-.cart-add-btn::before,
-.counter-btn::before,
-.cart-quantity::before,
-.review-order-badge::before,
-.review-rating-badge::before {
+html:not([data-design="normal"]) .checkout-button::before,
+html:not([data-design="normal"]) .promo-btn::before,
+html:not([data-design="normal"]) .promo-action-btn::before,
+html:not([data-design="normal"]) .cart-add-btn::before,
+html:not([data-design="normal"]) .counter-btn::before,
+html:not([data-design="normal"]) .cart-quantity::before,
+html:not([data-design="normal"]) .review-order-badge::before,
+html:not([data-design="normal"]) .review-rating-badge::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -2549,14 +2545,14 @@ html[data-dark="tinted"] {
     mask-composite: exclude;
 }
 
-.checkout-button::after,
-.promo-btn::after,
-.promo-action-btn::after,
-.cart-add-btn::after,
-.counter-btn::after,
-.cart-quantity::after,
-.review-order-badge::after,
-.review-rating-badge::after {
+html:not([data-design="normal"]) .checkout-button::after,
+html:not([data-design="normal"]) .promo-btn::after,
+html:not([data-design="normal"]) .promo-action-btn::after,
+html:not([data-design="normal"]) .cart-add-btn::after,
+html:not([data-design="normal"]) .counter-btn::after,
+html:not([data-design="normal"]) .cart-quantity::after,
+html:not([data-design="normal"]) .review-order-badge::after,
+html:not([data-design="normal"]) .review-rating-badge::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -2581,25 +2577,87 @@ html[data-dark="tinted"] {
 
 /* бейджи отзывов: собственную рамку 1px (в т.ч. inline border-color из app.js) прячем —
    иначе она рисуется по всему периметру поверх liquid glass обводки */
-.review-order-badge,
-.review-rating-badge {
+html:not([data-design="normal"]) .review-order-badge,
+html:not([data-design="normal"]) .review-rating-badge {
     border-color: transparent !important;
 }
 
 /* бейджи отзывов: у них своя рамка 1px (transparent), слой обводки перекрывает её */
-.review-order-badge::before,
-.review-order-badge::after,
-.review-rating-badge::before,
-.review-rating-badge::after {
+html:not([data-design="normal"]) .review-order-badge::before,
+html:not([data-design="normal"]) .review-order-badge::after,
+html:not([data-design="normal"]) .review-rating-badge::before,
+html:not([data-design="normal"]) .review-rating-badge::after {
     inset: -1px;
 }
 
-.review-rating-badge.badge-good,
-.review-rating-badge.badge-bad {
+html:not([data-design="normal"]) .review-rating-badge.badge-good,
+html:not([data-design="normal"]) .review-rating-badge.badge-bad {
     z-index: 1;
     isolation: isolate;
 }
 
-.review-order-badge {
+html:not([data-design="normal"]) .review-order-badge {
     isolation: isolate;
+}
+
+
+/* ===== Боковой отступ и расположение нижнего меню (и закрепа корзины) ===== */
+:root {
+    --menu-side: 16px;
+    --menu-min-w: 320px;
+}
+
+#bottomMenuWrapper,
+.cart-checkout-fixed {
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: min(calc(100% - 32px), max(var(--menu-min-w), calc(100% - 2 * var(--menu-side))));
+}
+
+html[data-menu-align="left"] #bottomMenuWrapper,
+html[data-menu-align="left"] .cart-checkout-fixed {
+    left: 16px;
+    right: auto;
+    margin: 0;
+}
+
+html[data-menu-align="right"] #bottomMenuWrapper,
+html[data-menu-align="right"] .cart-checkout-fixed {
+    left: auto;
+    right: 16px;
+    margin: 0;
+}
+
+/* ===== Дизайн «Обычный»: обводки 1px, без бликов и эффектов ===== */
+html[data-design="normal"] {
+    --app-bg: #141415;
+    --card-bg: #242427;
+    --col-bg: #161617;
+    --slider-bg: #1c1c1e;
+    --header-btn-bg: #252528;
+    --border-color: rgba(42, 42, 45, 1);
+    --divider-color: rgba(51, 51, 54, 1);
+    --col-border-color: rgba(32, 32, 35, 1);
+    --sticky-bg: rgba(40, 40, 44, 0.98);
+    --sticky-bg2: rgba(38, 38, 42, 0.95);
+    --bottom-menu-border: rgba(54, 55, 58, 1);
+    --fixed-border: rgba(48, 48, 51, 1);
+    --menu-slider-bg: rgba(200, 200, 204, 0.1);
+}
+
+html[data-design="normal"][data-dark="tinted"] {
+    --app-bg: #181D23;
+    --card-bg: #242D38;
+    --col-bg: #1B2027;
+    --slider-bg: #1B2027;
+    --header-btn-bg: #242D38;
+    --border-color: #29333F;
+    --divider-color: #2F3A47;
+    --col-border-color: #252E39;
+    --sticky-bg: rgba(43, 54, 66, 0.99);
+    --sticky-bg2: rgba(39, 49, 60, 0.99);
+    --bottom-menu-border: #35414F;
+    --fixed-border: #2F3A47;
+    --menu-slider-bg: rgba(190, 215, 240, 0.1);
 }

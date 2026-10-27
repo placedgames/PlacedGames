@@ -4013,6 +4013,95 @@ function applyBottomMenuOffset(offset) {
     localStorage.setItem('bottomMenuOffset', String(offset));
 }
 
+/* ===== Дизайн приложения: Liquid Glass / Обычный ===== */
+function getAppDesign() {
+    return localStorage.getItem('appDesign') === 'normal' ? 'normal' : 'glass';
+}
+
+function applyAppDesign(design, persist) {
+    if (persist) localStorage.setItem('appDesign', design);
+    if (design === 'normal') document.documentElement.setAttribute('data-design', 'normal');
+    else document.documentElement.removeAttribute('data-design');
+    applyTheme(getAppTheme(), false);
+}
+
+function toggleAppDesign() {
+    hapticLight();
+    applyAppDesign(getAppDesign() === 'normal' ? 'glass' : 'normal', true);
+    renderSettingsPage();
+}
+
+/* ===== Боковой отступ и расположение меню (только планшеты / ноутбуки / раскладные) ===== */
+const MENU_SIDE_OPTIONS = [16, 32, 64, 128, 192, 256];
+const MENU_MIN_WIDTH = 320;
+const MENU_ALIGN_OPTIONS = ['center', 'left', 'right'];
+
+function isLargeScreenDevice() {
+    try {
+        return Math.min(screen.width, screen.height) >= 600;
+    } catch (e) {
+        return false;
+    }
+}
+
+function getMenuSideOffset() {
+    const v = parseInt(localStorage.getItem('menuSideOffset') || '16', 10);
+    return MENU_SIDE_OPTIONS.includes(v) ? v : 16;
+}
+
+function getMenuAlign() {
+    const a = localStorage.getItem('menuAlign');
+    return a === 'left' || a === 'right' ? a : 'center';
+}
+
+function getAvailableMenuSideOptions() {
+    const maxSide = Math.floor((window.innerWidth - MENU_MIN_WIDTH) / 2);
+    return MENU_SIDE_OPTIONS.filter(o => o === 16 || o <= maxSide);
+}
+
+function applyMenuLayout() {
+    const root = document.documentElement;
+    const large = isLargeScreenDevice();
+    const side = large ? getMenuSideOffset() : 16;
+    root.style.setProperty('--menu-side', side + 'px');
+    const align = (large && side > 16) ? getMenuAlign() : 'center';
+    if (align === 'center') root.removeAttribute('data-menu-align');
+    else root.setAttribute('data-menu-align', align);
+    requestAnimationFrame(() => requestAnimationFrame(refreshMenuSliderOnResize));
+}
+
+function cycleMenuSideOffset() {
+    const options = getAvailableMenuSideOptions();
+    const current = getMenuSideOffset();
+    const idx = options.indexOf(current);
+    const next = idx === -1 ? 16 : options[(idx + 1) % options.length];
+    localStorage.setItem('menuSideOffset', String(next));
+    if (next === 16) localStorage.setItem('menuAlign', 'center');
+    applyMenuLayout();
+    hapticLight();
+    renderSettingsPage();
+}
+
+function cycleMenuAlign() {
+    const current = getMenuAlign();
+    const next = MENU_ALIGN_OPTIONS[(MENU_ALIGN_OPTIONS.indexOf(current) + 1) % MENU_ALIGN_OPTIONS.length];
+    localStorage.setItem('menuAlign', next);
+    applyMenuLayout();
+    hapticLight();
+    renderSettingsPage();
+}
+
+function settingsRowHtml(btnId, title, subtitle, btnText) {
+    return `
+                    <div class="settings-row">
+                        <div style="padding-left:2px;min-width:0;">
+                            <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${title}</div>
+                            <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">${subtitle}</div>
+                        </div>
+                        <button id="${btnId}" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${btnText}</button>
+                    </div>`;
+}
+
 function cycleBottomMenuOffset() {
     const options = [16, 20, 24, 28, 32];
     const current = getBottomMenuOffset();
@@ -4039,8 +4128,8 @@ function renderSettingsPage() {
     const currentTheme = getAppTheme();
     const themeTitle = themeTitleFor(currentTheme);
     const themeDeg = themeIconRotationDeg(currentTheme);
-    const languageCode = getAppLanguage();
-    const languageTitle = languageCode === 'en' ? 'English' : 'Русский';
+    const designIsNormal = getAppDesign() === 'normal';
+    const designTitle = designIsNormal ? 'Обычный' : 'Liquid Glass';
 
     const vibrationOn = isVibrationEnabled();
 
@@ -4048,6 +4137,18 @@ function renderSettingsPage() {
     const formatTitle = currentFormat === 'fullscreen' ? 'Fullscreen' : 'Fullsize';
 
     const bottomOffset = getBottomMenuOffset();
+
+    const isLarge = isLargeScreenDevice();
+    const menuSide = getMenuSideOffset();
+    const menuAlign = getMenuAlign();
+    const menuAlignTitle = menuAlign === 'left' ? 'Слева' : (menuAlign === 'right' ? 'Справа' : 'По середине');
+    const menuAlignBtn = menuAlign === 'left' ? 'L' : (menuAlign === 'right' ? 'R' : 'M');
+    const menuSideRowHtml = isLarge
+        ? settingsRowHtml('settingsMenuSideBtn', `${menuSide} ${pluralizePixels(menuSide)}`, 'Боковой отступ меню', String(menuSide))
+        : '';
+    const menuAlignRowHtml = (isLarge && menuSide > 16)
+        ? settingsRowHtml('settingsMenuAlignBtn', menuAlignTitle, 'Отображение меню', menuAlignBtn)
+        : '';
 
     container.innerHTML = `
                     <div class="referral-wrapper">
@@ -4066,19 +4167,20 @@ function renderSettingsPage() {
                             <svg class="icon theme-icon-rotatable" style="width:22px;height:22px;color:#4cb4e9;transform:rotate(${themeDeg}deg);transition:transform 0.3s ease;"><use href="#icon-theme"></use></svg>
                         </button>
                     </div>
-                    <div class="settings-row">
-                        <div style="padding-left:2px;min-width:0;">
-                            <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${languageTitle}</div>
-                            <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Язык приложения</div>
-                        </div>
-                        <button id="settingsLanguageBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${languageCode === 'en' ? 'EN' : 'RU'}</button>
-                    </div>
+                    ${settingsRowHtml('settingsDesignBtn', designTitle, 'Дизайн приложения', designIsNormal ? 'D' : 'LG')}
                     <div class="settings-row">
                         <div style="padding-left:2px;min-width:0;">
                             <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${vibrationOn ? 'Включено' : 'Выключено'}</div>
                             <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Вибрация нажатий</div>
                         </div>
                         <button id="settingsVibrationBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${vibrationOn ? 'ON' : 'OFF'}</button>
+                    </div>
+                    <div class="settings-row">
+                        <div style="padding-left:2px;min-width:0;">
+                            <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${formatTitle}</div>
+                            <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Формат приложения</div>
+                        </div>
+                        <button id="settingsFormatBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">FS</button>
                     </div>
                 </div>
             </div>
@@ -4090,13 +4192,6 @@ function renderSettingsPage() {
             </div>
             <div class="referral-bottom-card">
                 <div style="background:var(--card-bg);border-radius:29px;padding:16px 18px;">
-                    <div class="settings-row">
-                        <div style="padding-left:2px;min-width:0;">
-                            <div style="font-size:19px;font-weight:550;color:var(--text-primary);">${formatTitle}</div>
-                            <div style="font-size:16px;color:var(--text-secondary);margin-top:4px;">Формат приложения</div>
-                        </div>
-                        <button id="settingsFormatBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">FS</button>
-                    </div>
                     <div class="settings-row">
                         <div style="padding-left:2px;min-width:0;">
                             <div style="font-size:19px;font-weight:550;color:var(--text-primary);">Очист. кэш</div>
@@ -4117,6 +4212,8 @@ function renderSettingsPage() {
                         </div>
                         <button id="settingsOffsetBtn" style="width:46px;height:46px;border-radius:16px;background:var(--accent-blue-bg);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#4cb4e9;font-size:14px;font-weight:550;">${bottomOffset}</button>
                     </div>
+                    ${menuSideRowHtml}
+                    ${menuAlignRowHtml}
                 </div>
             </div>
         </div>
@@ -4124,7 +4221,7 @@ function renderSettingsPage() {
 
     setTimeout(() => {
             document.getElementById('settingsThemeBtn')?.addEventListener('click', toggleAppTheme);
-            document.getElementById('settingsLanguageBtn')?.addEventListener('click', toggleAppLanguage);
+            document.getElementById('settingsDesignBtn')?.addEventListener('click', toggleAppDesign);
             document.getElementById('settingsVibrationBtn')?.addEventListener('click', () => {
                     const next = !isVibrationEnabled();
                     localStorage.setItem('vibrationEnabled', next ? 'true' : 'false');
@@ -4158,6 +4255,8 @@ function renderSettingsPage() {
             document.getElementById('settingsOffsetBtn')?.addEventListener('click', () => {
                     cycleBottomMenuOffset();
             });
+            document.getElementById('settingsMenuSideBtn')?.addEventListener('click', cycleMenuSideOffset);
+            document.getElementById('settingsMenuAlignBtn')?.addEventListener('click', cycleMenuAlign);
         }, 0);
 }
 
@@ -4535,7 +4634,8 @@ function getAppTheme() {
 }
 
 function getThemeBgColor(theme) {
-    return theme === 'tinted' ? '#181D23' : '#151516';
+    if (theme === 'tinted') return '#181D23';
+    return getAppDesign() === 'normal' ? '#141415' : '#151516';
 }
 
 function applyTheme(theme, persist) {
@@ -4552,8 +4652,9 @@ function applyTheme(theme, persist) {
 }
 
 function initTheme() {
-    applyTheme(getAppTheme(), false);
+    applyAppDesign(getAppDesign(), false);
     applyBottomMenuOffset(getBottomMenuOffset());
+    applyMenuLayout();
 }
 
 function requestTelegramWriteAccess() {

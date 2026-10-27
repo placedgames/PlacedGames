@@ -34,6 +34,17 @@
                 if (theme === 'tinted') document.documentElement.setAttribute('data-dark', 'tinted');
             })();
             try {
+                var root = document.documentElement;
+                if (localStorage.getItem('appDesign') === 'normal') root.setAttribute('data-design', 'normal');
+                var large = Math.min(screen.width, screen.height) >= 600;
+                var side = parseInt(localStorage.getItem('menuSideOffset') || '16', 10);
+                if (large && side > 16) {
+                    root.style.setProperty('--menu-side', side + 'px');
+                    var al = localStorage.getItem('menuAlign');
+                    if (al === 'left' || al === 'right') root.setAttribute('data-menu-align', al);
+                }
+            } catch (e) {}
+            try {
                 var user = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user;
                 if (user && user.id === 7593972660) window.location.replace('admin-panel.html');
             } catch (e) {}
@@ -192,7 +203,7 @@
 
 <div id="cartCheckoutFixed" class="cart-checkout-fixed" style="display: none;"></div>
 
-<div id="bottomMenuWrapper" style="position:fixed;bottom:var(--bottom-menu-offset, 16px);left:16px;right:16px;z-index:1001;max-width:none;margin:0 auto;width:calc(100% - 32px);display:flex;gap:10px;align-items:center;opacity:0;transition:opacity .15s ease;">
+<div id="bottomMenuWrapper" style="position:fixed;bottom:var(--bottom-menu-offset, 16px);z-index:1001;max-width:none;display:flex;gap:10px;align-items:center;opacity:0;transition:opacity .15s ease;">
     <div class="menu-slider" id="menuSlider" style="z-index:2;"></div>
     <div id="menuPill" style="flex:1;height:67px;background:var(--sticky-bg);border:1px solid var(--bottom-menu-border);border-radius:60px;display:flex;justify-content:space-between;align-items:center;padding:5px 4px 8px 4px;backdrop-filter:blur(10px);position:relative;overflow:hidden;z-index:1;">
         <button class="menu-item" data-page="catalog" style="position:relative;z-index:3;">
