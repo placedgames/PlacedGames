@@ -1,5 +1,4 @@
 
-
 :root {
     --glass-rgb: 88, 90, 98;
     --glass-strong: 0.15;
@@ -131,14 +130,17 @@ html[data-dark="tinted"] {
     rgba(0,0,0,0.4) 0%, transparent 100%);
 }
 
+/* Меню и все закрепы: одинаковая обводка (блик + внутреннее свечение) */
 #menuPill,
-#profileMenuWrapper > div:first-child {
+#profileMenuWrapper > div:first-child,
+.checkout-card {
     --glass2-rgb: 122, 124, 134;
     --glass2-a: 0.34;
 }
 
 html[data-dark="tinted"] #menuPill,
-html[data-dark="tinted"] #profileMenuWrapper > div:first-child {
+html[data-dark="tinted"] #profileMenuWrapper > div:first-child,
+html[data-dark="tinted"] .checkout-card {
     --glass2-rgb: 110, 130, 155;
 }
 
@@ -161,8 +163,10 @@ html[data-dark="tinted"] {
     --menu-glass-bg: rgba(43, 54, 67, 0.78);
 }
 
+/* Меню и все закрепы: одинаковый фон и блюр */
 #menuPill,
-#profileMenuWrapper > div:first-child {
+#profileMenuWrapper > div:first-child,
+.checkout-card {
     --glass-rgb: 108, 110, 118;
     --glass-strong: 0.25;
     --glass-faint: 0.12;
@@ -172,8 +176,17 @@ html[data-dark="tinted"] {
 }
 
 html[data-dark="tinted"] #menuPill,
-html[data-dark="tinted"] #profileMenuWrapper > div:first-child {
+html[data-dark="tinted"] #profileMenuWrapper > div:first-child,
+html[data-dark="tinted"] .checkout-card {
     --glass-rgb: 104, 122, 146;
+}
+
+/* Закрепы, у которых фон задан inline через --sticky-bg / --sticky-bg2 (app.js / index.html):
+   фон берётся из переменных (они теперь равны цвету меню), тут добавляем блюр */
+[style*="--sticky-bg"],
+[style*="--sticky-bg2"] {
+    -webkit-backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
+    backdrop-filter: blur(var(--menu-glass-blur)) saturate(var(--menu-glass-saturate)) !important;
 }
 
 .page {
@@ -208,10 +221,11 @@ html[data-dark="tinted"] #profileMenuWrapper > div:first-child {
     --input-bg: #3a3a3d;
     --input2-bg: #323235;
     --input-bg-dark: #303033;
-    --sticky-bg: rgba(40, 40, 44, 0.98);
-    --sticky-bg2: rgba(38, 38, 42, 0.95);
-    --bottom-menu-border: rgba(54, 55, 58, 1);
-    --fixed-border: rgba(48, 48, 51, 1);
+    /* закрепы = цвет меню */
+    --sticky-bg: var(--menu-glass-bg);
+    --sticky-bg2: var(--menu-glass-bg);
+    --bottom-menu-border: rgba(108, 110, 118, 0.25);
+    --fixed-border: rgba(108, 110, 118, 0.25);
     --menu-slider-bg: rgba(200, 200, 204, 0.1);
     --accent-blue-bg: rgba(56, 150, 200, 0.1);
 
@@ -277,13 +291,13 @@ html[data-dark="tinted"] {
     --border-color: #29333F;
     --divider-color: #2F3A47;
     --col-border-color: #252E39;
-    --fixed-border: #2F3A47;
-    --bottom-menu-border: #35414F;
+    --fixed-border: rgba(104, 122, 146, 0.25);
+    --bottom-menu-border: rgba(104, 122, 146, 0.25);
     --input-bg: #333F4D;
     --input2-bg: #303B48;
     --input-bg-dark: #2D3844;
-    --sticky-bg: rgba(43, 54, 66, 0.99);
-    --sticky-bg2: rgba(39, 49, 60, 0.99);
+    --sticky-bg: var(--menu-glass-bg);
+    --sticky-bg2: var(--menu-glass-bg);
     --menu-slider-bg: rgba(190, 215, 240, 0.1);
 }
 
